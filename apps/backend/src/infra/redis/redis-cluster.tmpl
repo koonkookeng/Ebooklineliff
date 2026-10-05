@@ -1,6 +1,13 @@
-/**
- * AUTO-SCAFFOLD Phase 002 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-// placeholder
+# SSOT Phase 002 §5 — Redis 7.2 cluster node template
+# Usage: generate-cluster-config.sh renders one file per node from this template.
+# Variables: {{PORT}} {{DIR}} {{PASSWORD}}
+port {{PORT}}
+dir {{DIR}}
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+appendonly yes
+requirepass {{PASSWORD}}
+masterauth {{PASSWORD}}
+maxmemory 256mb
+maxmemory-policy allkeys-lru

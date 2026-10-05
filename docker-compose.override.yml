@@ -1,0 +1,9 @@
+# SSOT Phase 002 §9 — local dev overrides (base = production-shaped cluster)
+services:
+  postgres:
+    restart: "no"
+    ports:
+      - "5432:5432"
+  redis-node-1:
+    ports:
+      - "6379:6379"
