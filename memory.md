@@ -8,3 +8,4 @@
 - Last scaffold: run `node scripts/scaffold-from-inventory.mjs` to regenerate tree from filefolder.md + full prisma from schema.md
 - Phase 001 DONE (b23e83d): monorepo core verified 100/100 (prisma valid + backend/frontend typecheck + zod 5/5 + health runtime); next: Phase 002
 - Phase 002 DONE (a531265): infra engine verified 100/100 incl. Phase001 regression (compose config + phase002 typecheck + infra zod 3/3); next: Phase 003
+- Phase 003+004 DONE (2a91f7b): identity KYC (AES-256-GCM + atomic submit) + GraphQL gateway (4 resolvers) + webhooks (EasySlip atomic/HMAC, logistics, LINE) verified 100/100 x3 incl. regressions; next: Phase 005
