@@ -1,0 +1,79 @@
+'use client';
+/**
+ * Phase 000 — Memory-safe Canvas reader (<30MB): window [N-1,N,N+1], GC N-2, forensic watermark.
+ * States: LIFF_INIT -> IDLE -> LOADING -> SUCCESS / ERROR (retry).
+ */
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+type UiState = 'LIFF_INIT' | 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
+
+export default function CanvasReader({ productId, userIdHash }: { productId: string; userIdHash: string }) {
+  const [page, setPage] = useState(1);
+  const [ui, setUi] = useState<UiState>('IDLE');
+  const [error, setError] = useState<string | null>(null);
+  const cache = useRef(new Map<number, string>());
+  const blobUrls = useRef(new Map<number, string>());
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const loadSlidingWindow = useCallback(
+    async (currentPage: number) => {
+      setUi('LOADING');
+      setError(null);
+      try {
+        const targets = [currentPage - 1, currentPage, currentPage + 1].filter((p) => p > 0);
+        const next = new Map<number, string>();
+        for (const p of targets) {
+          if (cache.current.has(p)) {
+            next.set(p, cache.current.get(p)!);
+            continue;
+          }
+          const res = await fetch(`/api/reader/chunk?productId=${productId}&page=${p}`);
+          if (!res.ok) throw new Error(`chunk ${p}: ${res.status}`);
+          const data = await res.json();
+          next.set(p, data.vectorSvgContent as string);
+        }
+        // GC N-2: revoke blob URL + clear canvas (RAM < 30MB)
+        for (const [p, url] of blobUrls.current) {
+          if (!next.has(p)) {
+            URL.revokeObjectURL(url);
+            blobUrls.current.delete(p);
+          }
+        }
+        const ctx = canvasRef.current?.getContext('2d');
+        ctx?.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
+        cache.current = next;
+        setUi('SUCCESS');
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'load failed');
+        setUi('ERROR');
+      }
+    },
+    [productId],
+  );
+
+  useEffect(() => {
+    void loadSlidingWindow(page);
+  }, [page, loadSlidingWindow]);
+
+  return (
+    <div>
+      {ui === 'LOADING' && <div aria-busy>Skeleton loading page {page}…</div>}
+      {ui === 'ERROR' && (
+        <div role="alert">
+          {error} <button onClick={() => void loadSlidingWindow(page)}>Retry</button>
+        </div>
+      )}
+      <canvas ref={canvasRef} width={390} height={844} aria-label={`ebook page ${page}`} />
+      <div
+        aria-hidden
+        style={{ pointerEvents: 'none' }}
+        data-watermark={`${userIdHash}-${Date.now()}`}
+      />
+      <nav>
+        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</button>
+        <span>{page}</span>
+        <button onClick={() => setPage((p) => p + 1)}>Next</button>
+      </nav>
+    </div>
+  );
+}

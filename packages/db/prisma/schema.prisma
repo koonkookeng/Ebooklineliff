@@ -1,0 +1,177 @@
+// SSOT Phase 0 core — source: Phases/phase_000.md §4.1
+// Full 279-model version is generated to packages/db/prisma/schema.full.prisma by scaffold script from schema.md
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  CONTENT_MODERATOR
+  SUPPORT_STAFF
+  INSTRUCTOR
+  SELLER
+  MEMBER
+}
+
+enum ProductType {
+  PHYSICAL_BOOK
+  EBOOK
+  ELEARNING_COURSE
+  LIVE_CLASS
+  HYBRID_BUNDLE
+}
+
+enum ContentAccessType {
+  FULL_PURCHASE
+  SUBSCRIPTION
+  CORPORATE_LICENSE
+  TIME_LIMITED_RENTAL
+}
+
+model User {
+  id               String                   @id @default(uuid())
+  lineUserId       String?                  @unique
+  email            String?                  @unique
+  role             UserRole                 @default(MEMBER)
+  displayName      String
+  avatarUrl        String?
+  walletBalance    Decimal                  @default(0.00) @db.Decimal(12, 2)
+  rewardPoints     Int                      @default(0)
+  affiliateCode    String                   @unique @default(uuid())
+  entitlements     Entitlement[]
+  orders           Order[]
+  readingProgress  EbookReadingProgress[]
+  learningProgress CourseLearningProgress[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([lineUserId])
+  @@index([affiliateCode])
+}
+
+model Product {
+  id             String          @id @default(uuid())
+  sellerId       String
+  title          String
+  slug           String          @unique
+  description    String          @db.Text
+  coverImageUrl  String
+  productType    ProductType
+  price          Decimal         @db.Decimal(10, 2)
+  discountPrice  Decimal?        @db.Decimal(10, 2)
+  isPublished    Boolean         @default(false)
+  physicalDetail PhysicalDetail?
+  ebookDetail    EbookDetail?
+  courseDetail   CourseDetail?
+  entitlements   Entitlement[]
+  orderItems     OrderItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([sellerId])
+  @@index([productType])
+}
+
+model PhysicalDetail {
+  id          String  @id @default(uuid())
+  productId   String  @unique
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  isbn        String?
+  weightGrams Int
+  stockQty    Int     @default(0)
+  sku         String  @unique
+}
+
+model EbookDetail {
+  id            String  @id @default(uuid())
+  productId     String  @unique
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  totalPages    Int
+  previewPages  Int     @default(10)
+  storagePathR2 String
+  fileHash      String
+}
+
+model CourseDetail {
+  id         String  @id @default(uuid())
+  productId  String  @unique
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  totalHours Float   @default(0.0)
+}
+
+model Entitlement {
+  id         String            @id @default(uuid())
+  userId     String
+  productId  String
+  accessType ContentAccessType @default(FULL_PURCHASE)
+  expiresAt  DateTime?
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime          @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Order {
+  id          String       @id @default(uuid())
+  orderNumber String       @unique
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  netAmount   Decimal      @db.Decimal(10, 2)
+  orderStatus String       @default("PENDING_PAYMENT")
+  orderItems  OrderItem[]
+  paymentSlip PaymentSlip?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int     @default(1)
+}
+
+model PaymentSlip {
+  id           String    @id @default(uuid())
+  orderId      String    @unique
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  slipImageUrl String
+  transRef     String?   @unique
+  amount       Decimal   @db.Decimal(10, 2)
+  verifiedAt   DateTime?
+}
+
+model EbookReadingProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ebookId   String
+  lastPage  Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, ebookId])
+}
+
+model CourseLearningProgress {
+  id          String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  watchedSec  Int      @default(0)
+  isCompleted Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}

@@ -1,0 +1,11 @@
+{
+  "inventoryRows": 2168,
+  "dirsEnsured": 786,
+  "filesCreated": 0,
+  "filesSkippedExisting": 1374,
+  "garbageSkipped": 8,
+  "schemaEnums": 117,
+  "schemaModels": 279,
+  "fullSchemaPath": "packages/db/prisma/schema.full.prisma",
+  "fullSchemaNote": "raw consolidation needs opposite-relation fix; auto-running scripts/fix-full-schema.mjs"
+}

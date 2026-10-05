@@ -1,0 +1,36 @@
+# deps
+node_modules/
+.pnp/
+.pnp.js
+
+# build
+.next/
+out/
+dist/
+build/
+
+# cache
+.turbo/
+.parcel-cache/
+
+# env
+.env
+.env*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+*.pem
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# vercel
+.vercel/
+
+# temp
+gitupload.md

@@ -1,0 +1,24 @@
+{
+  "name": "ebook-liff-v2",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "scaffold": "node scripts/scaffold-from-inventory.mjs",
+    "scaffold:full-schema": "node scripts/scaffold-from-inventory.mjs --full-schema",
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "verify:phase000": "tsx scripts/verify-phase000.ts",
+    "check:bundle": "tsx scripts/check-bundle-size.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.1",
+    "zod": "^3.23.8",
+    "prisma": "^5.22.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
