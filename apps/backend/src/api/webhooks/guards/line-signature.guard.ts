@@ -1,10 +1,24 @@
-/**
- * AUTO-SCAFFOLD Phase 004 — REST webhook
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+// SSOT Phase 004 Task 004.7 — LINE messaging signature guard (channel secret HMAC)
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import * as crypto from 'node:crypto';
+
 @Injectable()
-export class LineSignatureGuardGuard implements CanActivate {
-  canActivate(_ctx: ExecutionContext): boolean { return true; }
+export class LineSignatureGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const signature: string | undefined = request.headers['x-line-signature'];
+    const secret = process.env.LINE_CHANNEL_SECRET;
+
+    if (!signature || !secret) {
+      throw new UnauthorizedException('Missing LINE Signature or Channel Secret');
+    }
+
+    const body = typeof request.body === 'string' ? request.body : JSON.stringify(request.body);
+    const computed = crypto.createHmac('sha256', secret).update(body).digest('base64');
+
+    if (signature.length !== computed.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(computed))) {
+      throw new UnauthorizedException('Invalid LINE Signature');
+    }
+    return true;
+  }
 }

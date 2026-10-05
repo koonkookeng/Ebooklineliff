@@ -1,29 +1,64 @@
-/**
- * Phase 000 — NestJS EasySlip webhook: LIFF slip upload -> verify -> 200 in <1s.
- */
-import { Body, Controller, Post } from '@nestjs/common';
-import { z } from 'zod';
+// SSOT Phase 004 §5.4 — EasySlip slip-verification webhook (atomic, <1s)
+// NOTE: global prefix api/v1 applies (main.ts) → POST /api/v1/webhooks/payment/easyslip
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  BadRequestException,
+  UseGuards,
+} from '@nestjs/common';
+import { PrismaService } from '../../../infra/database/prisma.service';
+import { HmacSignatureGuard } from '../guards/hmac-signature.guard';
+import { EasySlipWebhookPayloadSchema } from '@repo/shared';
 
-const WebhookDto = z.object({
-  orderId: z.string().uuid(),
-  slipImageUrl: z.string().url(),
-  expectedAmount: z.number().positive(),
-  expectedAccount: z.string().min(1),
-});
+@Controller('webhooks/payment')
+export class EasySlipWebhookController {
+  constructor(private prisma: PrismaService) {}
 
-@Controller('webhooks/easyslip')
-export class EasyslipWebhookController {
-  constructor(private readonly verifier: { verifyAndGrant(...a: never[]): Promise<unknown> }) {}
+  @Post('easyslip')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(HmacSignatureGuard)
+  async handleSlipWebhook(@Body() rawBody: unknown) {
+    // 1. Zod validation
+    const parseResult = EasySlipWebhookPayloadSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      throw new BadRequestException('Invalid Webhook Payload Structure');
+    }
+    const payload = parseResult.data;
 
-  @Post()
-  async handle(@Body() body: unknown) {
-    const dto = WebhookDto.parse(body);
-    const out = await (this.verifier.verifyAndGrant as (...a: unknown[]) => Promise<unknown>)(
-      dto.orderId,
-      dto.slipImageUrl,
-      dto.expectedAmount,
-      dto.expectedAccount,
-    );
-    return { ok: true, data: out };
+    // 2. Atomic transaction: verify order + unlock entitlements (idempotent)
+    const result = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { orderNumber: payload.transRef },
+        include: { orderItems: true },
+      });
+
+      if (!order || order.orderStatus === 'COMPLETED') {
+        return { success: false, message: 'Order already processed or not found' };
+      }
+
+      if (Number(order.netAmount) > payload.amount.value) {
+        throw new BadRequestException('Payment Amount Mismatch');
+      }
+
+      await tx.order.update({
+        where: { id: order.id },
+        data: { orderStatus: 'COMPLETED' },
+      });
+
+      for (const item of order.orderItems) {
+        await tx.entitlement.upsert({
+          where: { userId_productId: { userId: order.userId, productId: item.productId } },
+          update: { accessType: 'FULL_PURCHASE' },
+          create: { userId: order.userId, productId: item.productId, accessType: 'FULL_PURCHASE' },
+        });
+      }
+
+      return { success: true, orderId: order.id };
+    });
+
+    return { status: 'SUCCESS', data: result };
   }
 }

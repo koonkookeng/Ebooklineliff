@@ -1,6 +1,20 @@
-/**
- * AUTO-SCAFFOLD Phase 003 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 003 §5 — thin user repository over PrismaService
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../../infra/database/prisma.service';
+
+@Injectable()
+export class UserRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  findByIdWithKYC(userId: string) {
+    return this.prisma.user.findUnique({ where: { id: userId }, include: { kycDetail: true } });
+  }
+
+  upsertByLineUserId(lineUserId: string, displayName: string, avatarUrl?: string) {
+    return this.prisma.user.upsert({
+      where: { lineUserId },
+      update: { displayName, ...(avatarUrl ? { avatarUrl } : {}) },
+      create: { lineUserId, displayName, avatarUrl },
+    });
+  }
+}

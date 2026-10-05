@@ -1,10 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 004 — REST webhook
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class LogisticsWebhookControllerController {
-  @Get('health') health() { return { ok: true }; }
+// SSOT Phase 004 Task 004.7 — carrier logistics webhook (status relay; full engine = Phase 077)
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+
+@Controller('webhooks/logistics')
+export class LogisticsWebhookController {
+  @Post('carrier')
+  @HttpCode(HttpStatus.OK)
+  async handleCarrierUpdate(@Body() body: { trackingId?: string; status?: string }) {
+    return { status: 'RECEIVED', trackingId: body?.trackingId ?? null };
+  }
 }

@@ -1,11 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 004 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 004 Task 004.2 — e-learning resolver stub (full lesson engine = Phase 047+)
 import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class ElearningResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
+
+@Resolver('ElearningPayload')
+export class ElearningResolver {
+  @Query('elearningHealth')
+  elearningHealth(): string {
+    return 'ok';
+  }
 }

@@ -1,8 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 004 — REST webhook
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 004 §5.1 — webhook adapters module
 import { Module } from '@nestjs/common';
-@Module({})
-export class WebhooksModuleModule {}
+import { EasySlipWebhookController } from './controllers/easyslip-webhook.controller';
+import { LogisticsWebhookController } from './controllers/logistics-webhook.controller';
+import { LineMessagingWebhookController } from './controllers/line-messaging-webhook.controller';
+
+@Module({
+  controllers: [EasySlipWebhookController, LogisticsWebhookController, LineMessagingWebhookController],
+})
+export class WebhooksModule {}

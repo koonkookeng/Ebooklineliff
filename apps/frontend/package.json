@@ -9,10 +9,13 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@apollo/client": "^4.3.1",
+    "@hookform/resolvers": "^5.9.1",
     "@repo/shared": "workspace:*",
     "next": "^15.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.89.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

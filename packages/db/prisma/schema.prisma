@@ -35,16 +35,32 @@ enum ContentAccessType {
   TIME_LIMITED_RENTAL
 }
 
+enum KYCStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 model User {
   id               String                   @id @default(uuid())
   lineUserId       String?                  @unique
   email            String?                  @unique
+  phone            String?                  @unique
+  passwordHash     String?
   role             UserRole                 @default(MEMBER)
+  kycStatus        KYCStatus                @default(NOT_SUBMITTED)
   displayName      String
   avatarUrl        String?
   walletBalance    Decimal                  @default(0.00) @db.Decimal(12, 2)
   rewardPoints     Int                      @default(0)
   affiliateCode    String                   @unique @default(uuid())
+  referredById     String?
+  referredBy       User?                    @relation("AffiliateReferrals", fields: [referredById], references: [id])
+  referrals        User[]                   @relation("AffiliateReferrals")
+  addresses        UserAddress[]
+  kycDetail        CreatorKYC?
+  auditLogs        AuditLog[]
   entitlements     Entitlement[]
   orders           Order[]
   readingProgress  EbookReadingProgress[]
@@ -53,6 +69,8 @@ model User {
   updatedAt        DateTime                 @updatedAt
 
   @@index([lineUserId])
+  @@index([email])
+  @@index([phone])
   @@index([affiliateCode])
 }
 
@@ -151,6 +169,54 @@ model PaymentSlip {
   transRef     String?   @unique
   amount       Decimal   @db.Decimal(10, 2)
   verifiedAt   DateTime?
+}
+
+model UserAddress {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipient    String
+  phoneNumber  String
+  addressLine1 String
+  addressLine2 String?
+  subdistrict  String
+  district     String
+  province     String
+  postalCode   String
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model CreatorKYC {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idCardNumberEnc   String // AES-256-GCM encrypted ID card number
+  idCardImageUrl    String // Cloudflare R2 private bucket object key
+  bankName          String
+  bankAccountNumber String
+  bankAccountName   String
+  taxId             String?
+  verifiedAt        DateTime?
+  rejectionReason   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   Json
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
 }
 
 model SystemHealth {

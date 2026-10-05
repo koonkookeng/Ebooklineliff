@@ -1,10 +1,21 @@
-/**
- * AUTO-SCAFFOLD Phase 003 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class KycControllerController {
-  @Get('health') health() { return { ok: true }; }
+// SSOT Phase 003 §5.1 — identity REST presentation (KYC submit)
+import { Controller, Post, Body, Req, BadRequestException } from '@nestjs/common';
+import { KYCService } from '../../application/kyc.service';
+import { CreatorKYCSchema } from '@repo/shared';
+
+@Controller('identity')
+export class KycController {
+  constructor(private readonly kyc: KYCService) {}
+
+  @Post('kyc/submit')
+  submit(@Req() req: { user?: { id: string } }, @Body() body: unknown) {
+    if (!req.user?.id) {
+      throw new BadRequestException('Unauthenticated');
+    }
+    const parsed = CreatorKYCSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException('Invalid KYC payload');
+    }
+    return this.kyc.submitKYC(req.user.id, parsed.data);
+  }
 }

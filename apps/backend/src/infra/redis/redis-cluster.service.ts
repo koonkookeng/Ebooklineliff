@@ -43,6 +43,15 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.setex(key, ttlSeconds, chunkData);
   }
 
+  // Phase 004 §4.1 — entitlement flag cache (DB fallback on miss)
+  async getEntitlementFlag(key: string): Promise<string | null> {
+    return await this.client.get(key);
+  }
+
+  async setEntitlementFlag(key: string, ttlSeconds = 3600): Promise<void> {
+    await this.client.setex(key, ttlSeconds, 'TRUE');
+  }
+
   onModuleDestroy() {
     this.client.disconnect();
   }

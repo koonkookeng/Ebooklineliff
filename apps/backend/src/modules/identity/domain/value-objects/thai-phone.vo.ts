@@ -1,6 +1,14 @@
-/**
- * AUTO-SCAFFOLD Phase 003 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 003 §5 — Thai phone value object
+import { BadRequestException } from '@nestjs/common';
+import { thaiPhoneRegex } from '@repo/shared';
+
+export class ThaiPhone {
+  private constructor(readonly value: string) {}
+
+  static create(phone: string): ThaiPhone {
+    if (!thaiPhoneRegex.test(phone)) {
+      throw new BadRequestException('หมายเลขโทรศัพท์ไม่ถูกต้อง');
+    }
+    return new ThaiPhone(phone);
+  }
+}

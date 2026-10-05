@@ -1,6 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 003 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 003 §5 — encrypted ID card value object (opaque wrapper)
+export class EncryptedIdCard {
+  private constructor(readonly ciphertext: string) {}
+
+  static fromCiphertext(ciphertext: string): EncryptedIdCard {
+    if (!ciphertext || ciphertext.length < 16) {
+      throw new Error('Invalid encrypted ID card payload');
+    }
+    return new EncryptedIdCard(ciphertext);
+  }
+}
