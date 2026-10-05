@@ -6,3 +6,4 @@
 - Constraints: LIFF RAM < 30MB, Slip < 1s atomic, R2 zero-egress, 5 UI states, 9 gatekeepers
 - Roadmap: `docs/phase-roadmap-130.md` (Atomic 000-130)
 - Last scaffold: run `node scripts/scaffold-from-inventory.mjs` to regenerate tree from filefolder.md + full prisma from schema.md
+- Phase 001 DONE (b23e83d): monorepo core verified 100/100 (prisma valid + backend/frontend typecheck + zod 5/5 + health runtime); next: Phase 002
