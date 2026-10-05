@@ -153,6 +153,13 @@ model PaymentSlip {
   verifiedAt   DateTime?
 }
 
+model SystemHealth {
+  id        String   @id @default(uuid())
+  status    String
+  nodeName  String
+  createdAt DateTime @default(now())
+}
+
 model EbookReadingProgress {
   id        String   @id @default(uuid())
   userId    String

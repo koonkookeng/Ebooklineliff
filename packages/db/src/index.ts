@@ -1,4 +1,19 @@
-// Placeholder: wire PrismaClient here after `prisma generate`.
-// import { PrismaClient } from '@prisma/client';
-// export const db = new PrismaClient();
-export const SSOT_PRISMA_PATH = 'packages/db/prisma/schema.prisma';
+// SSOT Phase 001 §4.2 — Prisma client singleton
+import { PrismaClient } from '@prisma/client';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
+
+export const db =
+  global.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = db;
+}
+
+export * from '@prisma/client';

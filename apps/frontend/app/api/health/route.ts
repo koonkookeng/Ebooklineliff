@@ -1,6 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — Frontend file
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export default function Placeholder() { return null; }
+// SSOT Phase 001 §6 — frontend health route
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok', engine: 'Next.js 15 App Router' });
+}

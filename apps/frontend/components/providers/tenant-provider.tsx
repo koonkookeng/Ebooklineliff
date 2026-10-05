@@ -1,6 +1,30 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — React component/page
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export default function Placeholder() { return null; }
+// SSOT Phase 001 §6 — tenant CSS vars provider (SSR-first ms injection via middleware headers)
+'use client';
+
+import React, { createContext, useContext } from 'react';
+
+export interface TenantTheme {
+  primary: string;
+  logo: string;
+  font: string;
+}
+
+const DEFAULT_THEME: TenantTheme = {
+  primary: '#16a34a',
+  logo: '/logo.svg',
+  font: 'Prompt, sans-serif',
+};
+
+const TenantContext = createContext<TenantTheme>(DEFAULT_THEME);
+
+export function TenantProvider({
+  children,
+  theme = DEFAULT_THEME,
+}: {
+  children: React.ReactNode;
+  theme?: TenantTheme;
+}) {
+  return <TenantContext.Provider value={theme}>{children}</TenantContext.Provider>;
+}
+
+export const useTenant = () => useContext(TenantContext);

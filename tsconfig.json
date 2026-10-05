@@ -7,6 +7,8 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@repo/shared": ["packages/shared/src/index.ts"],
+      "@repo/db": ["packages/db/src/index.ts"],
       "@shared/*": ["packages/shared/src/*"],
       "@db": ["packages/db/src/index.ts"]
     }

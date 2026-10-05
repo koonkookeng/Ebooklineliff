@@ -1,10 +1,13 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class HealthControllerController {
-  @Get('health') health() { return { ok: true }; }
+// SSOT Phase 001 §5 — GET /api/v1/health
+import { Controller, Get, Headers } from '@nestjs/common';
+import { HealthService } from './health.service';
+
+@Controller('health')
+export class HealthController {
+  constructor(private readonly health: HealthService) {}
+
+  @Get()
+  get(@Headers('x-tenant') tenant?: string) {
+    return this.health.check(tenant);
+  }
 }

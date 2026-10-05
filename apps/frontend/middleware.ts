@@ -12,7 +12,8 @@ const TENANTS: Record<string, { primary: string; logo: string; font: string }> =
 export function middleware(req: NextRequest) {
   const host = req.headers.get('host') ?? '';
   const sub = host.split('.')[0];
-  const tenant = req.nextUrl.searchParams.get('tenant') ?? TENANTS[sub] ? sub : 'default';
+  const param = req.nextUrl.searchParams.get('tenant');
+  const tenant = param ?? (TENANTS[sub] ? sub : 'default');
   const theme = TENANTS[tenant] ?? TENANTS.default;
   const res = NextResponse.next();
   res.headers.set('x-tenant', tenant);

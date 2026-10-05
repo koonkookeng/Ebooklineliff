@@ -1,6 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — Frontend file
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export default function Placeholder() { return null; }
+// SSOT Phase 001 §6 — Next.js 15 App Router config
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+};
+
+export default nextConfig;

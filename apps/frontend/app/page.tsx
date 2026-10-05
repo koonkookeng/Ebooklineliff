@@ -1,6 +1,14 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — React component/page
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export default function Placeholder() { return null; }
+// SSOT Phase 001 §6 — LIFF entry page (skeleton, RAM < 15MB initial)
+import { LiffProvider } from '@/components/providers/liff-provider';
+
+export default function Page() {
+  const liffId = process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+  return (
+    <main>
+      <h1>Omni-Channel E-Book Platform</h1>
+      <LiffProvider liffId={liffId}>
+        <p>LIFF ready bootstrap.</p>
+      </LiffProvider>
+    </main>
+  );
+}

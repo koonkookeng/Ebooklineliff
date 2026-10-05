@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16
+    image: ankane/pgvector:v0.5.1
+    container_name: omni_postgres_dev
     environment:
       POSTGRES_USER: ebook
       POSTGRES_PASSWORD: ebook
@@ -9,9 +10,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ebook"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   redis:
-    image: redis:7.2
+    image: redis:7.2-alpine
+    container_name: omni_redis_dev
     ports:
       - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   pgdata: {}
+  redisdata: {}

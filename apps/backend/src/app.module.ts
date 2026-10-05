@@ -1,8 +1,8 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 001 §5 — NestJS root module
 import { Module } from '@nestjs/common';
-@Module({})
-export class AppModuleModule {}
+import { HealthModule } from './modules/health/health.module';
+
+@Module({
+  imports: [HealthModule],
+})
+export class AppModule {}

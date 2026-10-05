@@ -1,6 +1,8 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 001 §5 — typed env access
+import { AppConfigSchema, type AppConfig } from '@repo/shared';
+
+export function getConfiguration(): AppConfig {
+  return AppConfigSchema.parse(process.env);
+}
+
+export default getConfiguration;
