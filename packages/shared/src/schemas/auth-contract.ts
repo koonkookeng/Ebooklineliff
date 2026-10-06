@@ -141,3 +141,47 @@ export const AuthTokenResponseSchema = z.object({
   user: UserProfileAuthSchema,
 });
 export type AuthTokenResponse = z.infer<typeof AuthTokenResponseSchema>;
+
+// ---- Phase 007 §3.1: QR cross-platform login sync (additive) ----
+
+export const QrSessionStatusEnum = z.enum(['PENDING', 'SCANNED', 'AUTHORIZED', 'EXPIRED', 'REJECTED']);
+export type QrSessionStatus = z.infer<typeof QrSessionStatusEnum>;
+
+export const InitQrSessionResponseSchema = z.object({
+  qrToken: z.string().uuid(),
+  encryptedNonce: z.string().min(10),
+  expiresInSec: z.number().int().positive().default(60),
+  websocketChannel: z.string().min(1),
+});
+export type InitQrSessionResponse = z.infer<typeof InitQrSessionResponseSchema>;
+
+export const ConfirmQrAuthPayloadSchema = z.object({
+  qrToken: z.string().uuid(),
+  userAccessToken: z.string().min(10),
+  deviceFingerprint: z.string().min(1).max(128),
+  userAgent: z.string().max(500),
+  ipAddress: z.string().ip(),
+  envelope: z.string().min(10).optional(),
+  pin: z.string().regex(/^\d{6}$/).optional(),
+});
+export type ConfirmQrAuthPayload = z.infer<typeof ConfirmQrAuthPayloadSchema>;
+
+export const QrAuthSocketBroadcastSchema = z.object({
+  status: QrSessionStatusEnum,
+  authToken: z.string().optional(),
+  refreshToken: z.string().optional(),
+  oneTimeCode: z.string().optional(),
+  requirePin: z.boolean().optional(),
+  // Step-up PIN displayed ONLY on the desktop channel (never returned to LIFF)
+  pinDisplay: z.string().regex(/^\d{6}$/).optional(),
+  userProfile: z
+    .object({
+      id: z.string().uuid(),
+      displayName: z.string(),
+      avatarUrl: z.string().nullable(),
+      role: z.string(),
+    })
+    .optional(),
+  errorMessage: z.string().optional(),
+});
+export type QrAuthSocketBroadcast = z.infer<typeof QrAuthSocketBroadcastSchema>;

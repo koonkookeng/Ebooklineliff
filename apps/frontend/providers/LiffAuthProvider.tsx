@@ -31,6 +31,8 @@ interface LiffAuthContextType {
   login: () => void;
   logout: () => void;
   retry: () => void;
+  /** Memory-only access token for authenticated in-app API calls (never persisted). */
+  getAccessToken: () => string | null;
 }
 
 const LiffAuthContext = createContext<LiffAuthContextType>({
@@ -43,6 +45,7 @@ const LiffAuthContext = createContext<LiffAuthContextType>({
   login: () => {},
   logout: () => {},
   retry: () => {},
+  getAccessToken: () => null,
 });
 
 interface LiffSdk {
@@ -118,6 +121,7 @@ export function LiffAuthProvider({
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const sdkRef = useRef<LiffSdk | null>(null);
+  const tokenRef = useRef<string | null>(null);
   const mounted = useRef(true);
 
   const authenticate = useCallback(
@@ -131,6 +135,7 @@ export function LiffAuthProvider({
         const authData = await handshakeWithBackend(idToken, tenantId, ref ?? undefined);
         if (!mounted.current) return;
         // Memory-only session (HTTP-Only cookie set by backend; nothing in localStorage)
+        tokenRef.current = authData.accessToken;
         setUser(authData.user);
         setError(null);
         setStatus('SUCCESS');
@@ -187,9 +192,12 @@ export function LiffAuthProvider({
     } catch {
       // storage already memory-only; nothing to clear
     }
+    tokenRef.current = null;
     setUser(null);
     setStatus('IDLE');
   }, []);
+
+  const getAccessToken = useCallback(() => tokenRef.current, []);
 
   const retry = useCallback(() => {
     setError(null);
@@ -208,8 +216,9 @@ export function LiffAuthProvider({
       login,
       logout,
       retry,
+      getAccessToken,
     }),
-    [status, user, error, login, logout, retry],
+    [status, user, error, login, logout, retry, getAccessToken],
   );
 
   return <LiffAuthContext.Provider value={value}>{children}</LiffAuthContext.Provider>;

@@ -7,11 +7,14 @@ import { EbookReaderResolver } from '../../api/graphql/resolvers/ebook-reader.re
 import { ElearningResolver } from '../../api/graphql/resolvers/elearning.resolver';
 import { OrderPaymentResolver } from '../../api/graphql/resolvers/order-payment.resolver';
 import { IdentityModule } from '../../modules/identity/identity.module';
+import { AuthModule } from '../../modules/auth/auth.module';
+import { QrAuthResolver } from '../../modules/auth/qr-sync/presentation/resolvers/qr-auth.resolver';
 import { buildGraphQLContext } from '../../api/graphql/context/graphql-context.factory';
 
 @Module({
   imports: [
     IdentityModule,
+    AuthModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
@@ -21,6 +24,6 @@ import { buildGraphQLContext } from '../../api/graphql/context/graphql-context.f
         buildGraphQLContext({ req }),
     }),
   ],
-  providers: [AuthResolver, EbookReaderResolver, ElearningResolver, OrderPaymentResolver],
+  providers: [AuthResolver, EbookReaderResolver, ElearningResolver, OrderPaymentResolver, QrAuthResolver],
 })
 export class ApolloServerGatewayModule {}

@@ -11,10 +11,16 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { LineLiffGuard } from './guards/line-liff.guard';
 import { AuthWebhookController } from './controllers/auth-webhook.controller';
+import { InitQrSessionUseCase } from './qr-sync/application/use-cases/init-qr-session.use-case';
+import { ProcessQrScanUseCase } from './qr-sync/application/use-cases/process-qr-scan.use-case';
+import { AuthorizeQrSessionUseCase } from './qr-sync/application/use-cases/authorize-qr-session.use-case';
+import { RedisQrCacheRepository } from './qr-sync/infrastructure/repositories/redis-qr-cache.repository';
+import { QrAuthGateway } from './qr-sync/infrastructure/gateways/qr-auth.gateway';
+import { QrAuthWebhookController } from './qr-sync/presentation/controllers/qr-auth-webhook.controller';
 
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single connection pool).
 @Module({
-  controllers: [AuthWebhookController],
+  controllers: [AuthWebhookController, QrAuthWebhookController],
   providers: [
     LineOAuthAdapter,
     GoogleOAuthAdapter,
@@ -26,7 +32,12 @@ import { AuthWebhookController } from './controllers/auth-webhook.controller';
     JwtAuthGuard,
     RolesGuard,
     LineLiffGuard,
+    RedisQrCacheRepository,
+    QrAuthGateway,
+    InitQrSessionUseCase,
+    ProcessQrScanUseCase,
+    AuthorizeQrSessionUseCase,
   ],
-  exports: [AuthService, TokenService, JwtTokenService, LineVerifierService, JwtStrategy, JwtAuthGuard, RolesGuard, LineLiffGuard],
+  exports: [AuthService, TokenService, JwtTokenService, LineVerifierService, JwtStrategy, JwtAuthGuard, RolesGuard, LineLiffGuard, RedisQrCacheRepository, QrAuthGateway, InitQrSessionUseCase, ProcessQrScanUseCase, AuthorizeQrSessionUseCase],
 })
 export class AuthModule {}

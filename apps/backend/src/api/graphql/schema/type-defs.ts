@@ -22,6 +22,8 @@ export const typeDefs = /* GraphQL */ `
     me: MePayload!
     # Phase 006 §3.2 — full auth profile for the verified session owner
     authMe: UserAuthPayload!
+    # Phase 007 §3.2 — request dynamic QR session credentials (tenantId falls back to x-tenant-id)
+    initQrLoginSession(tenantId: ID): QrSessionPayload!
   }
 
   type MePayload {
@@ -40,7 +42,29 @@ export const typeDefs = /* GraphQL */ `
     # Intent: Logout and Invalidate Active Session (logout = Phase 006 alias)
     logoutSession: Boolean!
     logout: Boolean!
+    # Phase 007 §3.2 — authorize / reject a desktop QR login from an authenticated LIFF session
+    confirmQrSessionAuth(input: ConfirmQrAuthInput!): QrAuthResultPayload!
+    rejectQrSessionAuth(qrToken: String!): Boolean!
     createOrder(productIds: [ID!]!): OrderPayload!
+  }
+
+  # Phase 007 §3.2 — QR cross-platform login sync intents
+  type QrSessionPayload {
+    qrToken: String!
+    encryptedNonce: String!
+    expiresInSec: Int!
+    websocketChannel: String!
+  }
+
+  type QrAuthResultPayload {
+    success: Boolean!
+    authorizedAt: String!
+    deviceInfo: String!
+  }
+
+  input ConfirmQrAuthInput {
+    qrToken: String!
+    deviceFingerprint: String!
   }
 
   type AuthUser {

@@ -61,6 +61,51 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.publish(channel, message);
   }
 
+  // Phase 007 — QR sync: atomic single-use claim + dedicated subscriber (cluster-safe)
+  async setnx(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    const res = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
+    return res === 'OK';
+  }
+
+  /** Atomic read-and-delete (Redis 6.2+ GETDEL) for single-use handoff codes. */
+  async getdel(key: string): Promise<string | null> {
+    return await this.client.getdel(key);
+  }
+
+  private subscriber: import('ioredis').Cluster | null = null;
+  private subscriptions = new Map<string, Set<(message: string) => void>>();
+
+  async subscribe(channel: string, handler: (message: string) => void): Promise<() => void> {
+    if (!this.subscriber) {
+      this.subscriber = this.client.duplicate() as import('ioredis').Cluster;
+      this.subscriber.on('message', (ch: string, message: string) => {
+        for (const fn of this.subscriptions.get(ch) ?? []) {
+          try {
+            fn(message);
+          } catch {
+            // never break the subscriber loop on handler errors
+          }
+        }
+      });
+    }
+    let set = this.subscriptions.get(channel);
+    if (!set) {
+      set = new Set();
+      this.subscriptions.set(channel, set);
+      await this.subscriber.subscribe(channel);
+    }
+    set.add(handler);
+    return () => {
+      const live = this.subscriptions.get(channel);
+      if (!live) return;
+      live.delete(handler);
+      if (live.size === 0) {
+        this.subscriptions.delete(channel);
+        void this.subscriber?.unsubscribe(channel).catch(() => undefined);
+      }
+    };
+  }
+
   // Phase 004 §4.1 — entitlement flag cache (DB fallback on miss)
   async getEntitlementFlag(key: string): Promise<string | null> {
     return await this.client.get(key);

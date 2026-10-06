@@ -44,4 +44,17 @@ describe('AuthService (Phase 005 Integration)', () => {
     );
     assert.ok(performance.now() - t0 < 300);
   });
+
+  it('validates Phase 007 QR envelope + risk threshold', async () => {
+    const { sealEnvelope, openEnvelope } = await import('./qr-sync/domain/value-objects/ephemeral-nonce.vo');
+    const { scoreQrRisk, requiresPin } = await import('./qr-sync/domain/entities/qr-session.entity');
+    const t0 = performance.now();
+    const qrToken = '123e4567-e89b-12d3-a456-426614174002';
+    const env = sealEnvelope({ qrToken, nonce: 'n'.repeat(64), exp: Math.floor(Date.now() / 1000) + 60 });
+    assert.equal(openEnvelope(env, qrToken).qrToken, qrToken);
+    assert.throws(() => openEnvelope(env, TID));
+    assert.ok(!requiresPin(scoreQrRisk({ desktopIp: '1.1.1.1', mobileIp: '1.1.1.1', fingerprintKnown: true, attempts: 0 })));
+    assert.ok(requiresPin(scoreQrRisk({ desktopIp: '1.1.1.1', mobileIp: '2.2.2.2', fingerprintKnown: false, attempts: 0 })));
+    assert.ok(performance.now() - t0 < 500);
+  });
 });
