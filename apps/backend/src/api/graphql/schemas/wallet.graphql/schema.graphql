@@ -1,0 +1,61 @@
+# SSOT Phase 017 §3.2 — Internal Wallet intent layer (Meb-Killer Credits + One-Click Buy)
+# Canonical: apps/backend/src/api/graphql/schemas/wallet.graphql/schema.graphql
+# Runtime is code-first via WalletResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod wallet-contract.ts <-> Prisma Wallet/WalletLedger <-> here).
+
+enum LedgerType {
+  TOPUP_CREDIT
+  BONUS_CREDIT
+  PURCHASE_DEBIT
+  REFUND_CREDIT
+  AFFILIATE_REWARD_CREDIT
+  CASHBACK_CREDIT
+  ADMIN_ADJUSTMENT
+}
+
+type WalletBalance {
+  walletId: ID!
+  mainBalance: Float!
+  bonusBalance: Float!
+  totalBalance: Float!
+  currency: String!
+}
+
+type WalletLedgerItem {
+  id: ID!
+  type: LedgerType!
+  amount: Float!
+  balanceAfter: Float!
+  description: String!
+  referenceId: String
+  createdAt: String!
+}
+
+type OneClickBuyResult {
+  success: Boolean!
+  orderId: ID!
+  remainingBalance: Float!
+}
+
+type WalletTopupResult {
+  success: Boolean!
+  walletId: ID!
+  creditedAmount: Float!
+  bonusAmount: Float!
+  totalBalance: Float!
+  transRef: String
+}
+
+type Query {
+  walletBalance: WalletBalance!
+  walletLedger(take: Int): [WalletLedgerItem!]!
+}
+
+type Mutation {
+  executeOneClickBuy(productId: ID!, expectedPrice: Float!): OneClickBuyResult!
+  topupWalletPreview(amount: Float!): TopupPreview!
+}
+
+type TopupPreview {
+  amount: Float!
+}

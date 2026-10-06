@@ -86,6 +86,8 @@ model User {
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
   deviceSessions    UserDeviceSession[]
+  // Atomic Phase 017: internal wallet (Meb-Killer Credits, bonus-first debit)
+  wallets           Wallet[]
 
   @@index([lineUserId])
   @@index([email])
@@ -718,4 +720,50 @@ model ShippingRateTable {
   createdAt      DateTime @default(now())
 
   @@index([carrierName, provinceZone])
+}
+
+// Atomic Phase 017 §4.1: Internal Wallet (Meb-Killer Credits) + immutable ledger.
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Invariants: balances never negative (guarded in WalletService txn); bonus debited
+// first; every mutation writes exactly one WalletLedger row (TOPUP/BONUS/DEBIT/...).
+enum LedgerType {
+  TOPUP_CREDIT
+  BONUS_CREDIT
+  PURCHASE_DEBIT
+  REFUND_CREDIT
+  AFFILIATE_REWARD_CREDIT
+  CASHBACK_CREDIT
+  ADMIN_ADJUSTMENT
+}
+
+model Wallet {
+  id           String         @id @default(uuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mainBalance  Decimal        @default(0.00) @db.Decimal(12, 2)
+  bonusBalance Decimal        @default(0.00) @db.Decimal(12, 2)
+  pinHash      String?
+  isLocked     Boolean        @default(false)
+  ledgers      WalletLedger[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model WalletLedger {
+  id           String     @id @default(uuid())
+  walletId     String
+  wallet       Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type         LedgerType
+  amount       Decimal    @db.Decimal(12, 2)
+  balanceAfter Decimal    @db.Decimal(12, 2)
+  description  String
+  referenceId  String?
+  createdById  String?
+  createdAt    DateTime   @default(now())
+
+  @@index([walletId])
+  @@index([referenceId])
+  @@index([createdAt])
 }

@@ -1,0 +1,3 @@
+# SSOT Phase 017 — legacy alias (filefolder.md inventory expects api/graphql/wallet).
+# Canonical SDL lives at ../schemas/wallet.graphql/schema.graphql; keep in sync.
+# Re-export intentionally via file copy (single source edited in schemas/).

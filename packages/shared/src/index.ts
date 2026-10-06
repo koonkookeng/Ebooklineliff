@@ -154,3 +154,24 @@ export {
   SLIP_PICKER_TARGET_KB,
 } from './schemas/slip-picker.schema';
 export type { SlipPickerSource, SlipPickerAnalyticsEvent } from './schemas/slip-picker.schema';
+export {
+  LedgerTypeEnum,
+  WalletTopupInputSchema,
+  OneClickBuyInputSchema,
+  WalletBalanceResponseSchema,
+  WalletLedgerItemSchema,
+  OneClickBuyResultSchema,
+  WalletTopupResultSchema,
+  WALLET_LOCK_TTL_SEC,
+  WALLET_TOPUP_BONUS_RATE,
+  walletLockKey,
+} from './schemas/wallet-contract';
+export type {
+  LedgerType,
+  WalletTopupInput,
+  OneClickBuyInput,
+  WalletBalanceResponse,
+  WalletLedgerItem,
+  OneClickBuyResult,
+  WalletTopupResult,
+} from './schemas/wallet-contract';
