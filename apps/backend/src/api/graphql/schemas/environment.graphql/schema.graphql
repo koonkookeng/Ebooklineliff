@@ -1,0 +1,45 @@
+# SSOT Phase 022 §3.2 — Environment metrics intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/environment.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile); this SDL is the contract supplement
+# (SSOT sync gate: Zod environment-contract.ts <-> Prisma UserDeviceMetric <-> here).
+
+enum EnvironmentType {
+  LINE_LIFF_IOS
+  LINE_LIFF_ANDROID
+  STANDALONE_PWA
+  MOBILE_SAFARI
+  MOBILE_CHROME
+  IN_APP_WEBVIEW
+  DESKTOP_BROWSER
+}
+
+input SafeAreaInsetsInput {
+  top: Float!
+  bottom: Float!
+  left: Float!
+  right: Float!
+}
+
+input ViewportMetricsInput {
+  windowWidth: Float!
+  windowHeight: Float!
+  devicePixelRatio: Float!
+  isTouchDevice: Boolean!
+  safeArea: SafeAreaInsetsInput!
+  environment: EnvironmentType!
+}
+
+input SyncEnvironmentInput {
+  tenantId: String!
+  metrics: ViewportMetricsInput!
+  userAgent: String!
+}
+
+type SyncEnvironmentResponse {
+  success: Boolean!
+  recommendedLayoutMode: String!
+}
+
+extend type Mutation {
+  syncEnvironmentMetrics(input: SyncEnvironmentInput!): SyncEnvironmentResponse!
+}

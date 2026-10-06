@@ -1,6 +1,71 @@
-/**
- * AUTO-SCAFFOLD Phase 022 — Frontend file
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
+/* SSOT Phase 022 §2.1 — Dynamic safe-area tokens + utilities
+ * Canonical: apps/frontend/styles/safe-area.css
+ * (legacy src/frontend/styles/safe-area.css)
+ * Imported by SafeAreaProvider (component-level CSS, zero global side effects).
+ * Tenant brand vars (--primary-color, etc.) are injected by middleware and compose
+ * with these insets without conflict.
  */
-// placeholder
+
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --real-vh: 1vh;
+}
+
+/* Fixed bottom action bar: clears LINE dock / home indicator + 12px rhythm (§1.3) */
+.safe-bottom-bar {
+  padding-bottom: calc(var(--sab) + 12px);
+  padding-left: max(var(--sal), 8px);
+  padding-right: max(var(--sar), 8px);
+}
+
+/* Tailwind v4–compatible utility tokens (§2.1) */
+.pt-safe {
+  padding-top: var(--sat);
+}
+
+.pb-safe {
+  padding-bottom: var(--sab);
+}
+
+.px-safe {
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+.h-dvh-custom {
+  height: calc(var(--real-vh, 1vh) * 100);
+}
+
+.min-h-dvh-custom {
+  min-height: calc(var(--real-vh, 1vh) * 100);
+}
+
+/* Desktop reset: spacers collapse to rhythm-only padding (§2.2 DESKTOP_BROWSER) */
+@media (min-width: 1024px) and (pointer: fine) {
+  :root {
+    --sat: 0px;
+    --sab: 0px;
+    --sal: 0px;
+    --sar: 0px;
+  }
+}
+
+/* Skeleton shown during ENV_DETECTING (44px spacers, §2.2) */
+.safe-area-skeleton {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--real-vh, 1vh) * 100);
+}
+
+.safe-area-skeleton-body {
+  flex: 1;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.01));
+}
+
+/* Reader environment hooks for per-env tuning */
+.reader-safe-area-wrapper {
+  box-sizing: border-box;
+}

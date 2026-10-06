@@ -218,3 +218,17 @@ export type {
   LiffAuthResponse,
   LiffEnvironment,
 } from './schemas/liff-auth.schema';
+export {
+  EnvironmentTypeEnum,
+  SafeAreaInsetsSchema,
+  ViewportMetricsSchema,
+  SyncEnvironmentPayloadSchema,
+  LayoutModeEnum,
+} from './schemas/environment-contract';
+export type {
+  EnvironmentType,
+  SafeAreaInsets,
+  ViewportMetrics,
+  SyncEnvironmentPayload,
+  LayoutMode,
+} from './schemas/environment-contract';

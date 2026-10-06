@@ -88,6 +88,8 @@ model User {
   deviceSessions    UserDeviceSession[]
   // Atomic Phase 017: internal wallet (Meb-Killer Credits, bonus-first debit)
   wallets           Wallet[]
+  // Atomic Phase 022: device viewport/safe-area metrics (async analytics, nullable user)
+  userDeviceMetrics UserDeviceMetric[]
 
   @@index([lineUserId])
   @@index([email])
@@ -181,31 +183,31 @@ model UserDeviceSession {
 }
 
 model Product {
-  id             String               @id @default(uuid())
+  id             String                      @id @default(uuid())
   // Phase 008: optional multi-tenant ownership (expand-contract; required after backfill)
   tenantId       String?
-  tenant         Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant         Tenant?                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sellerId       String
   title          String
-  slug           String               @unique
-  description    String               @db.Text
+  slug           String                      @unique
+  description    String                      @db.Text
   coverImageUrl  String
   productType    ProductType
-  status         ProductStatus        @default(DRAFT)
-  price          Decimal              @db.Decimal(10, 2)
-  discountPrice  Decimal?             @db.Decimal(10, 2)
+  status         ProductStatus               @default(DRAFT)
+  price          Decimal                     @db.Decimal(10, 2)
+  discountPrice  Decimal?                    @db.Decimal(10, 2)
   // Phase 009: faceted filter + hybrid search (tsvector + pgvector HNSW)
-  ratingAverage  Decimal              @default(0.00) @db.Decimal(3, 2)
-  reviewCount    Int                  @default(0)
+  ratingAverage  Decimal                     @default(0.00) @db.Decimal(3, 2)
+  reviewCount    Int                         @default(0)
   embedding      Unsupported("vector(768)")?
   searchVector   Unsupported("tsvector")?
-  isPublished    Boolean              @default(false)
+  isPublished    Boolean                     @default(false)
   physicalDetail PhysicalDetail?
   ebookDetail    EbookDetail?
   courseDetail   CourseDetail?
   // Hybrid Bundle self-referential many-to-many (parent bundle -> child products)
-  bundleParents  BundleItem[]         @relation("ChildProducts")
-  bundleChildren BundleItem[]         @relation("ParentBundle")
+  bundleParents  BundleItem[]                @relation("ChildProducts")
+  bundleChildren BundleItem[]                @relation("ParentBundle")
   categories     ProductCategoryMap[]
   tags           ProductTagMap[]
   entitlements   Entitlement[]
@@ -214,10 +216,10 @@ model Product {
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
-  isFeatured     Boolean              @default(false)
-  soldCount      Int                  @default(0)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  isFeatured     Boolean                     @default(false)
+  soldCount      Int                         @default(0)
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
 
   @@index([tenantId])
   @@index([sellerId])
@@ -437,29 +439,29 @@ enum PromptPayStatus {
 }
 
 model Order {
-  id             String        @id @default(uuid())
+  id                   String                   @id @default(uuid())
   // Phase 012: optional multi-tenant ownership (expand-contract; required after backfill)
-  tenantId       String?
-  orderNumber    String        @unique
-  userId         String
-  user           User          @relation(fields: [userId], references: [id])
-  totalAmount    Decimal       @default(0.00) @db.Decimal(10, 2)
-  shippingFee    Decimal       @default(0.00) @db.Decimal(10, 2)
-  discountAmount Decimal       @default(0.00) @db.Decimal(10, 2)
-  netAmount      Decimal       @db.Decimal(10, 2)
-  orderStatus    OrderStatus   @default(PENDING_PAYMENT)
-  paymentStatus  PaymentStatus @default(UNPAID)
-  trackingNumber String?
-  orderItems     OrderItem[]
-  paymentSlip    PaymentSlip?
+  tenantId             String?
+  orderNumber          String                   @unique
+  userId               String
+  user                 User                     @relation(fields: [userId], references: [id])
+  totalAmount          Decimal                  @default(0.00) @db.Decimal(10, 2)
+  shippingFee          Decimal                  @default(0.00) @db.Decimal(10, 2)
+  discountAmount       Decimal                  @default(0.00) @db.Decimal(10, 2)
+  netAmount            Decimal                  @db.Decimal(10, 2)
+  orderStatus          OrderStatus              @default(PENDING_PAYMENT)
+  paymentStatus        PaymentStatus            @default(UNPAID)
+  trackingNumber       String?
+  orderItems           OrderItem[]
+  paymentSlip          PaymentSlip?
   // Phase 013: 1:1 dynamic QR lifecycle (fractional cent + TTL expiry)
   promptPayTransaction PromptPayTransaction?
   // Phase 015: transactional outbox (LINE flex / affiliate / AI consumers)
-  outboxEvents   OutboxEvent[]
+  outboxEvents         OutboxEvent[]
   // Atomic Phase 019: transactional receipt logs (Log & Notification scope only)
-  receiptLogs    ReceiptNotificationLog[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  receiptLogs          ReceiptNotificationLog[]
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
 
   @@index([userId])
   @@index([tenantId])
@@ -524,12 +526,12 @@ model PromptPayTransaction {
   id             String          @id @default(uuid())
   orderId        String          @unique
   order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  promptPayId    String          // Biller ID or Mobile / Tax ID
+  promptPayId    String // Biller ID or Mobile / Tax ID
   qrPayload      String          @db.Text
   ref1           String
   ref2           String?
   baseAmount     Decimal         @db.Decimal(10, 2)
-  fractionalCent Decimal         @db.Decimal(3, 2) @default(0.00)
+  fractionalCent Decimal         @default(0.00) @db.Decimal(3, 2)
   totalAmount    Decimal         @db.Decimal(10, 2)
   expiresAt      DateTime
   status         PromptPayStatus @default(PENDING)
@@ -705,13 +707,13 @@ model Cart {
 }
 
 model CartItem {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   cartId       String
-  cart         Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart         Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId    String
-  product      Product @relation(fields: [productId], references: [id])
-  quantity     Int     @default(1)
-  itemCategory String  @default("DIGITAL") // "DIGITAL" or "PHYSICAL"
+  product      Product  @relation(fields: [productId], references: [id])
+  quantity     Int      @default(1)
+  itemCategory String   @default("DIGITAL") // "DIGITAL" or "PHYSICAL"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -721,12 +723,12 @@ model CartItem {
 }
 
 model ShippingRateTable {
-  id             String  @id @default(uuid())
-  carrierName    String  // e.g., FLASH, KERRY, THAIPOST
+  id             String   @id @default(uuid())
+  carrierName    String // e.g., FLASH, KERRY, THAIPOST
   minWeightGrams Int
   maxWeightGrams Int
-  baseFee        Decimal @db.Decimal(10, 2)
-  provinceZone   String  @default("BANGKOK_METRO") // or "UPCOUNTRY", "REMOTE"
+  baseFee        Decimal  @db.Decimal(10, 2)
+  provinceZone   String   @default("BANGKOK_METRO") // or "UPCOUNTRY", "REMOTE"
   createdAt      DateTime @default(now())
 
   @@index([carrierName, provinceZone])
@@ -788,17 +790,17 @@ enum ReceiptStatus {
 }
 
 model TenantSetting {
-  id               String   @id @default(uuid())
-  tenantSlug       String   @unique
-  companyName      String
+  id                String   @id @default(uuid())
+  tenantSlug        String   @unique
+  companyName       String
   taxRegistrationNo String?
-  logoUrl          String
-  primaryColorHex  String   @default("#00C751")
+  logoUrl           String
+  primaryColorHex   String   @default("#00C751")
   // Optional per-tenant LINE channel token override. Secrets resolve env-first
   // (LINE_CHANNEL_ACCESS_TOKEN); this field is only a fallback reference.
-  lineChannelToken String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  lineChannelToken  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model ReceiptNotificationLog {
@@ -818,4 +820,36 @@ model ReceiptNotificationLog {
   @@index([orderId])
   @@index([lineUserId])
   @@index([status])
+}
+
+// Atomic Phase 022: environment detection & safe-area analytics (async, never blocks UI)
+enum EnvironmentType {
+  LINE_LIFF_IOS
+  LINE_LIFF_ANDROID
+  STANDALONE_PWA
+  MOBILE_SAFARI
+  MOBILE_CHROME
+  IN_APP_WEBVIEW
+  DESKTOP_BROWSER
+}
+
+model UserDeviceMetric {
+  id               String          @id @default(uuid())
+  userId           String?
+  tenantId         String
+  user             User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  environment      EnvironmentType
+  viewportWidth    Int
+  viewportHeight   Int
+  safeAreaTop      Float
+  safeAreaBottom   Float
+  safeAreaLeft     Float
+  safeAreaRight    Float
+  devicePixelRatio Float
+  userAgent        String          @db.Text
+  createdAt        DateTime        @default(now())
+
+  @@index([environment])
+  @@index([tenantId])
+  @@index([userId])
 }
