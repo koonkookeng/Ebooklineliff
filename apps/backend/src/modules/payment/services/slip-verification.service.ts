@@ -3,7 +3,7 @@
  * BDD: PENDING_PAYMENT -> COMPLETED + Entitlement grant within 1 second.
  */
 import { Injectable } from '@nestjs/common';
-import { SlipVerificationPayloadSchema } from '@shared/schemas/sdid-contract';
+import { SlipVerificationPayloadSchema } from '@repo/shared';
 
 export interface EasySlipResult {
   transRef: string;
@@ -35,10 +35,15 @@ export class SlipVerificationService {
     const result = await this.prisma.$transaction(async (tx: never) => {
       const db = tx as unknown as {
         paymentSlip: { update(args: unknown): Promise<unknown> };
-        order: { update(args: unknown): Promise<{ id: string }> };
+        order: {
+          update(args: unknown): Promise<{ id: string }>;
+          findUnique(args: unknown): Promise<{ userId: string } | null>;
+        };
         entitlement: { upsert(args: unknown): Promise<unknown> };
         orderItem: { findMany(args: unknown): Promise<{ productId: string }[]> };
       };
+      const owner = await db.order.findUnique({ where: { id: orderId }, select: { userId: true } });
+      if (!owner) throw new Error('ORDER_NOT_FOUND');
       await db.paymentSlip.update({
         where: { orderId },
         data: { transRef: slip.transRef, amount: slip.amount, verifiedAt: new Date() },
@@ -46,8 +51,8 @@ export class SlipVerificationService {
       const items = await db.orderItem.findMany({ where: { orderId } });
       for (const it of items) {
         await db.entitlement.upsert({
-          where: { userId_productId: { userId: '', productId: it.productId } },
-          create: { userId: '', productId: it.productId, accessType: 'FULL_PURCHASE' },
+          where: { userId_productId: { userId: owner.userId, productId: it.productId } },
+          create: { userId: owner.userId, productId: it.productId, accessType: 'FULL_PURCHASE' },
           update: {},
         });
       }

@@ -1,0 +1,109 @@
+# SSOT Phase 012 §3.2 — Order/payment/entitlement GraphQL intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/order.graphql/schema.graphql
+# NOTE: legacy `createOrder(productIds)` (Phase 004, Apollo-wired) is untouched;
+# Phase 012 adds `createSmartOrder(input)` + `verifyPaymentSlip` + `smartOrder`.
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_VERIFYING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING_SLIP
+  VERIFIED
+  FAILED
+  REFUNDED
+}
+
+type OrderItem {
+  id: ID!
+  orderId: ID!
+  productId: ID!
+  productTitle: String!
+  productType: String!
+  price: Float!
+  quantity: Int!
+}
+
+type Order {
+  id: ID!
+  orderNumber: String!
+  tenantId: ID
+  userId: ID!
+  totalAmount: Float!
+  shippingFee: Float!
+  discountAmount: Float!
+  netAmount: Float!
+  orderStatus: OrderStatus!
+  paymentStatus: PaymentStatus!
+  trackingNumber: String
+  orderItems: [OrderItem!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Entitlement {
+  id: ID!
+  userId: ID!
+  productId: ID!
+  accessType: String!
+  expiresAt: String
+  createdAt: String!
+}
+
+type PaymentSlip {
+  id: ID!
+  orderId: ID!
+  slipImageUrl: String!
+  transRef: String
+  sendingBank: String
+  receivingAccount: String
+  amount: Float!
+  verifiedAt: String
+}
+
+type CreateSmartOrderPayload {
+  orderId: ID!
+  orderNumber: String!
+  netAmount: Float!
+  promptPayQrPayload: String!
+  expiresAt: String!
+}
+
+type SlipVerificationResult {
+  success: Boolean!
+  message: String!
+  orderId: ID!
+  orderStatus: OrderStatus!
+  paymentStatus: PaymentStatus!
+  transRef: String
+  entitlementsGranted: [ID!]!
+}
+
+input OrderItemInput {
+  productId: ID!
+  quantity: Int
+}
+
+input CreateSmartOrderInput {
+  tenantId: ID!
+  shippingAddressId: ID
+  couponCode: String
+  items: [OrderItemInput!]!
+}
+
+type Query {
+  smartOrder(orderId: ID!): Order!
+}
+
+type Mutation {
+  createSmartOrder(input: CreateSmartOrderInput!): CreateSmartOrderPayload!
+  verifyPaymentSlip(orderId: ID!, slipImageUrl: String!): SlipVerificationResult!
+}

@@ -19,6 +19,6 @@ import { CartController } from './presentation/rest/cart.controller';
     SplitCartCalculatorUseCase,
     CartResolver,
   ],
-  exports: [CartService, AddToCartUseCase, SplitCartCalculatorUseCase],
+  exports: [CartService, AddToCartUseCase, SplitCartCalculatorUseCase, ShippingAdapterService, CartRepository],
 })
 export class CartModule {}
