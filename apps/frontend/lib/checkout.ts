@@ -1,5 +1,6 @@
 // SSOT Phase 012 §6 — Type-safe checkout fetcher (order + slip upload + verify)
 // Phase 013: + dynamic QR lifecycle (generate/status with fractional cent + TTL)
+// Phase 016: + order detail read (picker page with offline cache fallback)
 // Canonical: apps/frontend/lib/checkout.ts
 import type {
   CreateOrderInput,
@@ -8,6 +9,7 @@ import type {
   CreatePromptPayQRRequest,
   PromptPayQRPayload,
   PromptPayExpiryStatus,
+  Order,
 } from '@repo/shared';
 
 export type {
@@ -17,7 +19,17 @@ export type {
   CreatePromptPayQRRequest as CreatePromptPayQRInput,
   PromptPayQRPayload,
   PromptPayExpiryStatus,
+  Order,
 };
+
+export async function fetchOrderDetail(orderId: string): Promise<Order> {
+  const res = await fetch(`/api/checkout/orders/${encodeURIComponent(orderId)}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(body?.message ?? 'ไม่พบข้อมูลคำสั่งซื้อ');
+  }
+  return (await res.json()) as Order;
+}
 
 export async function createSmartOrder(input: CreateOrderInput): Promise<CreateOrderPayload> {
   const res = await fetch('/api/checkout/orders', {

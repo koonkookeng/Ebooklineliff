@@ -1,8 +1,8 @@
-/**
- * AUTO-SCAFFOLD Phase 016 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 016 §5.1 — Slip picker DTOs (thin: Zod SSOT is the single source)
+// Canonical: apps/backend/src/modules/payment/dto/slip-picker.dto.ts
+// (legacy src/backend/modules/payment/dto/slip-picker.dto.ts)
+// Zero-redundant policy: no duplicated shapes — infer from @repo/shared.
+import type { SlipPickerSource, SlipPickerAnalyticsEvent } from '@repo/shared';
+
+export type { SlipPickerSource, SlipPickerAnalyticsEvent };
+export type SlipAnalyticsBody = SlipPickerAnalyticsEvent;

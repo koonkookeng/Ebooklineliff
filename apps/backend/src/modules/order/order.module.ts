@@ -13,6 +13,8 @@ import { EasySlipVerifyAdapter } from '../payment/services/easyslip-verify.adapt
 import { EasySlipProvider } from '../payment/providers/easyslip.provider';
 import { SlipVerificationService } from '../payment/slip-verification.service';
 import { PaymentSlipController } from '../payment/slip-verification.controller';
+import { SlipPickerController } from '../payment/controllers/slip-picker.controller';
+import { SlipPickerAnalyticsService } from '../payment/services/slip-picker-analytics.service';
 import { PaymentResolver } from '../../api/graphql/resolvers/payment.resolver';
 import { OrderAtomicService } from './services/order-atomic.service';
 import { EntitlementService } from '../entitlement/services/entitlement.service';
@@ -26,8 +28,8 @@ import { SlipUploadController } from './presentation/rest/slip-upload.controller
 // CartModule import: checkout derives shipping from the live cart split calculator.
 @Module({
   imports: [CartModule, PromptPayModule],
-  controllers: [CheckoutController, SlipVerifyController, SlipUploadController, PaymentSlipController],
-  providers: [CheckoutService, SlipVerifyService, SlipUploadService, EasySlipVerifyAdapter, EasySlipProvider, SlipVerificationService, EntitlementGrantService, EntitlementService, OrderAtomicService, OrderResolver, PaymentResolver],
+  controllers: [CheckoutController, SlipVerifyController, SlipUploadController, PaymentSlipController, SlipPickerController],
+  providers: [CheckoutService, SlipVerifyService, SlipUploadService, EasySlipVerifyAdapter, EasySlipProvider, SlipVerificationService, SlipPickerAnalyticsService, EntitlementGrantService, EntitlementService, OrderAtomicService, OrderResolver, PaymentResolver],
   exports: [CheckoutService, SlipVerifyService, SlipUploadService, SlipVerificationService, EntitlementGrantService, EntitlementService, OrderAtomicService],
 })
 export class OrderModule {}

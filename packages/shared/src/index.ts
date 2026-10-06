@@ -147,3 +147,10 @@ export type {
   OutboxEventType,
   SlipRetryJob,
 } from './schemas/payment-slip.schema';
+export {
+  SlipPickerSourceEnum,
+  SlipPickerAnalyticsEventSchema,
+  SLIP_PICKER_MAX_SOURCE_BYTES,
+  SLIP_PICKER_TARGET_KB,
+} from './schemas/slip-picker.schema';
+export type { SlipPickerSource, SlipPickerAnalyticsEvent } from './schemas/slip-picker.schema';

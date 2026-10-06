@@ -12,6 +12,9 @@ import type { SlipVerificationResponse } from '@repo/shared';
 export type SlipStage = 'idle' | 'compressing' | 'uploading' | 'verifying' | 'done';
 export type SlipUiState = 'LIFF_INIT' | 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
 
+/** Success outcome carries the post-compression size (single-compress pipeline). */
+export type SlipVerifyOutcome = (SlipVerificationResponse & { compressedKb: number }) | null;
+
 function friendlyError(message: string): string {
   if (/SLIP_ALREADY_USED|เคยถูกใช้งาน/.test(message)) return 'สลิปรายการนี้เคยถูกใช้งานแล้ว กรุณาใช้สลิปใหม่';
   if (/does not match|น้อยกว่า|ยอดเงิน/.test(message)) return 'ยอดเงินในสลิปไม่ตรง กรุณาตรวจสอบเศษสตางค์แล้วลองใหม่';
@@ -50,8 +53,9 @@ export function useSlipVerification() {
   /**
    * Compresses (≤300KB) → uploads to R2 → verifies (<0.8s SLA).
    * Falls back to direct-base64 v1 verification if the R2 upload fails.
+   * Compression runs exactly once; the outcome reports its size.
    */
-  const verifySlip = useCallback(async (orderId: string, file: File, tenantId: string): Promise<SlipVerificationResponse | null> => {
+  const verifySlip = useCallback(async (orderId: string, file: File, tenantId: string): Promise<SlipVerifyOutcome> => {
     live.current = true;
     setError(null);
     setResult(null);
@@ -86,9 +90,10 @@ export function useSlipVerification() {
         : await postVerify({ orderId, slipBase64: compressed.dataBase64, filename: file.name, contentType: compressed.mimeType, tenantId });
       if (!live.current) return null;
       setStage('done');
+      const outcome = { ...data, compressedKb: compressed.fileSizeKb };
       setResult(data);
       setUiState('SUCCESS');
-      return data;
+      return outcome;
     } catch (err) {
       if (!live.current) return null;
       setStage('idle');
