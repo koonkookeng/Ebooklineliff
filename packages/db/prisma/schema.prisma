@@ -61,6 +61,9 @@ model User {
   addresses        UserAddress[]
   kycDetail        CreatorKYC?
   auditLogs        AuditLog[]
+  accounts         Account[]
+  sessions         Session[]
+  authAuditLogs    AuthAuditLog[]
   entitlements     Entitlement[]
   orders           Order[]
   readingProgress  EbookReadingProgress[]
@@ -219,6 +222,60 @@ model AuditLog {
   @@index([action])
 }
 
+// Atomic Phase 005: Unified Auth Middleware & JWT Session SSO
+// (LINE LIFF / LINE Web / Google / Email+Password + single-use refresh rotation)
+model Account {
+  id                String   @id @default(uuid())
+  userId            String
+  // NOTE: spec §4.1 typed provider as UserRole; canonical uses String provider key
+  // (e.g. LINE_LIFF / LINE_WEB / GOOGLE / EMAIL_PASSWORD) to avoid enum misuse.
+  provider          String // External provider key, e.g. lineUserId or googleSub
+  providerAccountId String // External ID e.g., lineUserId or googleSub
+  refreshToken      String?  @db.Text
+  accessToken       String?  @db.Text
+  expiresAt         Int?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  tenantId     String
+  sessionToken String   @unique
+  refreshToken String   @unique
+  deviceOs     String?
+  userAgent    String?
+  ipAddress    String?
+  isRevoked    Boolean  @default(false)
+  expiresAt    DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+model AuthAuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenantId  String
+  event     String // e.g., "LOGIN_SUCCESS", "LOGIN_FAILED", "ACCOUNT_LINKED"
+  ipAddress String
+  userAgent String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
 model SystemHealth {
   id        String   @id @default(uuid())
   status    String
@@ -239,8 +296,8 @@ model EbookReadingProgress {
 
 model CourseLearningProgress {
   id          String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lessonId    String
   watchedSec  Int      @default(0)
   isCompleted Boolean  @default(false)

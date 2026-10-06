@@ -1,5 +1,6 @@
-// SSOT barrel — Phase 001 core + Phase 002 infra + Phase 003 identity
+// SSOT barrel — Phase 001 core + Phase 002 infra + Phase 003 identity + Phase 005 auth
 export * from './schemas/phase001-init';
 export * from './schemas/infra-env.schema';
 export * from './schemas/identity.zod';
 export * from './schemas/zod-graphql-contracts';
+export * from './schemas/auth-contract';

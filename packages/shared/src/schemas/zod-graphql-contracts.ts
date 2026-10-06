@@ -1,11 +1,12 @@
 // SSOT Phase 004 §3.1 — GraphQL input + webhook payload Zod contracts
+// NOTE (Phase 005): AuthenticateLineLiffInput* now lives in ./auth-contract.ts (evolved SSOT:
+// idToken primary + accessToken deprecated alias + referralCode). Re-exported here for compat.
 import { z } from 'zod';
 
-// GraphQL input validation schemas
-export const AuthenticateLineLiffInputSchema = z.object({
-  accessToken: z.string().min(10, 'Invalid LINE Access Token'),
-  tenantId: z.string().uuid('Invalid Tenant ID'),
-});
+export {
+  AuthenticateLineLiffInputSchema,
+  type AuthenticateLineLiffInput,
+} from './auth-contract';
 
 export const GetEbookChunkInputSchema = z.object({
   productId: z.string().uuid(),
@@ -44,7 +45,6 @@ export const EasySlipWebhookPayloadSchema = z.object({
   rawImageBase64: z.string().optional(),
 });
 
-export type AuthenticateLineLiffInput = z.infer<typeof AuthenticateLineLiffInputSchema>;
 export type GetEbookChunkInput = z.infer<typeof GetEbookChunkInputSchema>;
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
 export type EasySlipWebhookPayload = z.infer<typeof EasySlipWebhookPayloadSchema>;

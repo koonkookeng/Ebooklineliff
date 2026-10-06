@@ -1,8 +1,3 @@
-/**
- * AUTO-SCAFFOLD Phase 120 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class AuthServiceService {}
+// SSOT Phase 005 — canonical AuthService lives in ./services/auth.service.ts (single logic point)
+export { AuthService } from './services/auth.service';
+export type { AuthRequestContext } from './services/auth.service';

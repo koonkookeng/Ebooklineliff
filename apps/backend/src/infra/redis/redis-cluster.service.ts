@@ -43,6 +43,19 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.setex(key, ttlSeconds, chunkData);
   }
 
+  // Phase 005 §5.2/§10.2 — generic session edge cache (<1ms verify; PG fallback on failure)
+  async get(key: string): Promise<string | null> {
+    return await this.client.get(key);
+  }
+
+  async setex(key: string, ttlSeconds: number, value: string): Promise<void> {
+    await this.client.setex(key, ttlSeconds, value);
+  }
+
+  async del(key: string): Promise<void> {
+    await this.client.del(key);
+  }
+
   // Phase 004 §4.1 — entitlement flag cache (DB fallback on miss)
   async getEntitlementFlag(key: string): Promise<string | null> {
     return await this.client.get(key);

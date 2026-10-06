@@ -1,10 +1,2 @@
-/**
- * AUTO-SCAFFOLD Phase 005, 006 — NestJS guard
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-@Injectable()
-export class JwtAuthGuardGuard implements CanActivate {
-  canActivate(_ctx: ExecutionContext): boolean { return true; }
-}
+// SSOT Phase 005 — module guard re-export (single logic point in apps/backend/src/guards/jwt-auth.guard.ts)
+export { JwtAuthGuard } from '../../../guards/jwt-auth.guard';

@@ -5,8 +5,9 @@ import { IdentityModule } from './modules/identity/identity.module';
 import { InfraModule } from './infra/infra.module';
 import { ApolloServerGatewayModule } from './infra/apollo/apollo-server.module';
 import { WebhooksModule } from './api/webhooks/webhooks.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
