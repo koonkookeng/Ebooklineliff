@@ -1,14 +1,15 @@
-// SSOT Phase 000 (multi-tenant branding) + Phase 005 §6.1 (Next.js 15 auth middleware)
+// SSOT Phase 000 (multi-tenant branding) + Phase 005 §6.1 (Next.js 15 auth middleware) + Phase 021 (dynamic tenant LIFF ID)
 // Canonical: apps/frontend/middleware.ts (legacy src/frontend/middleware.ts)
 // - Tenant branding (CSS vars) preserved from Phase 000: subdomain/?tenant= -> headers + cookie (<10ms).
 // - Auth: __Host-next-auth.session-token cookie or Bearer header verified (HS256, WebCrypto, edge-safe,
 //   no new deps); verified claims forwarded as x-user-id / x-user-role / x-tenant-id.
 // - Public bypass: /_next, /api/public, /login. /api/* without token -> 401; pages -> redirect /login.
+// - Phase 021: Dynamic LIFF ID per tenant (x-liff-id header for LIFF SDK init)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const TENANTS: Record<string, { primary: string; logo: string; font: string; brand: string }> = {
-  default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif', brand: 'Ebook LIFF' },
+const TENANTS: Record<string, { primary: string; logo: string; font: string; brand: string; liffId: string }> = {
+  default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif', brand: 'Ebook LIFF', liffId: process.env.NEXT_PUBLIC_DEFAULT_LIFF_ID ?? 'default-liff-id' },
 };
 
 const SESSION_COOKIE = '__Host-next-auth.session-token';
@@ -62,6 +63,7 @@ function applyTenantBranding(res: NextResponse, tenant: string): void {
   res.headers.set('x-tenant', tenant);
   res.headers.set('x-primary-color', theme.primary);
   res.headers.set('x-brand-name', theme.brand);
+  res.headers.set('x-liff-id', theme.liffId);
   res.cookies.set('tenant-theme', JSON.stringify(theme), { path: '/', maxAge: 3600 });
 }
 

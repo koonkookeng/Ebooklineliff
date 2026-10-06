@@ -1,0 +1,35 @@
+# SSOT Phase 021 §3.2 — LINE LIFF Auth intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/auth.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via LiffAuthResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod liff-auth.schema.ts <-> Prisma User <-> here).
+
+type LiffAuthPayload {
+  success: Boolean!
+  token: String!
+  user: UserProfile!
+  isNewUser: Boolean!
+}
+
+type UserProfile {
+  id: ID!
+  lineUserId: ID!
+  displayName: String!
+  avatarUrl: String
+  email: String
+  role: String!
+  tenantId: ID!
+  walletBalance: Float!
+  rewardPoints: Int!
+  affiliateCode: String!
+}
+
+input LiffAuthInput {
+  idToken: String!
+  accessToken: String
+  tenantId: ID!
+  referralCode: String
+}
+
+extend type Mutation {
+  authenticateLineLiff(input: LiffAuthInput!): LiffAuthPayload!
+}

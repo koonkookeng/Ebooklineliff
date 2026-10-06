@@ -206,3 +206,15 @@ export type {
   ReceiptLog,
   ReceiptDownloadTicket,
 } from './schemas/line-receipt.schema';
+export {
+  LiffEnvironmentEnum,
+  LiffInitPayloadSchema,
+  LiffAuthHandshakeSchema,
+  LiffAuthResponseSchema,
+} from './schemas/liff-auth.schema';
+export type {
+  LiffInitPayload,
+  LiffAuthHandshake,
+  LiffAuthResponse,
+  LiffEnvironment,
+} from './schemas/liff-auth.schema';
