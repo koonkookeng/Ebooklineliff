@@ -166,6 +166,11 @@ function buildFakes012(): {
     order: { findUnique: findOrder, create: createOrder, update: updateOrder },
     orderItem: { findMany: findOrderItems },
     paymentSlip: { upsert: upsertPaymentSlip },
+    // Phase 013: slip-verify closes the QR lifecycle (findFirst → max(net,txn), updateMany → PAID)
+    promptPayTransaction: {
+      findFirst: async (): Promise<null> => null,
+      updateMany: async (): Promise<{ count: number }> => ({ count: 0 }),
+    },
     entitlement: { upsert: upsertEntitlement, findUnique: async (): Promise<null> => null },
     userAddress: { findUnique: (args: { where: { id: string } }): unknown => addresses.get(args.where.id) ?? null },
     product: { findMany: (args: { where: { id: { in: string[] } } }): unknown[] => [...products.values()].filter((p) => args.where.id.in.includes(p.id)) },

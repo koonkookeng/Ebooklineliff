@@ -1,9 +1,9 @@
-// SSOT Phase 012 §6 — LIFF checkout page (cart summary → order → PromptPay modal)
+// SSOT Phase 012 §6 + Phase 013 §6.1 — LIFF checkout (cart → order → dynamic QR widget)
 'use client';
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PromptPayQrModal } from '../../../components/payment/PromptPayQrModal';
+import { PromptPayQRWidget } from '../../../components/checkout/PromptPayQRWidget';
 import { fetchSmartCart } from '../../../lib/cart';
 import { createSmartOrder, type CreateOrderPayload } from '../../../lib/checkout';
 import type { HybridCartSplitSummary } from '@repo/shared';
@@ -73,7 +73,7 @@ function LiffCheckoutInner() {
   if (uiState === 'SUCCESS' && order) {
     return (
       <main className="mx-auto max-w-md px-4 py-6">
-        <PromptPayQrModal orderId={order.orderId} qrPayload={order.promptPayQrPayload} amount={order.netAmount} expiresAt={order.expiresAt} />
+        <PromptPayQRWidget orderId={order.orderId} />
       </main>
     );
   }

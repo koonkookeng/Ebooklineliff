@@ -94,3 +94,21 @@ export {
   EntitlementSchema,
 } from './schemas/entitlement.schema';
 export type { GrantEntitlementInput, Entitlement } from './schemas/entitlement.schema';
+export {
+  PromptPayStatusEnum,
+  CreatePromptPayQRInputSchema,
+  PromptPayQRPayloadSchema,
+  PromptPayExpiryStatusSchema,
+  PROMPTPAY_DEFAULT_TTL_SEC,
+  PROMPTPAY_RATE_LIMIT,
+  PROMPTPAY_RATE_WINDOW_SEC,
+  PROMPTPAY_FRAUD_STRIKES,
+  PROMPTPAY_FRAUD_FREEZE_SEC,
+} from './schemas/promptpay.schema';
+export type {
+  PromptPayStatus,
+  CreatePromptPayQRInput,
+  CreatePromptPayQRRequest,
+  PromptPayQRPayload,
+  PromptPayExpiryStatus,
+} from './schemas/promptpay.schema';

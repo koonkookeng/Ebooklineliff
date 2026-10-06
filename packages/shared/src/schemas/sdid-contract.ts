@@ -25,6 +25,8 @@ export const OrderStatusEnum = z.enum([
   'COMPLETED',
   'CANCELLED',
   'REFUNDED',
+  // Phase 013: time-bound QR expiry (auto-cancel unpaid orders, slot release)
+  'EXPIRED',
 ]);
 
 export const SlipVerificationPayloadSchema = z.object({

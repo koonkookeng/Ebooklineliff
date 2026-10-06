@@ -401,6 +401,7 @@ model Entitlement {
 }
 
 // Atomic Phase 012: order lifecycle + payment verification states (expand-contract)
+// Atomic Phase 013: + EXPIRED (time-bound QR auto-cancel, additive)
 enum OrderStatus {
   PENDING_PAYMENT
   PAYMENT_VERIFYING
@@ -410,6 +411,7 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
   REFUNDED
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -418,6 +420,14 @@ enum PaymentStatus {
   VERIFIED
   FAILED
   REFUNDED
+}
+
+// Atomic Phase 013: dynamic PromptPay QR lifecycle (fractional-cent matching)
+enum PromptPayStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
 }
 
 model Order {
@@ -436,6 +446,8 @@ model Order {
   trackingNumber String?
   orderItems     OrderItem[]
   paymentSlip    PaymentSlip?
+  // Phase 013: 1:1 dynamic QR lifecycle (fractional cent + TTL expiry)
+  promptPayTransaction PromptPayTransaction?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -470,6 +482,28 @@ model PaymentSlip {
   verifiedAt       DateTime?
   apiRawResponse   Json?
   createdAt        DateTime  @default(now())
+}
+
+// Atomic Phase 013: dynamic PromptPay QR lifecycle (spec §4.1, canonical schema.md)
+model PromptPayTransaction {
+  id             String          @id @default(uuid())
+  orderId        String          @unique
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  promptPayId    String          // Biller ID or Mobile / Tax ID
+  qrPayload      String          @db.Text
+  ref1           String
+  ref2           String?
+  baseAmount     Decimal         @db.Decimal(10, 2)
+  fractionalCent Decimal         @db.Decimal(3, 2) @default(0.00)
+  totalAmount    Decimal         @db.Decimal(10, 2)
+  expiresAt      DateTime
+  status         PromptPayStatus @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([expiresAt])
+  @@index([ref1])
+  @@index([totalAmount, status])
 }
 
 model UserAddress {

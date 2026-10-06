@@ -1,0 +1,45 @@
+# SSOT Phase 013 §3.2 — Dynamic PromptPay QR GraphQL intent layer (SDL supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/promptpay.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via PromptPayResolver; this file is the
+# versioned contract mirror. generate/regenerate share one QR engine — the
+# REST layer exposes both paths, GraphQL exposes generate only.
+
+enum PromptPayStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+type PromptPayQRPayload {
+  qrCodePayload: String!
+  qrCodeBase64: String
+  orderNumber: String!
+  reference1: String!
+  reference2: String
+  baseAmount: Float!
+  fractionalCent: Float!
+  totalAmount: Float!
+  expiresAt: String!
+  timeRemainingSec: Int!
+}
+
+type PromptPayStatusPayload {
+  orderId: ID!
+  status: PromptPayStatus!
+  isExpired: Boolean!
+}
+
+input CreatePromptPayQRInput {
+  orderId: ID!
+  expireMinutes: Int
+  useFractionalCent: Boolean
+}
+
+type Query {
+  getPromptPayQRStatus(orderId: ID!): PromptPayStatusPayload!
+}
+
+type Mutation {
+  generateDynamicPromptPayQR(input: CreatePromptPayQRInput!): PromptPayQRPayload!
+}

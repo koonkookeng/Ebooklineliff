@@ -1,4 +1,4 @@
-// SSOT Phase 001+003+004+008+011+012 — NestJS root module
+// SSOT Phase 001+003+004+008+011+012+013 — NestJS root module
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -9,8 +9,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
+import { PromptPayModule } from './modules/payment/promptpay.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
