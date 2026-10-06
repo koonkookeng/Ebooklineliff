@@ -79,6 +79,7 @@ model User {
   lineProfile       LineAuthProfile?
   entitlements      Entitlement[]
   orders            Order[]
+  cart              Cart?
   readingProgress   EbookReadingProgress[]
   learningProgress  CourseLearningProgress[]
   createdAt         DateTime                 @default(now())
@@ -207,6 +208,7 @@ model Product {
   tags           ProductTagMap[]
   entitlements   Entitlement[]
   orderItems     OrderItem[]
+  cartItems      CartItem[]
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
@@ -560,4 +562,59 @@ model CourseLearningProgress {
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, lessonId])
+}
+
+// Atomic Phase 011: smart hybrid cart (digital/physical split) + carrier rate table.
+// NOTE: AbandonedCartLog relation lands in Phase 084 (owns that model); omitted here
+// to keep this additive change self-contained and prisma-valid.
+enum AbandonedStatus {
+  ACTIVE
+  ABANDONED
+  RECOVERED
+  EXPIRED
+}
+
+model Cart {
+  id             String          @id @default(uuid())
+  userId         String          @unique
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId       String          @default("default")
+  status         AbandonedStatus @default(ACTIVE)
+  lastActivityAt DateTime        @default(now())
+  abandonedAt    DateTime?
+  recoveredAt    DateTime?
+  items          CartItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status, lastActivityAt])
+}
+
+model CartItem {
+  id           String  @id @default(uuid())
+  cartId       String
+  cart         Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  quantity     Int     @default(1)
+  itemCategory String  @default("DIGITAL") // "DIGITAL" or "PHYSICAL"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+}
+
+model ShippingRateTable {
+  id             String  @id @default(uuid())
+  carrierName    String  // e.g., FLASH, KERRY, THAIPOST
+  minWeightGrams Int
+  maxWeightGrams Int
+  baseFee        Decimal @db.Decimal(10, 2)
+  provinceZone   String  @default("BANGKOK_METRO") // or "UPCOUNTRY", "REMOTE"
+  createdAt      DateTime @default(now())
+
+  @@index([carrierName, provinceZone])
 }

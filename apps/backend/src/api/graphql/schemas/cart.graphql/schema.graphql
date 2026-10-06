@@ -1,0 +1,62 @@
+# SSOT Phase 011 §3.2 — Smart hybrid cart GraphQL intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/cart.graphql/schema.graphql
+# (legacy src/backend/api/graphql/resolvers/cart.resolver.ts)
+
+enum CartItemType {
+  DIGITAL
+  PHYSICAL
+}
+
+enum Carrier {
+  FLASH
+  KERRY
+  THAIPOST
+}
+
+type SmartCartItem {
+  cartItemId: ID!
+  productId: ID!
+  title: String!
+  coverImageUrl: String!
+  productType: String!
+  itemCategory: String!
+  unitPrice: Float!
+  quantity: Int!
+  weightGrams: Int!
+  sku: String
+}
+
+type HybridCartSplitSummary {
+  digitalItems: [SmartCartItem!]!
+  physicalItems: [SmartCartItem!]!
+  digitalSubtotal: Float!
+  physicalSubtotal: Float!
+  totalPhysicalWeightGrams: Int!
+  estimatedShippingFee: Float!
+  appliedDiscountAmount: Float!
+  grandTotalAmount: Float!
+  requiresShippingAddress: Boolean!
+}
+
+type ShippingQuote {
+  carrier: String!
+  fee: Float!
+  estimatedDays: [Int!]!
+}
+
+input CalculateShippingInput {
+  cartId: ID!
+  shippingAddressId: ID!
+  preferredCarrier: Carrier
+}
+
+type Query {
+  getSmartCart: HybridCartSplitSummary!
+}
+
+type Mutation {
+  addToSmartCart(productId: ID!, quantity: Int): HybridCartSplitSummary!
+  updateSmartCartItemQuantity(cartItemId: ID!, quantity: Int!): HybridCartSplitSummary!
+  removeFromSmartCart(cartItemId: ID!): HybridCartSplitSummary!
+  calculateHybridShippingFee(input: CalculateShippingInput!): HybridCartSplitSummary!
+}

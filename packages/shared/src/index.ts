@@ -42,3 +42,23 @@ export type {
   ProductDetail,
   StorefrontFeed,
 } from './schemas/storefront.schema';
+export {
+  CartItemTypeEnum,
+  CarrierEnum,
+  SmartCartItemSchema,
+  HybridCartSplitSummarySchema,
+  CalculateShippingInputSchema,
+  AddToCartInputSchema,
+  UpdateCartItemQuantityInputSchema,
+  isPhysicalProduct,
+  effectiveUnitPrice,
+} from './schemas/cart.schema';
+export type {
+  CartItemType,
+  Carrier,
+  SmartCartItem,
+  HybridCartSplitSummary,
+  CalculateShippingInput,
+  AddToCartInput,
+  UpdateCartItemQuantityInput,
+} from './schemas/cart.schema';
