@@ -187,3 +187,22 @@ export type {
   OneClickBuyResult,
   WalletTopupResult,
 } from './schemas/wallet-contract';
+export {
+  ReceiptDeliveryStatusEnum,
+  ReceiptLineItemSchema,
+  LineReceiptPayloadSchema,
+  ReceiptLogSchema,
+  ReceiptDownloadTicketSchema,
+  FLEX_MAX_BYTES,
+  RECEIPT_MAX_RETRIES,
+  RECEIPT_URL_TTL_SEC,
+  vatIncluded,
+  receiptR2Key,
+} from './schemas/line-receipt.schema';
+export type {
+  ReceiptDeliveryStatus,
+  ReceiptLineItem,
+  LineReceiptPayload,
+  ReceiptLog,
+  ReceiptDownloadTicket,
+} from './schemas/line-receipt.schema';

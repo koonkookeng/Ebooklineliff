@@ -456,6 +456,8 @@ model Order {
   promptPayTransaction PromptPayTransaction?
   // Phase 015: transactional outbox (LINE flex / affiliate / AI consumers)
   outboxEvents   OutboxEvent[]
+  // Atomic Phase 019: transactional receipt logs (Log & Notification scope only)
+  receiptLogs    ReceiptNotificationLog[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -774,4 +776,46 @@ model WalletLedger {
   @@index([walletId])
   @@index([referenceId])
   @@index([createdAt])
+}
+
+// Atomic Phase 019 §4.1: transactional LINE receipts (log + notification records only —
+// payment verification core untouched per OUT_OF_SCOPE_STRICT).
+enum ReceiptStatus {
+  PENDING
+  GENERATED
+  DELIVERED
+  FAILED
+}
+
+model TenantSetting {
+  id               String   @id @default(uuid())
+  tenantSlug       String   @unique
+  companyName      String
+  taxRegistrationNo String?
+  logoUrl          String
+  primaryColorHex  String   @default("#00C751")
+  // Optional per-tenant LINE channel token override. Secrets resolve env-first
+  // (LINE_CHANNEL_ACCESS_TOKEN); this field is only a fallback reference.
+  lineChannelToken String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ReceiptNotificationLog {
+  id            String        @id @default(uuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lineUserId    String
+  status        ReceiptStatus @default(PENDING)
+  lineMessageId String?
+  pdfR2Path     String?
+  errorMessage  String?
+  retryCount    Int           @default(0)
+  sentAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([lineUserId])
+  @@index([status])
 }
