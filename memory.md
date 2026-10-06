@@ -9,3 +9,4 @@
 - Phase 001 DONE (b23e83d): monorepo core verified 100/100 (prisma valid + backend/frontend typecheck + zod 5/5 + health runtime); next: Phase 002
 - Phase 002 DONE (a531265): infra engine verified 100/100 incl. Phase001 regression (compose config + phase002 typecheck + infra zod 3/3); next: Phase 003
 - Phase 003+004 DONE (2a91f7b): identity KYC (AES-256-GCM + atomic submit) + GraphQL gateway (4 resolvers) + webhooks (EasySlip atomic/HMAC, logistics, LINE) verified 100/100 x3 incl. regressions; next: Phase 005
+- Phase 005 DONE (ad3ca6c): unified Auth SSO (LINE LIFF/Web OAuth adapters, HS256 dual-token + kid rotation, atomic account linking, single-use refresh + breach revocation, JwtAuthGuard/RolesGuard/JwtStrategy, Next edge middleware, useLineAuth 5-state hook) verified 100/100 x3 incl. Phase003+004 regression, zero new deps; next: Phase 006
