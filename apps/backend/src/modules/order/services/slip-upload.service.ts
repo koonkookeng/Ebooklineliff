@@ -2,8 +2,11 @@
 // Canonical: apps/backend/src/modules/order/services/slip-upload.service.ts
 // Serves POST /api/storage/upload-slip (spec §6.1). Public URL via R2_PUBLIC_DOMAIN
 // so EasySlip can fetch it (zero egress). 503 when R2 env is absent (honest degrade).
+// Phase 014 §7/§8: returns the SHA-256 forensic hash + emits payment_slip_uploaded
+// (orderId, fileSizeKb) to the analytics stream.
 import { createHash, createHmac } from 'node:crypto';
 import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 
 export const MAX_SLIP_BYTES = 5 * 1024 * 1024;
 
@@ -69,7 +72,17 @@ function r2Config(): { endpoint: string; bucket: string; accessKey: string; secr
 
 @Injectable()
 export class SlipUploadService {
-  async uploadSlipImage(orderId: string, filename: string, contentType: string, dataBase64: string): Promise<{ slipImageUrl: string }> {
+  // Optional (no decorator — tsx contract tests run without
+  // experimentalDecorators). Emits analytics only when wired.
+  constructor(private readonly redis?: RedisClusterService) {}
+
+  async uploadSlipImage(
+    orderId: string,
+    filename: string,
+    contentType: string,
+    dataBase64: string,
+    opts?: { tenantId?: string },
+  ): Promise<{ slipImageUrl: string; slipSha256: string; fileSizeKb: number }> {
     if (!orderId) throw new BadRequestException('Missing order id');
     let buf: Buffer;
     try {
@@ -108,6 +121,14 @@ export class SlipUploadService {
       body: new Uint8Array(buf),
     }).catch(() => null);
     if (!res || !res.ok) throw new ServiceUnavailableException('Slip upload to storage failed');
-    return { slipImageUrl: `${cfg.publicDomain}/${key}` };
+    const slipSha256 = payloadHash;
+    const fileSizeKb = Math.round((buf.length / 1024) * 100) / 100;
+    await this.redis
+      ?.publish('stream:analytics:payments', JSON.stringify({
+        event: 'payment_slip_uploaded', orderId, tenantId: opts?.tenantId ?? null,
+        fileSizeKb, at: new Date().toISOString(),
+      }))
+      .catch(() => undefined);
+    return { slipImageUrl: `${cfg.publicDomain}/${key}`, slipSha256, fileSizeKb };
   }
 }

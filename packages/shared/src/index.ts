@@ -112,3 +112,20 @@ export type {
   PromptPayQRPayload,
   PromptPayExpiryStatus,
 } from './schemas/promptpay.schema';
+export {
+  OrderStatusEnum as OrderStatusEnumFromSlip,
+  PaymentStatusEnum as PaymentStatusEnumFromSlip,
+  SlipVerificationInputSchema,
+  EasySlipDataSchema,
+  EasySlipResponseSchema,
+  SlipVerificationResponseSchema,
+  SLIP_TRANSREF_LOCK_SEC,
+  SLIP_CLIENT_MAX_KB,
+} from './schemas/slip-verification.schema';
+export type {
+  SlipVerificationInput,
+  SlipVerificationRequest,
+  EasySlipData,
+  EasySlipResponse,
+  SlipVerificationResponse,
+} from './schemas/slip-verification.schema';

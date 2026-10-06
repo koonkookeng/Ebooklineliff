@@ -12,6 +12,8 @@ const UploadBodySchema = z.object({
   filename: z.string().max(255).default('slip.png'),
   contentType: z.string().max(100).default('image/png'),
   dataBase64: z.string().min(1).max(8 * 1024 * 1024),
+  // Phase 014 §7: tenant attribution for the payment_slip_uploaded event.
+  tenantId: z.string().min(1).max(100).optional(),
 });
 
 @Controller('api/storage')
@@ -24,6 +26,6 @@ export class SlipUploadController {
     if (!req.user?.id) throw new UnauthorizedException('Unauthorized');
     const parsed = UploadBodySchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('Invalid upload payload');
-    return this.uploads.uploadSlipImage(parsed.data.orderId, parsed.data.filename, parsed.data.contentType, parsed.data.dataBase64);
+    return this.uploads.uploadSlipImage(parsed.data.orderId, parsed.data.filename, parsed.data.contentType, parsed.data.dataBase64, { tenantId: parsed.data.tenantId });
   }
 }

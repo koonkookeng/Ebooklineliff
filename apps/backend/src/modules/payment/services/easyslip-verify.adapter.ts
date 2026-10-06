@@ -1,7 +1,16 @@
-// SSOT Phase 012 §5.1/§10 — EasySlip verify adapter (800ms budget, SlipOK fallback-ready)
+// SSOT Phase 012 §5.1/§10 + Phase 014 §5.2 — EasySlip verify adapter
 // Canonical: apps/backend/src/modules/payment/services/easyslip-verify.adapter.ts
-// Uses global fetch (Node 20, zero new deps). Throws typed errors; never returns partial data.
+// Transport is delegated to EasySlipProvider (URL + base64 + SlipOK fallback,
+// Zod-validated); this adapter keeps the Phase-012 VerifiedSlip contract and
+// emits the fallback analytics hook. Uses global fetch (zero new deps).
 import { Injectable } from '@nestjs/common';
+import { EasySlipProvider } from '../providers/easyslip.provider';
+import type { EasySlipResponse } from '@repo/shared';
+
+// Single source (defined in the provider): re-exported so Phase-012/013
+// import sites keep working unchanged.
+export { SlipUnverifiableError, EASYSLIP_TIMEOUT_MS } from '../providers/easyslip.provider';
+import { SlipUnverifiableError } from '../providers/easyslip.provider';
 
 export interface VerifiedSlip {
   transRef: string;
@@ -11,71 +20,38 @@ export interface VerifiedSlip {
   raw: unknown;
 }
 
-export class SlipUnverifiableError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SlipUnverifiableError';
-  }
-}
-
-/** Budget: 800ms of the 1000ms end-to-end SLA (leaves 200ms for the DB transaction). */
-export const EASYSLIP_TIMEOUT_MS = 800;
+const looksLikeHttpUrl = (s: string): boolean => s.startsWith('http://') || s.startsWith('https://');
 
 @Injectable()
 export class EasySlipVerifyAdapter {
-  private readonly apiKey = process.env.EASYSLIP_API_KEY ?? '';
-  private readonly endpoint = process.env.EASYSLIP_API_URL ?? 'https://api.easyslip.com/v1/verify';
-  private readonly timeoutMs: number;
+  constructor(private readonly provider = new EasySlipProvider()) {}
 
-  constructor(timeoutMs = EASYSLIP_TIMEOUT_MS) {
-    this.timeoutMs = timeoutMs;
-  }
-
-  async verify(slipImageUrl: string): Promise<VerifiedSlip> {
-    if (!slipImageUrl?.startsWith('http')) throw new SlipUnverifiableError('Invalid slip image URL');
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
+  /** Accepts an R2 URL (preferred) or a raw base64 image (v1 API path). */
+  async verify(slipImage: string, onFallback?: () => void): Promise<VerifiedSlip> {
+    if (!slipImage || slipImage.length < 10) throw new SlipUnverifiableError('Invalid slip image URL');
+    let body: EasySlipResponse;
     try {
-      const res = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ image_url: slipImageUrl }),
-        signal: ctrl.signal,
-      });
-      const body = (await res.json().catch(() => null)) as {
-        status?: number;
-        message?: string;
-        data?: {
-          transRef?: string;
-          amount?: { value?: number | string };
-          receiver?: { account?: { bank?: { account?: string } } };
-          sender?: { bank?: { name?: string } };
-        };
-      } | null;
-      if (!res.ok || body?.status !== 200 || !body?.data) {
-        throw new SlipUnverifiableError(body?.message ?? `EasySlip rejected slip (${res.status})`);
-      }
-      const transRef = body.data.transRef?.trim();
-      const amount = Number(body.data.amount?.value);
-      const receiverAccount = body.data.receiver?.account?.bank?.account?.replace(/\D/g, '');
-      if (!transRef || !Number.isFinite(amount) || amount <= 0 || !receiverAccount) {
-        throw new SlipUnverifiableError('EasySlip response missing transRef/amount/account');
-      }
-      return {
-        transRef,
-        amount,
-        receiverAccount,
-        senderBank: body.data.sender?.bank?.name ?? 'UNKNOWN',
-        raw: body,
-      };
+      body = looksLikeHttpUrl(slipImage)
+        ? await this.provider.verifySlipUrl(slipImage, onFallback)
+        : await this.provider.verifySlipBase64(slipImage, onFallback);
     } catch (e) {
       if (e instanceof SlipUnverifiableError) throw e;
-      throw new SlipUnverifiableError(e instanceof Error && e.name === 'AbortError' ? 'EasySlip timeout' : 'EasySlip unreachable');
-    } finally {
-      clearTimeout(timer);
+      throw new SlipUnverifiableError('EasySlip unreachable');
     }
+    // Provider guarantees the spec §3.1 shape (flat fields, Zod-validated).
+    const data = body.data;
+    const transRef = data?.transRef?.trim();
+    const amount = Number(data?.amount?.value);
+    const receiverAccount = (data?.receivingAccount ?? '').replace(/\D/g, '');
+    if (!transRef || !Number.isFinite(amount) || amount <= 0 || !receiverAccount) {
+      throw new SlipUnverifiableError('EasySlip response missing transRef/amount/account');
+    }
+    return {
+      transRef,
+      amount,
+      receiverAccount,
+      senderBank: data?.sendingBank ?? 'UNKNOWN',
+      raw: body,
+    };
   }
 }

@@ -22,6 +22,8 @@ export const SlipVerificationResultSchema = z.object({
   paymentStatus: PaymentStatusEnum,
   transRef: z.string().nullable(),
   entitlementsGranted: z.array(z.string().uuid()),
+  // Phase 014: end-to-end latency for the <0.8s SLA dashboard.
+  processedInMs: z.number().nonnegative().optional(),
 });
 export type SlipVerificationResult = z.infer<typeof SlipVerificationResultSchema>;
 

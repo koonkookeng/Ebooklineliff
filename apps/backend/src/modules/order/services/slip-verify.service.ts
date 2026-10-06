@@ -8,8 +8,12 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
+// Phase 014: Redis transRef anti-replay (SLIP_ALREADY_USED, 30-day lock,
+// <10ms, zero DB change on replay) + forensic slipSha256 + analytics/fraud
+// event fan-out + processedInMs on the result.
 import {
   SlipVerificationResultSchema,
+  SLIP_TRANSREF_LOCK_SEC,
   type SlipVerificationResult,
 } from '@repo/shared';
 import { EasySlipVerifyAdapter, SlipUnverifiableError } from '../../payment/services/easyslip-verify.adapter';
@@ -45,7 +49,12 @@ export class SlipVerifyService {
     private readonly guard?: PromptPayGuardService,
   ) {}
 
-  async verify(orderId: string, slipImageUrl: string, actorUserId: string): Promise<SlipVerificationResult> {
+  async verify(
+    orderId: string,
+    slipImageUrl: string,
+    actorUserId: string,
+    opts?: { slipSha256?: string },
+  ): Promise<SlipVerificationResult> {
     if (!orderId) throw new BadRequestException('Missing order id');
     if (!slipImageUrl?.startsWith('http')) throw new BadRequestException('Invalid slip image URL');
     const t0 = Date.now();
@@ -66,7 +75,7 @@ export class SlipVerifyService {
         throw new BadRequestException('QR หมดอายุแล้ว กรุณาสร้าง QR Code ใหม่');
       }
       if (order.paymentStatus === 'VERIFIED') {
-        return this.result(orderId, 'Order already verified', order.orderStatus as SlipVerificationResult['orderStatus'], 'VERIFIED', null, order.orderItems.map((i) => i.productId));
+        return this.result(orderId, 'Order already verified', order.orderStatus as SlipVerificationResult['orderStatus'], 'VERIFIED', null, order.orderItems.map((i) => i.productId), Date.now() - t0);
       }
       await this.prisma.order
         .update({ where: { id: orderId }, data: { orderStatus: 'PAYMENT_VERIFYING', paymentStatus: 'PENDING_SLIP' } })
@@ -80,20 +89,31 @@ export class SlipVerifyService {
         await this.guard?.recordSlipFailure(actorUserId).catch(() => undefined);
         throw new BadRequestException(e instanceof SlipUnverifiableError ? e.message : 'Slip verification unavailable');
       }
-      // Phase 013: fractional-cent matching — the slip must cover the active
-      // QR total when one exists (overpay tolerated, underpay rejected).
+      // Phase 014: definitive user-side failures land on FAILED (retry with a
+      // correct slip); provider outages stay PENDING_SLIP (retryable).
       const netAmount = toNum(order.netAmount, 0);
       const expectedAmount = await this.activeQrTotal(orderId, netAmount);
       if (slip.amount < expectedAmount) {
-        await this.markFailed(orderId, 'PENDING_SLIP');
+        await this.markFailed(orderId, 'FAILED');
         await this.guard?.recordSlipFailure(actorUserId).catch(() => undefined);
         throw new BadRequestException(`Payment amount (${slip.amount}) does not match order amount (${expectedAmount})`);
       }
       const expectedAccount = (process.env.COMPANY_PROMPTPAY_ACCOUNT ?? '').replace(/\D/g, '');
       if (expectedAccount && slip.receiverAccount !== expectedAccount) {
-        await this.markFailed(orderId, 'PENDING_SLIP');
+        await this.markFailed(orderId, 'FAILED');
         await this.guard?.recordSlipFailure(actorUserId).catch(() => undefined);
         throw new BadRequestException('Recipient account does not match enterprise account');
+      }
+      // Phase 014 BDD scenario 2: atomic Redis anti-replay claim (<10ms).
+      // A lost race surfaces as P2002 on transRef @unique inside the txn.
+      const replayKey = `slip:transRef:${slip.transRef}`;
+      const firstClaim = await this.redis.setnx(replayKey, orderId, SLIP_TRANSREF_LOCK_SEC).catch(() => true);
+      if (!firstClaim) {
+        await this.guard?.recordSlipFailure(actorUserId).catch(() => undefined);
+        await this.emit('stream:security:fraud-alert', {
+          event: 'payment_slip_fraud_alert', orderId, transRef: slip.transRef, actorUserId,
+        });
+        throw new ConflictException('สลิปรายการนี้เคยถูกใช้งานในระบบแล้ว (SLIP_ALREADY_USED)');
       }
 
       const granted = await this.prisma.$transaction(async (tx) => {
@@ -106,11 +126,13 @@ export class SlipVerifyService {
           where: { orderId },
           create: {
             orderId, slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
-            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(), apiRawResponse: slip.raw as never,
+            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
+            apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
           },
           update: {
             slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
-            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(), apiRawResponse: slip.raw as never,
+            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
+            apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
           },
         });
         await db.order.update({ where: { id: orderId }, data: { orderStatus: 'COMPLETED', paymentStatus: 'VERIFIED' } });
@@ -128,12 +150,16 @@ export class SlipVerifyService {
 
       const latencyMs = Date.now() - t0;
       await this.emit('stream:payment:slip-verified', { orderId, userId: order.userId, latencyMs, transRef: slip.transRef });
+      await this.emit('stream:analytics:payments', {
+        event: 'payment_slip_verified_success', orderId, transRef: slip.transRef,
+        processedInMs: latencyMs, amount: slip.amount,
+      });
       if (latencyMs > SLA_MS) {
         await this.emit('stream:monitor:sla-breach', { flow: 'slip-verify', orderId, latencyMs });
       }
       await this.guard?.clearOnSuccess(actorUserId).catch(() => undefined);
       await this.emit('stream:notify:flex-receipt', { orderId, userId: order.userId, productIds: granted });
-      return this.result(orderId, 'Slip verified and access unlocked successfully.', 'COMPLETED', 'VERIFIED', slip.transRef, granted);
+      return this.result(orderId, 'Slip verified and access unlocked successfully.', 'COMPLETED', 'VERIFIED', slip.transRef, granted, latencyMs);
     } finally {
       await this.redis.del(lockKey).catch(() => undefined);
     }
@@ -146,9 +172,11 @@ export class SlipVerifyService {
     paymentStatus: SlipVerificationResult['paymentStatus'],
     transRef: string | null,
     entitlementsGranted: string[],
+    processedInMs?: number,
   ): SlipVerificationResult {
     const parsed = SlipVerificationResultSchema.safeParse({
       success: true, message, orderId, orderStatus, paymentStatus, transRef, entitlementsGranted,
+      ...(processedInMs !== undefined ? { processedInMs } : {}),
     });
     if (!parsed.success) throw new BadRequestException('Verification result contract drift');
     return parsed.data;

@@ -32,7 +32,11 @@ export async function createSmartOrder(input: CreateOrderInput): Promise<CreateO
   return (await res.json()) as CreateOrderPayload;
 }
 
-export async function uploadSlipImage(orderId: string, file: File): Promise<{ slipImageUrl: string }> {
+export async function uploadSlipImage(
+  orderId: string,
+  file: File,
+  opts?: { tenantId?: string },
+): Promise<{ slipImageUrl: string; slipSha256?: string; fileSizeKb?: number }> {
   const buf = new Uint8Array(await file.arrayBuffer());
   let binary = '';
   const CHUNK = 0x8000;
@@ -42,13 +46,13 @@ export async function uploadSlipImage(orderId: string, file: File): Promise<{ sl
   const res = await fetch('/api/storage/upload-slip', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderId, filename: file.name, contentType: file.type, dataBase64: btoa(binary) }),
+    body: JSON.stringify({ orderId, filename: file.name, contentType: file.type, dataBase64: btoa(binary), ...(opts?.tenantId ? { tenantId: opts.tenantId } : {}) }),
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { message?: string } | null;
     throw new Error(body?.message ?? 'Slip upload failed');
   }
-  return (await res.json()) as { slipImageUrl: string };
+  return (await res.json()) as { slipImageUrl: string; slipSha256?: string; fileSizeKb?: number };
 }
 
 export async function verifyPaymentSlip(orderId: string, slipImageUrl: string): Promise<SlipVerificationResult> {
