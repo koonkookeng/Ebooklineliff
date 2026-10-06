@@ -7,10 +7,16 @@ import { GetProductBySlugUseCase } from './application/queries/get-product-by-sl
 import { ListCatalogUseCase } from './application/queries/list-catalog.query';
 import { CatalogResolver } from './presentation/graphql/catalog.resolver';
 import { CatalogAdminController } from './presentation/rest/catalog-admin.controller';
+import { PrismaProductSearchRepository } from './infrastructure/persistence/prisma-product-search.repository';
+import { RedisSearchCacheAdapter } from './infrastructure/persistence/redis-search-cache.adapter';
+import { SearchProductsHandler } from './application/handlers/search-products.handler';
+import { PredictiveSearchHandler } from './application/handlers/predictive-search.handler';
+import { ProductSearchResolver } from './presentation/resolvers/product-search.resolver';
+import { ProductSearchController } from './presentation/rest/product-search.controller';
 
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single connection pool).
 @Module({
-  controllers: [CatalogAdminController],
+  controllers: [CatalogAdminController, ProductSearchController],
   providers: [
     PrismaCatalogRepository,
     CreateProductUseCase,
@@ -18,7 +24,12 @@ import { CatalogAdminController } from './presentation/rest/catalog-admin.contro
     GetProductBySlugUseCase,
     ListCatalogUseCase,
     CatalogResolver,
+    PrismaProductSearchRepository,
+    RedisSearchCacheAdapter,
+    SearchProductsHandler,
+    PredictiveSearchHandler,
+    ProductSearchResolver,
   ],
-  exports: [PrismaCatalogRepository, CreateProductUseCase, UpdateStockUseCase, GetProductBySlugUseCase, ListCatalogUseCase],
+  exports: [PrismaCatalogRepository, CreateProductUseCase, UpdateStockUseCase, GetProductBySlugUseCase, ListCatalogUseCase, PrismaProductSearchRepository, SearchProductsHandler, PredictiveSearchHandler],
 })
 export class CatalogModule {}

@@ -1,6 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 009 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 009 §5.1 — Product search repository port (DDD interface)
+// Canonical: apps/backend/src/modules/catalog/domain/repositories/product-search.repository.interface.ts
+import type { ProductFilterInput, ProductSearchResponse, PredictiveSuggestion } from '@repo/shared';
+
+export const PRODUCT_SEARCH_REPOSITORY = Symbol('PRODUCT_SEARCH_REPOSITORY');
+
+export interface IProductSearchRepository {
+  search(filter: ProductFilterInput): Promise<ProductSearchResponse>;
+  predictive(query: string, limit: number): Promise<PredictiveSuggestion[]>;
+}

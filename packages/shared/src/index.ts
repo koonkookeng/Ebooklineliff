@@ -5,3 +5,24 @@ export * from './schemas/identity.zod';
 export * from './schemas/zod-graphql-contracts';
 export * from './schemas/auth-contract';
 export * from './schemas/catalog.zod';
+export {
+  ProductSortByEnum,
+  ProductFilterInputSchema,
+  PredictiveSearchQuerySchema,
+  FacetCountSchema,
+  ProductSearchItemSchema,
+  ProductSearchResponseSchema,
+  PredictiveSuggestionSchema,
+  sanitizeSearchQuery,
+  searchCacheKey,
+  predictiveCacheKey,
+} from './schemas/product-search.schema';
+export type {
+  ProductSortBy,
+  ProductFilterInput,
+  PredictiveSearchQuery,
+  FacetCount,
+  ProductSearchItem,
+  ProductSearchResponse,
+  PredictiveSuggestion,
+} from './schemas/product-search.schema';

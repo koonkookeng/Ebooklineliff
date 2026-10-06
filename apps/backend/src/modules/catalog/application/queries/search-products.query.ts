@@ -1,6 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 009 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 009 §5.1 — SearchProducts CQRS query (DTO; validated at handler boundary)
+// Canonical: apps/backend/src/modules/catalog/application/queries/search-products.query.ts
+import type { ProductFilterInput } from '@repo/shared';
+
+export class SearchProductsQuery {
+  constructor(readonly filter: ProductFilterInput) {}
+}

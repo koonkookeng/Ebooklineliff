@@ -1,0 +1,80 @@
+# SSOT Phase 009 §3.2 — Product search GraphQL intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/product.graphql/schema.graphql
+# (legacy src/backend/api/graphql/schemas/product.graphql)
+
+enum ProductType {
+  PHYSICAL_BOOK
+  EBOOK
+  ELEARNING_COURSE
+  LIVE_CLASS
+  HYBRID_BUNDLE
+}
+
+enum ProductSortBy {
+  RELEVANCE
+  PRICE_ASC
+  PRICE_DESC
+  NEWEST
+  POPULARITY
+  RATING
+}
+
+input ProductFilterInput {
+  query: String
+  productTypes: [ProductType!]
+  categoryIds: [ID!]
+  minPrice: Float
+  maxPrice: Float
+  inStockOnly: Boolean
+  ratingMin: Float
+  sortBy: ProductSortBy
+  page: Int
+  limit: Int
+  cursor: String
+}
+
+type ProductSearchItem {
+  id: ID!
+  title: String!
+  slug: String!
+  coverImageUrl: String!
+  productType: ProductType!
+  price: Float!
+  discountPrice: Float
+  ratingAverage: Float!
+  reviewCount: Int!
+  isAvailable: Boolean!
+}
+
+type FacetCount {
+  facetName: String!
+  value: String!
+  count: Int!
+}
+
+type ProductSearchResult {
+  items: [ProductSearchItem!]!
+  facets: [FacetCount!]!
+  totalCount: Int!
+  hasNextPage: Boolean!
+  nextCursor: String
+}
+
+type PredictiveSuggestion {
+  id: ID!
+  title: String!
+  slug: String!
+  coverImageUrl: String!
+  productType: ProductType!
+  price: Float!
+  discountPrice: Float
+  ratingAverage: Float!
+  reviewCount: Int!
+  isAvailable: Boolean!
+  highlightSnippet: String
+}
+
+type Query {
+  searchProducts(filter: ProductFilterInput!): ProductSearchResult!
+  predictiveSearch(query: String!, limit: Int): [PredictiveSuggestion!]!
+}
