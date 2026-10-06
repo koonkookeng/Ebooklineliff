@@ -1,0 +1,29 @@
+# SSOT Phase 024 §3 — Service message intent layer (supplement; no new resolver surface)
+# Canonical: apps/backend/src/api/graphql/schemas/service-message.graphql/schema.graphql
+# Dispatch is queue-driven via LineServiceMessageService (REST/event seam); this SDL
+# pins the enum vocabulary shared with Zod + Prisma (Gate 1).
+
+enum ServiceMessageType {
+  ORDER_CONFIRMATION
+  PAYMENT_RECEIPT
+  EBOOK_GRANT_ACCESS
+  COURSE_ENROLLMENT
+  SHIPPING_TRACKING
+  AUTHENTICATION_OTP
+}
+
+enum DispatchStatus {
+  QUEUED
+  PROCESSING
+  DELIVERED
+  FAILED
+  FALLBACK_SENT
+}
+
+type ServiceMessageDeliveryStatus {
+  jobId: ID!
+  status: DispatchStatus!
+  deliveredAt: String
+  errorCode: String
+  costIncurred: Float!
+}

@@ -244,3 +244,21 @@ export type {
   HeaderDisplayMode,
   HeaderActionIcon,
 } from './schemas/header-contract';
+export {
+  ServiceMessageTypeEnum,
+  ServiceMessageDispatchPayloadSchema,
+  DispatchStatusEnum,
+  ServiceMessageDeliveryStatusSchema,
+  FlexCompileInputSchema,
+  FLEX_IMAGE_MAX_BYTES,
+  DISPATCH_MAX_RETRIES,
+  DISPATCH_BACKOFF_MS,
+  DISPATCH_CIRCUIT_THRESHOLD,
+} from './schemas/service-message-contract';
+export type {
+  ServiceMessageType,
+  ServiceMessageDispatchPayload,
+  DispatchStatus,
+  ServiceMessageDeliveryStatus,
+  FlexCompileInput,
+} from './schemas/service-message-contract';

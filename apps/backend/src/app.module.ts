@@ -2,6 +2,7 @@
 // Phase 017: WalletModule (Meb-Killer Credits). Phase 018: LibraryModule (My Library).
 // Phase 019: LineMessagingModule (transactional receipts; event-bound, core untouched).
 // Phase 023: HeaderModule (dynamic header title integrator + edge cache).
+// Phase 024: LineServiceMessageModule (zero-broadcast transactional dispatcher).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -17,8 +18,9 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { LibraryModule } from './modules/library/library.module';
 import { LineMessagingModule } from './modules/notification/line-messaging.module';
 import { HeaderModule } from './modules/header/header.module';
+import { LineServiceMessageModule } from './modules/line-service-message/line-service-message.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

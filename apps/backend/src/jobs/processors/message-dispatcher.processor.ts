@@ -1,6 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 024 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 024 — legacy jobs-path alias (filefolder inventory path).
+// Canonical implementation: apps/backend/src/modules/line-service-message/infrastructure/processors/message-dispatcher.processor.ts
+// This alias defines NO logic (single ownership avoids duplicate workers).
+export { MessageDispatcherProcessor } from '../../modules/line-service-message/infrastructure/processors/message-dispatcher.processor';
