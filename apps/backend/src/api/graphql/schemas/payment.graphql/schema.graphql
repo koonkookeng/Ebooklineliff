@@ -1,0 +1,19 @@
+# SSOT Phase 015 §3.2 — Payment verification status query (SDL supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/payment.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via PaymentResolver; the verify
+# MUTATION stays owned by OrderResolver (no duplicate field). The spec's
+# onEntitlementGranted subscription is deferred (no GraphQL pubsub infra;
+# clients poll this query or the promptpay status endpoints).
+
+type PaymentVerificationStatus {
+  orderId: ID!
+  orderNumber: String!
+  orderStatus: String!
+  paymentStatus: String!
+  transRef: String
+  grantedEntitlements: [EntitlementGrantResult!]!
+}
+
+type Query {
+  paymentVerificationStatus(orderId: ID!): PaymentVerificationStatus!
+}

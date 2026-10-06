@@ -129,3 +129,21 @@ export type {
   EasySlipResponse,
   SlipVerificationResponse,
 } from './schemas/slip-verification.schema';
+export {
+  SlipVerificationRequestSchema,
+  EasySlipBankDetailSchema,
+  EasySlipResponseDataSchema,
+  EasySlipVerifyResultSchema,
+  SlipAtomicResponseSchema,
+  OutboxEventTypeEnum,
+  SlipRetryJobSchema,
+} from './schemas/payment-slip.schema';
+export type {
+  SlipVerificationRequest as SlipAtomicRequest,
+  EasySlipBankDetail,
+  EasySlipResponseData,
+  EasySlipVerifyResult,
+  SlipAtomicResponse,
+  OutboxEventType,
+  SlipRetryJob,
+} from './schemas/payment-slip.schema';

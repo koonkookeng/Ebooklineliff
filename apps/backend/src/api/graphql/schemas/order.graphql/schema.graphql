@@ -1,7 +1,9 @@
-# SSOT Phase 012 §3.2 — Order/payment/entitlement GraphQL intent layer
+# SSOT Phase 012 §3.2 + Phase 015 §3.2 — Order/payment/entitlement intent layer
 # Canonical: apps/backend/src/api/graphql/schemas/order.graphql/schema.graphql
 # NOTE: legacy `createOrder(productIds)` (Phase 004, Apollo-wired) is untouched;
 # Phase 012 adds `createSmartOrder(input)` + `verifyPaymentSlip` + `smartOrder`.
+# Phase 015 enriches SlipVerificationResult (orderNumber, grant rows, timing)
+# and adds the paymentVerificationStatus query (see payment.graphql).
 
 enum OrderStatus {
   PENDING_PAYMENT
@@ -81,10 +83,21 @@ type SlipVerificationResult {
   success: Boolean!
   message: String!
   orderId: ID!
+  orderNumber: String!
   orderStatus: OrderStatus!
   paymentStatus: PaymentStatus!
   transRef: String
   entitlementsGranted: [ID!]!
+  grantedEntitlements: [EntitlementGrantResult!]!
+  processingTimeMs: Float!
+}
+
+type EntitlementGrantResult {
+  entitlementId: ID!
+  productId: ID!
+  productTitle: String!
+  productType: String!
+  grantedAt: String!
 }
 
 input OrderItemInput {

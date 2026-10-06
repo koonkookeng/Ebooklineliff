@@ -13,6 +13,9 @@ import { EasySlipVerifyAdapter } from '../payment/services/easyslip-verify.adapt
 import { EasySlipProvider } from '../payment/providers/easyslip.provider';
 import { SlipVerificationService } from '../payment/slip-verification.service';
 import { PaymentSlipController } from '../payment/slip-verification.controller';
+import { PaymentResolver } from '../../api/graphql/resolvers/payment.resolver';
+import { OrderAtomicService } from './services/order-atomic.service';
+import { EntitlementService } from '../entitlement/services/entitlement.service';
 import { EntitlementGrantService } from '../entitlement/services/entitlement-grant.service';
 import { OrderResolver } from './presentation/order.resolver';
 import { CheckoutController } from './presentation/rest/checkout.controller';
@@ -24,7 +27,7 @@ import { SlipUploadController } from './presentation/rest/slip-upload.controller
 @Module({
   imports: [CartModule, PromptPayModule],
   controllers: [CheckoutController, SlipVerifyController, SlipUploadController, PaymentSlipController],
-  providers: [CheckoutService, SlipVerifyService, SlipUploadService, EasySlipVerifyAdapter, EasySlipProvider, SlipVerificationService, EntitlementGrantService, OrderResolver],
-  exports: [CheckoutService, SlipVerifyService, SlipUploadService, SlipVerificationService, EntitlementGrantService],
+  providers: [CheckoutService, SlipVerifyService, SlipUploadService, EasySlipVerifyAdapter, EasySlipProvider, SlipVerificationService, EntitlementGrantService, EntitlementService, OrderAtomicService, OrderResolver, PaymentResolver],
+  exports: [CheckoutService, SlipVerifyService, SlipUploadService, SlipVerificationService, EntitlementGrantService, EntitlementService, OrderAtomicService],
 })
 export class OrderModule {}

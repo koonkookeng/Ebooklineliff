@@ -448,6 +448,8 @@ model Order {
   paymentSlip    PaymentSlip?
   // Phase 013: 1:1 dynamic QR lifecycle (fractional cent + TTL expiry)
   promptPayTransaction PromptPayTransaction?
+  // Phase 015: transactional outbox (LINE flex / affiliate / AI consumers)
+  outboxEvents   OutboxEvent[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -477,6 +479,8 @@ model PaymentSlip {
   slipImageUrl     String
   transRef         String?   @unique
   sendingBank      String?
+  // Phase 015: receiving bank name (spec §4.1; additive)
+  receivingBank    String?
   receivingAccount String?
   amount           Decimal   @db.Decimal(10, 2)
   verifiedAt       DateTime?
@@ -486,6 +490,25 @@ model PaymentSlip {
   createdAt        DateTime  @default(now())
 
   @@index([slipSha256])
+}
+
+// Atomic Phase 015 §4.1: transactional outbox (canonical schema.md shape)
+// Durability record for post-commit fan-out (LINE flex / affiliate / AI).
+// The dispatcher publishes to `stream:outbox:<eventType>` then marks processed.
+model OutboxEvent {
+  id            String    @id @default(uuid())
+  aggregateType String // e.g. "ORDER"
+  aggregateId   String // orderId
+  orderId       String?
+  order         Order?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  eventType     String // "PAYMENT_VERIFIED_ENTITLEMENT_GRANTED" | "SLIP_VERIFY_RETRY"
+  payload       Json
+  isProcessed   Boolean   @default(false)
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([isProcessed, createdAt])
+  @@index([aggregateType, aggregateId])
 }
 
 // Atomic Phase 013: dynamic PromptPay QR lifecycle (spec §4.1, canonical schema.md)

@@ -1,4 +1,6 @@
 // SSOT Phase 012 §3.2 — Order GraphQL presentation (smart checkout + slip verify)
+// Phase 015 §3.2: verify payload enriched (orderNumber, processingTimeMs,
+// grantedEntitlement rows) — additive, existing fields unchanged.
 // Canonical: apps/backend/src/modules/order/presentation/order.resolver.ts
 // NOTE: `createOrder(productIds)` is owned by the Phase-004 OrderPaymentResolver
 // (wired in Apollo gateway) — this module exposes `createSmartOrder(input)` to avoid
@@ -8,6 +10,7 @@ import { BadRequestException, UnauthorizedException, UseGuards } from '@nestjs/c
 import { CreateOrderInputSchema, VerifySlipInputSchema } from '@repo/shared';
 import { CheckoutService } from '../services/checkout.service';
 import { SlipVerifyService } from '../services/slip-verify.service';
+import { EntitlementService, type EntitlementGrantResult } from '../../entitlement/services/entitlement.service';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import type { GraphQLContext } from '../../../api/graphql/context/graphql-context.factory';
 
@@ -34,15 +37,27 @@ class CreateSmartOrderPayloadGql {
   @Field() expiresAt!: string;
 }
 
+@ObjectType('EntitlementGrantResult')
+class EntitlementGrantResultGql {
+  @Field(() => ID) entitlementId!: string;
+  @Field(() => ID) productId!: string;
+  @Field() productTitle!: string;
+  @Field() productType!: string;
+  @Field() grantedAt!: string;
+}
+
 @ObjectType('SlipVerificationResult')
 class SlipVerificationResultGql {
   @Field() success!: boolean;
   @Field() message!: string;
   @Field(() => ID) orderId!: string;
+  @Field() orderNumber!: string;
   @Field() orderStatus!: string;
   @Field() paymentStatus!: string;
   @Field({ nullable: true }) transRef!: string | null;
   @Field(() => [ID]) entitlementsGranted!: string[];
+  @Field(() => [EntitlementGrantResultGql]) grantedEntitlements!: EntitlementGrantResult[];
+  @Field(() => Float) processingTimeMs!: number;
 }
 
 function actor(ctx: GraphQLContext): { userId: string } {
@@ -56,6 +71,7 @@ export class OrderResolver {
   constructor(
     private readonly checkout: CheckoutService,
     private readonly slipVerify: SlipVerifyService,
+    private readonly entitlements: EntitlementService,
   ) {}
 
   @Mutation('createSmartOrder')
@@ -79,13 +95,23 @@ export class OrderResolver {
 
   @Mutation('verifyPaymentSlip')
   @UseGuards(JwtAuthGuard)
-  verifyPaymentSlip(
+  async verifyPaymentSlip(
     @Args('orderId') orderId: string,
     @Args('slipImageUrl') slipImageUrl: string,
     @Context() ctx: GraphQLContext,
   ) {
     const parsed = VerifySlipInputSchema.safeParse({ orderId, slipImageUrl });
     if (!parsed.success) throw new BadRequestException('Invalid slip verification payload');
-    return this.slipVerify.verify(parsed.data.orderId, parsed.data.slipImageUrl, actor(ctx).userId);
+    const { userId } = actor(ctx);
+    const result = await this.slipVerify.verify(parsed.data.orderId, parsed.data.slipImageUrl, userId);
+    const order = await this.checkout.getOrder(userId, parsed.data.orderId).catch(() => null) as unknown as {
+      orderNumber: string;
+    } | null;
+    return {
+      ...result,
+      orderNumber: order?.orderNumber ?? '',
+      grantedEntitlements: await this.entitlements.listGrantResults(userId, result.entitlementsGranted),
+      processingTimeMs: result.processedInMs ?? 0,
+    };
   }
 }

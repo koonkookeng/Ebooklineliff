@@ -19,6 +19,7 @@ import {
 import { EasySlipVerifyAdapter, SlipUnverifiableError } from '../../payment/services/easyslip-verify.adapter';
 import { EntitlementGrantService } from '../../entitlement/services/entitlement-grant.service';
 import type { PromptPayGuardService } from '../../payment/services/promptpay-guard.service';
+import type { OrderAtomicService } from './order-atomic.service';
 
 const LOCK_TTL_SEC = 10;
 const SLA_MS = 1000;
@@ -47,6 +48,8 @@ export class SlipVerifyService {
     // experimentalDecorators; Nest resolves via design:paramtypes metadata).
     // OrderModule imports PromptPayModule so runtime resolution succeeds.
     private readonly guard?: PromptPayGuardService,
+    // Phase 015: outbox + retry drain (same-module, optional for test compat).
+    private readonly atomic?: OrderAtomicService,
   ) {}
 
   async verify(
@@ -87,6 +90,9 @@ export class SlipVerifyService {
       } catch (e) {
         await this.markFailed(orderId, 'PENDING_SLIP');
         await this.guard?.recordSlipFailure(actorUserId).catch(() => undefined);
+        // Phase 015 §10: provider outage → background retry within 30s
+        // (order stays retryable instead of failing the buyer).
+        await this.atomic?.enqueueSlipRetry({ orderId, slipImageUrl, actorUserId }).catch(() => undefined);
         throw new BadRequestException(e instanceof SlipUnverifiableError ? e.message : 'Slip verification unavailable');
       }
       // Phase 014: definitive user-side failures land on FAILED (retry with a
@@ -116,37 +122,61 @@ export class SlipVerifyService {
         throw new ConflictException('สลิปรายการนี้เคยถูกใช้งานในระบบแล้ว (SLIP_ALREADY_USED)');
       }
 
-      const granted = await this.prisma.$transaction(async (tx) => {
-        const db = tx as unknown as {
-          paymentSlip: { upsert: (args: unknown) => Promise<unknown> };
-          order: { update: (args: unknown) => Promise<unknown> };
-          promptPayTransaction: { updateMany: (args: unknown) => Promise<unknown> };
-        };
-        await db.paymentSlip.upsert({
-          where: { orderId },
-          create: {
-            orderId, slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
-            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
-            apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
-          },
-          update: {
-            slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
-            receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
-            apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
-          },
+      // Phase 015 §5.2: P2002 on transRef @unique is the backstop race guard
+      // behind the Redis setnx claim — map it to 409, never 500.
+      let granted: string[];
+      try {
+        granted = await this.prisma.$transaction(async (tx) => {
+          const db = tx as unknown as {
+            paymentSlip: { upsert: (args: unknown) => Promise<unknown> };
+            order: { update: (args: unknown) => Promise<unknown> };
+            promptPayTransaction: { updateMany: (args: unknown) => Promise<unknown> };
+          };
+          await db.paymentSlip.upsert({
+            where: { orderId },
+            create: {
+              orderId, slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
+              receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
+              apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
+            },
+            update: {
+              slipImageUrl, transRef: slip.transRef, sendingBank: slip.senderBank,
+              receivingAccount: slip.receiverAccount, amount: netAmount, verifiedAt: new Date(),
+              apiRawResponse: slip.raw as never, slipSha256: opts?.slipSha256 ?? null,
+            },
+          });
+          await db.order.update({ where: { id: orderId }, data: { orderStatus: 'COMPLETED', paymentStatus: 'VERIFIED' } });
+          // Phase 013: close the QR lifecycle in the same atomic transaction.
+          await db.promptPayTransaction
+            .updateMany({ where: { orderId, status: 'PENDING' }, data: { status: 'PAID' } })
+            .catch(() => null);
+          const grantedIds = await this.grants.grantForOrder(
+            tx as never,
+            order.userId,
+            order.orderItems.map((i) => i.productId),
+            'FULL_PURCHASE',
+          );
+          // Phase 015 §5.2 table row D: outbox durability record in-txn.
+          // Best-effort (drift/event failure must not fail the payment).
+          if (this.atomic) {
+            await this.atomic.recordGrantCompleted(tx, {
+              success: true,
+              message: 'Slip verified and access unlocked successfully.',
+              orderId,
+              orderStatus: 'COMPLETED',
+              transactionRef: slip.transRef,
+              entitlementsGranted: grantedIds,
+              processingTimeMs: Date.now() - t0,
+            }).catch(() => undefined);
+          }
+          return grantedIds;
         });
-        await db.order.update({ where: { id: orderId }, data: { orderStatus: 'COMPLETED', paymentStatus: 'VERIFIED' } });
-        // Phase 013: close the QR lifecycle in the same atomic transaction.
-        await db.promptPayTransaction
-          .updateMany({ where: { orderId, status: 'PENDING' }, data: { status: 'PAID' } })
-          .catch(() => null);
-        return this.grants.grantForOrder(
-          tx as never,
-          order.userId,
-          order.orderItems.map((i) => i.productId),
-          'FULL_PURCHASE',
-        );
-      });
+      } catch (e) {
+        if ((e as { code?: string }).code === 'P2002') {
+          throw new ConflictException('สลิปนี้เคยถูกใช้งานในระบบแล้ว ไม่สามารถใช้ซ้ำได้');
+        }
+        throw e;
+      }
 
       const latencyMs = Date.now() - t0;
       await this.emit('stream:payment:slip-verified', { orderId, userId: order.userId, latencyMs, transRef: slip.transRef });

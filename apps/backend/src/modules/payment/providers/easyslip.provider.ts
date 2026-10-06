@@ -5,7 +5,11 @@
 // superseded by repo policy). Every response is Zod-validated; the provider
 // throws typed errors and never returns partial data.
 import { Injectable } from '@nestjs/common';
-import { EasySlipResponseSchema, type EasySlipResponse } from '@repo/shared';
+import {
+  EasySlipResponseSchema,
+  EasySlipVerifyResultSchema,
+  type EasySlipResponse,
+} from '@repo/shared';
 
 export class SlipUnverifiableError extends Error {
   constructor(message: string) {
@@ -87,13 +91,31 @@ export class EasySlipProvider {
 
 /**
  * Normalizes a provider response into the spec §3.1 shape. Accepts the
- * documented flat shape directly; tolerates the legacy nested EasySlip API
- * shape by mapping it onto the spec contract (missing bank/date degrade to
- * 'UNKNOWN'/now rather than failing production traffic).
+ * documented flat shape directly; validates the legacy nested vendor shape
+ * via EasySlipVerifyResultSchema (§3.1) and maps it onto the spec contract;
+ * a final triple-extraction tolerates truncated vendor payloads (missing
+ * bank/date degrade to 'UNKNOWN'/now rather than failing traffic).
  */
 function toSpecShape(raw: unknown): EasySlipResponse | null {
   const parsed = EasySlipResponseSchema.safeParse(raw);
   if (parsed.success && parsed.data.status === 200 && parsed.data.data) return parsed.data;
+  const legacy = EasySlipVerifyResultSchema.safeParse(raw);
+  if (legacy.success && legacy.data.status === 200 && legacy.data.data) {
+    const data = legacy.data.data;
+    const candidate = {
+      status: 200,
+      data: {
+        transRef: data.transRef,
+        sendingBank: data.sender.account.bank.name,
+        receivingBank: data.receiver.account.bank.name,
+        receivingAccount: data.receiver.account.bank.account,
+        amount: { value: data.amount.amount },
+        date: data.date,
+      },
+    };
+    const rechecked = EasySlipResponseSchema.safeParse(candidate);
+    if (rechecked.success && rechecked.data.data) return rechecked.data;
+  }
   const root = raw as {
     status?: number;
     data?: {
