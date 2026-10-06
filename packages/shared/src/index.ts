@@ -4,3 +4,4 @@ export * from './schemas/infra-env.schema';
 export * from './schemas/identity.zod';
 export * from './schemas/zod-graphql-contracts';
 export * from './schemas/auth-contract';
+export * from './schemas/catalog.zod';

@@ -28,6 +28,14 @@ enum ProductType {
   HYBRID_BUNDLE
 }
 
+// Atomic Phase 008: catalog lifecycle (DRAFT -> PUBLISHED -> ARCHIVED/SUSPENDED)
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SUSPENDED
+}
+
 enum ContentAccessType {
   FULL_PURCHASE
   SUBSCRIPTION
@@ -88,16 +96,19 @@ model User {
 // NOTE: `users` back-relation intentionally omitted (one-sided relation) until the User.tenantId
 // backfill migration lands; AuthService binds tenantId at auto-provision time.
 model Tenant {
-  id            String   @id @default(uuid())
-  slug          String   @unique
+  id            String    @id @default(uuid())
+  slug          String    @unique
   name          String
-  domain        String?  @unique
+  domain        String?   @unique
   lineChannelId String?
   logoUrl       String?
-  primaryColor  String   @default("#00C300")
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  primaryColor  String    @default("#00C300")
+  isActive      Boolean   @default(true)
+  // Phase 008: dynamic branding tokens (--primary-color, etc.) + catalog ownership
+  customCssVars Json?
+  products      Product[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   User          User[]
 
   @@index([slug])
@@ -166,53 +177,173 @@ model UserDeviceSession {
 }
 
 model Product {
-  id             String          @id @default(uuid())
+  id             String               @id @default(uuid())
+  // Phase 008: optional multi-tenant ownership (expand-contract; required after backfill)
+  tenantId       String?
+  tenant         Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sellerId       String
   title          String
-  slug           String          @unique
-  description    String          @db.Text
+  slug           String               @unique
+  description    String               @db.Text
   coverImageUrl  String
   productType    ProductType
-  price          Decimal         @db.Decimal(10, 2)
-  discountPrice  Decimal?        @db.Decimal(10, 2)
-  isPublished    Boolean         @default(false)
+  status         ProductStatus        @default(DRAFT)
+  price          Decimal              @db.Decimal(10, 2)
+  discountPrice  Decimal?             @db.Decimal(10, 2)
+  isPublished    Boolean              @default(false)
   physicalDetail PhysicalDetail?
   ebookDetail    EbookDetail?
   courseDetail   CourseDetail?
+  // Hybrid Bundle self-referential many-to-many (parent bundle -> child products)
+  bundleParents  BundleItem[]         @relation("ChildProducts")
+  bundleChildren BundleItem[]         @relation("ParentBundle")
+  categories     ProductCategoryMap[]
+  tags           ProductTagMap[]
   entitlements   Entitlement[]
   orderItems     OrderItem[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
+  deletedAt      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
+  @@index([tenantId])
   @@index([sellerId])
   @@index([productType])
+  @@index([status, isPublished])
+  @@index([slug])
 }
 
 model PhysicalDetail {
-  id          String  @id @default(uuid())
-  productId   String  @unique
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  isbn        String?
-  weightGrams Int
-  stockQty    Int     @default(0)
-  sku         String  @unique
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  isbn        String?  @unique
+  weightGrams Int      @default(0)
+  lengthCm    Decimal? @db.Decimal(6, 2)
+  widthCm     Decimal? @db.Decimal(6, 2)
+  heightCm    Decimal? @db.Decimal(6, 2)
+  stockQty    Int      @default(0)
+  reservedQty Int      @default(0)
+  sku         String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model EbookDetail {
-  id            String  @id @default(uuid())
-  productId     String  @unique
-  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id            String         @id @default(uuid())
+  productId     String         @unique
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   totalPages    Int
-  previewPages  Int     @default(10)
+  previewPages  Int            @default(10)
   storagePathR2 String
-  fileHash      String
+  fileHash      String         @db.VarChar(64)
+  chapters      EbookChapter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EbookChapter {
+  id            String      @id @default(uuid())
+  ebookId       String
+  ebook         EbookDetail @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+  chapterIndex  Int
+  title         String
+  chunkCount    Int
+  chunkR2Prefix String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ebookId, chapterIndex])
 }
 
 model CourseDetail {
-  id         String  @id @default(uuid())
-  productId  String  @unique
-  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  totalHours Float   @default(0.0)
+  id                 String          @id @default(uuid())
+  productId          String          @unique
+  product            Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  totalHours         Float           @default(0.0)
+  certificateEnabled Boolean         @default(true)
+  dripContentEnabled Boolean         @default(false)
+  sections           CourseSection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseSection {
+  id           String         @id @default(uuid())
+  courseId     String
+  course       CourseDetail   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionOrder Int
+  title        String
+  lessons      CourseLesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, sectionOrder])
+}
+
+model CourseLesson {
+  id          String        @id @default(uuid())
+  sectionId   String
+  section     CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  lessonOrder Int
+  title       String
+  videoHlsUrl String
+  durationSec Int           @default(0)
+  isPreview   Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sectionId, lessonOrder])
+}
+
+model BundleItem {
+  id             String  @id @default(uuid())
+  parentBundleId String
+  parentBundle   Product @relation("ParentBundle", fields: [parentBundleId], references: [id], onDelete: Cascade)
+  childProductId String
+  childProduct   Product @relation("ChildProducts", fields: [childProductId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([parentBundleId, childProductId])
+}
+
+model Category {
+  id        String               @id @default(uuid())
+  name      String
+  slug      String               @unique
+  products  ProductCategoryMap[]
+  createdAt DateTime             @default(now())
+}
+
+model ProductCategoryMap {
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+}
+
+model Tag {
+  id       String          @id @default(uuid())
+  name     String          @unique
+  products ProductTagMap[]
+}
+
+model ProductTagMap {
+  productId String
+  tagId     String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
 }
 
 model Entitlement {

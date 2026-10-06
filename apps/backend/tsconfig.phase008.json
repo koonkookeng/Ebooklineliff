@@ -1,0 +1,33 @@
+{
+  "extends": "../../packages/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "noEmit": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": { "@repo/shared": ["../../packages/shared/src"] }
+  },
+  "include": [
+    "src/main.ts",
+    "src/app.module.ts",
+    "src/worker.ts",
+    "src/modules/health/**/*.ts",
+    "src/common/**/*.ts",
+    "src/config/**/*.ts",
+    "src/guards/**/*.ts",
+    "src/middleware/**/*.ts",
+    "src/infra/database/prisma.service.ts",
+    "src/infra/redis/redis-cluster.service.ts",
+    "src/infra/apollo/**/*.ts",
+    "src/infra/infra.module.ts",
+    "src/modules/identity/**/*.ts",
+    "src/modules/auth/**/*.ts",
+    "src/modules/catalog/**/*.ts",
+    "src/api/graphql/resolvers/**/*.ts",
+    "src/api/graphql/context/**/*.ts",
+    "src/api/graphql/schema/**/*.ts",
+    "src/api/graphql/apollo-server.module.ts",
+    "src/api/webhooks/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "test"]
+}

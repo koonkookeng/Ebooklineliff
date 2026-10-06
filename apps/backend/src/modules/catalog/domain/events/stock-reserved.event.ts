@@ -1,6 +1,17 @@
-/**
- * AUTO-SCAFFOLD Phase 008 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 008 §5.1/§7.1 — stock reservation event (drives low-stock alerts downstream)
+// Canonical: apps/backend/src/modules/catalog/domain/events/stock-reserved.event.ts
+export interface StockReservedEvent {
+  event: 'stock.reserved';
+  productId: string;
+  qty: number;
+  availableAfter: number;
+  occurredAt: string;
+}
+
+export function stockReservedEvent(input: {
+  productId: string;
+  qty: number;
+  availableAfter: number;
+}): StockReservedEvent {
+  return { event: 'stock.reserved', ...input, occurredAt: new Date().toISOString() };
+}
