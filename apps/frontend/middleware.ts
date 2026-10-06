@@ -7,8 +7,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const TENANTS: Record<string, { primary: string; logo: string; font: string }> = {
-  default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif' },
+const TENANTS: Record<string, { primary: string; logo: string; font: string; brand: string }> = {
+  default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif', brand: 'Ebook LIFF' },
 };
 
 const SESSION_COOKIE = '__Host-next-auth.session-token';
@@ -61,6 +61,7 @@ function applyTenantBranding(res: NextResponse, tenant: string): void {
   const theme = TENANTS[tenant] ?? TENANTS.default;
   res.headers.set('x-tenant', tenant);
   res.headers.set('x-primary-color', theme.primary);
+  res.headers.set('x-brand-name', theme.brand);
   res.cookies.set('tenant-theme', JSON.stringify(theme), { path: '/', maxAge: 3600 });
 }
 

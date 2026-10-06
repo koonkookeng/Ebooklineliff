@@ -56,6 +56,11 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.del(key);
   }
 
+  // Phase 006 §7.1 — auth analytics events (best-effort; consumers subscribe to `auth-events`)
+  async publish(channel: string, message: string): Promise<void> {
+    await this.client.publish(channel, message);
+  }
+
   // Phase 004 §4.1 — entitlement flag cache (DB fallback on miss)
   async getEntitlementFlag(key: string): Promise<string | null> {
     return await this.client.get(key);

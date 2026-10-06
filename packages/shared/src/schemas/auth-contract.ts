@@ -64,6 +64,11 @@ export const AuthUserSchema = z.object({
   email: z.string().nullable(),
   lineUserId: z.string().nullable(),
   role: z.string().min(1),
+  // Phase 006 enrichment (optional => Phase 005 clients unaffected)
+  tenantId: z.string().uuid().optional(),
+  walletBalance: z.number().nonnegative().optional(),
+  rewardPoints: z.number().int().nonnegative().optional(),
+  affiliateCode: z.string().optional(),
 });
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
@@ -78,3 +83,61 @@ export const RefreshRotationInputSchema = z.object({
   refreshToken: z.string().uuid(),
 });
 export type RefreshRotationInput = z.infer<typeof RefreshRotationInputSchema>;
+
+// ---- Phase 006 §3.1: LIFF seamless-auth domain (additive; Phase 005 names unchanged) ----
+
+// NOTE: UserRoleEnum is owned by ./identity.zod (Phase 003 SSOT) — re-exported here under the
+// Phase 006 §3.1 vocabulary (zero-redundant policy, single source of truth).
+import { UserRoleEnum } from './identity.zod';
+export { UserRoleEnum };
+export type UserRole = z.infer<typeof UserRoleEnum>;
+
+export const DeviceInfoSchema = z.object({
+  os: z.string().max(64).optional(),
+  browser: z.string().max(64).optional(),
+  ipAddress: z.string().ip().optional(),
+});
+export type DeviceInfo = z.infer<typeof DeviceInfoSchema>;
+
+export const LiffAuthInputSchema = z.object({
+  idToken: z.string().min(10, 'LINE ID Token is required'),
+  tenantId: z.string().uuid('Invalid Tenant ID format'),
+  referralCode: z.string().min(1).max(64).optional(),
+  deviceInfo: DeviceInfoSchema.optional(),
+});
+export type LiffAuthInput = z.infer<typeof LiffAuthInputSchema>;
+
+export const DecodedLineTokenSchema = z.object({
+  iss: z.string().min(1),
+  sub: z.string().min(1, 'LINE User ID (sub) is missing'),
+  aud: z.string().min(1),
+  exp: z.number().int(),
+  iat: z.number().int(),
+  nonce: z.string().optional(),
+  name: z.string().optional(),
+  picture: z.string().url().optional(),
+  email: z.string().email().optional(),
+});
+export type DecodedLineToken = z.infer<typeof DecodedLineTokenSchema>;
+
+export const UserProfileAuthSchema = z.object({
+  id: z.string().uuid(),
+  lineUserId: z.string().min(1),
+  displayName: z.string().min(1),
+  avatarUrl: z.string().nullable(),
+  email: z.string().nullable(),
+  role: UserRoleEnum,
+  tenantId: z.string().uuid(),
+  walletBalance: z.number().nonnegative(),
+  rewardPoints: z.number().int().nonnegative(),
+  affiliateCode: z.string().min(1),
+  createdAt: z.string().min(1),
+});
+export type UserProfileAuth = z.infer<typeof UserProfileAuthSchema>;
+
+export const AuthTokenResponseSchema = z.object({
+  accessToken: z.string().min(10),
+  expiresIn: z.number().int().positive(),
+  user: UserProfileAuthSchema,
+});
+export type AuthTokenResponse = z.infer<typeof AuthTokenResponseSchema>;

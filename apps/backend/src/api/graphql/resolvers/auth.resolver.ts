@@ -1,8 +1,8 @@
-// SSOT Phase 005 §3.2 — Auth GraphQL intents (LINE LIFF / Web OAuth / refresh / logout)
+// SSOT Phase 005 §3.2 + Phase 006 §3.2 — Auth intents (flat args, input-object, me, logout aliases)
 // Delegates to AuthService (single logic point); Phase 004 accessToken alias retained.
-import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Query, Context } from '@nestjs/graphql';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { AuthenticateLineLiffInputSchema } from '@repo/shared';
+import { AuthenticateLineLiffInputSchema, LiffAuthInputSchema } from '@repo/shared';
 import { AuthService } from '../../../modules/auth/services/auth.service';
 import type { GraphQLContext } from '../context/graphql-context.factory';
 
@@ -13,6 +13,16 @@ interface AuthUserShape {
   email: string | null;
   lineUserId: string | null;
   role: string;
+  tenantId?: string;
+  walletBalance?: number;
+  rewardPoints?: number;
+  affiliateCode?: string;
+}
+
+interface LiffInputArg {
+  idToken: string;
+  tenantId: string;
+  referralCode?: string;
 }
 
 function toPayload(
@@ -53,7 +63,15 @@ export class AuthResolver {
     @Args('idToken') idToken?: string,
     @Args('accessToken') accessToken?: string,
     @Args('referralCode') referralCode?: string,
+    @Args('input') input?: LiffInputArg,
   ) {
+    // Phase 006 object form: routes to the tenant-gated auto-provisioning engine
+    if (input) {
+      const parsedInput = LiffAuthInputSchema.safeParse(input);
+      if (!parsedInput.success) throw new BadRequestException('Invalid LIFF authentication input');
+      const result = await this.auth.authenticateLiffUser(parsedInput.data, reqMeta(ctx));
+      return toPayload(result, parsedInput.data.tenantId);
+    }
     const parsed = AuthenticateLineLiffInputSchema.safeParse({
       idToken,
       accessToken,
@@ -100,8 +118,30 @@ export class AuthResolver {
 
   @Mutation('logoutSession')
   async logoutSession(@Context() ctx: GraphQLContext): Promise<boolean> {
+    return this.doLogout(ctx);
+  }
+
+  @Mutation('logout')
+  async logout(@Context() ctx: GraphQLContext): Promise<boolean> {
+    return this.doLogout(ctx);
+  }
+
+  private async doLogout(ctx: GraphQLContext): Promise<boolean> {
     const sessionId = ctx.user?.sessionId ?? ctx.req.user?.sessionId;
     if (!sessionId) throw new UnauthorizedException('Missing active session');
     return this.auth.logoutSession(sessionId, reqMeta(ctx));
+  }
+
+  @Query('authMe')
+  async authMe(@Context() ctx: GraphQLContext) {
+    const userId = ctx.user?.id ?? ctx.req.user?.id;
+    if (!userId) throw new UnauthorizedException('Missing active session');
+    const profile = await this.auth.getMyProfile(userId);
+    if (!profile) throw new UnauthorizedException('User profile not found');
+    return {
+      ...profile,
+      walletBalance: profile.walletBalance,
+      rewardPoints: profile.rewardPoints,
+    };
   }
 }

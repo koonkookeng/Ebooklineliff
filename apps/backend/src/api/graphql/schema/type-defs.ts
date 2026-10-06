@@ -20,6 +20,8 @@ export const typeDefs = /* GraphQL */ `
   type Query {
     getEbookPageChunk(productId: ID!, pageNumber: Int!): EbookChunkPayload!
     me: MePayload!
+    # Phase 006 §3.2 — full auth profile for the verified session owner
+    authMe: UserAuthPayload!
   }
 
   type MePayload {
@@ -28,14 +30,16 @@ export const typeDefs = /* GraphQL */ `
   }
 
   type Mutation {
-    # Intent: Authenticate via LINE LIFF One-Click Access (accessToken = deprecated Phase 004 alias of idToken)
-    authenticateLineLiff(idToken: String, accessToken: String, tenantId: ID!, referralCode: String): AuthPayload!
+    # Intent: Authenticate via LINE LIFF One-Click Access (accessToken = deprecated Phase 004 alias of idToken;
+    # input = Phase 006 object form for Mini App clients; both route to the same atomic engine)
+    authenticateLineLiff(idToken: String, accessToken: String, tenantId: ID!, referralCode: String, input: LiffAuthInput): AuthPayload!
     # Intent: Authenticate via Web OAuth 2.1 (LINE / Google)
     authenticateWebOAuth(provider: AuthProvider!, code: String!, state: String!, redirectUri: String!, tenantId: ID!): AuthPayload!
     # Intent: Refresh Access Token with Rotatable Refresh Token (refresh token via __Host cookie)
     refreshAccessToken: AuthPayload!
-    # Intent: Logout and Invalidate Active Session
+    # Intent: Logout and Invalidate Active Session (logout = Phase 006 alias)
     logoutSession: Boolean!
+    logout: Boolean!
     createOrder(productIds: [ID!]!): OrderPayload!
   }
 
@@ -47,6 +51,36 @@ export const typeDefs = /* GraphQL */ `
     lineUserId: String
     role: String!
     tenantId: ID!
+    # Phase 006 enrichment (same User row)
+    walletBalance: Float
+    rewardPoints: Int
+    affiliateCode: String
+  }
+
+  # Phase 006 §3.2 — LIFF seamless-auth intent layer (canonical shape for Mini App clients)
+  input LiffAuthInput {
+    idToken: String!
+    tenantId: ID!
+    referralCode: String
+  }
+
+  type UserAuthPayload {
+    id: ID!
+    lineUserId: String!
+    displayName: String!
+    avatarUrl: String
+    email: String
+    role: String!
+    tenantId: ID!
+    walletBalance: Float!
+    rewardPoints: Int!
+    affiliateCode: String!
+  }
+
+  type AuthTokenResponse {
+    accessToken: String!
+    expiresIn: Int!
+    user: UserAuthPayload!
   }
 
   type AuthPayload {
