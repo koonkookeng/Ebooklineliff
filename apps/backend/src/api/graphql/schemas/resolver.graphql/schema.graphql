@@ -1,0 +1,39 @@
+# SSOT Phase 025 §3.2 — Resolver intent layer (supplement; supplements code-first ResolverResolver)
+# Canonical: apps/backend/src/api/graphql/schemas/resolver.graphql/schema.graphql
+# Pins the enum + object vocabulary shared with Zod (Gate 1) + Prisma ProductType (Gate 1).
+
+enum DeepLinkTargetType {
+  EBOOK
+  ELEARNING_COURSE
+  PHYSICAL_PRODUCT
+  HYBRID_BUNDLE
+  PROMOTION_CAMPAIGN
+  AFFILIATE_DISCOVERY
+}
+
+enum ResolverEnvironment {
+  LINE_IOS
+  LINE_ANDROID
+  EXTERNAL_MOBILE_IOS
+  EXTERNAL_MOBILE_ANDROID
+  DESKTOP_WEB
+}
+
+type DynamicRouteResolved {
+  success: Boolean!
+  targetUrl: String!
+  tenantId: String!
+  targetType: String!
+  targetId: String!
+  affiliateCode: String
+  couponCode: String
+  requiresAuth: Boolean!
+}
+
+extend type Query {
+  resolveShortCode(shortCode: String!, env: String): DynamicRouteResolved!
+}
+
+extend type Mutation {
+  generatePermanentDeepLink(input: String!): String!
+}

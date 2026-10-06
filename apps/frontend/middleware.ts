@@ -74,11 +74,48 @@ export async function middleware(req: NextRequest) {
   const tenantHint = param ?? (TENANTS[sub] ? sub : 'default');
   const { pathname } = req.nextUrl;
 
+  // Phase 025 §6.1: permanent mini-app scheme resolver (public link entry).
+  // /r/:shortCode and /resolve bypass auth (resolution itself is public; the
+  // entitlement gatekeeper + requiresAuth enforce access after dispatch).
+  // Non-LINE mobile browsers get a native LINE handoff (line://app/<liffId>);
+  // LINE in-app + desktop fall through to the LIFF resolver route with tenant.
+  if (pathname.startsWith('/r/') || pathname === '/resolve' || pathname.startsWith('/resolve/')) {
+    const res = NextResponse.next();
+    applyTenantBranding(res, tenantHint);
+    if (pathname.startsWith('/r/')) {
+      const shortCode = pathname.split('/')[2] ?? '';
+      const ua = req.headers.get('user-agent') ?? '';
+      const isLineApp = /Line/i.test(ua);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+      if (!isLineApp && isMobile && shortCode) {
+        const theme = TENANTS[tenantHint] ?? TENANTS.default;
+        const nativeScheme = `line://app/${theme.liffId}?liff.state=${encodeURIComponent(`/resolve?code=${shortCode}`)}`;
+        // Explicit 302 (not NextResponse.redirect): custom `line://` schemes
+        // bypass framework URL validation; mobile OS honors Location directly.
+        const redirect = new NextResponse(null, {
+          status: 302,
+          headers: { Location: nativeScheme, 'Cache-Control': 'no-store' },
+        });
+        applyTenantBranding(redirect, tenantHint);
+        return redirect;
+      }
+      const rewriteUrl = req.nextUrl.clone();
+      rewriteUrl.pathname = '/resolve';
+      if (shortCode) rewriteUrl.searchParams.set('code', shortCode);
+      rewriteUrl.searchParams.set('tenant', tenantHint);
+      const rewritten = NextResponse.rewrite(rewriteUrl);
+      applyTenantBranding(rewritten, tenantHint);
+      return rewritten;
+    }
+    return res;
+  }
+
   // Public routes bypass (branding only) — Phase 010: storefront home, PDP and
   // catalog discovery stay public (BDD: user opens LIFF storefront unauthenticated).
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
+    pathname.startsWith('/api/v1/resolver/') ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

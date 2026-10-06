@@ -949,3 +949,65 @@ model NotificationLog {
   @@index([status])
   @@index([createdAt])
 }
+
+// Atomic Phase 025 §4.1: resolver, deep-linking & affiliate attribution.
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models; targetId stays String so
+// PHYSICAL_BOOK/EBOOK/COURSE/BUNDLE ids all resolve through one table.
+model ShortLink {
+  id             String         @id @default(uuid())
+  tenantId       String
+  shortCode      String         @unique
+  // RISK_CALL deviation from Phase 025 §4.1 (`targetType ProductType`): the
+  // DeepLinkTargetType vocabulary (EBOOK, ELEARNING_COURSE, PHYSICAL_PRODUCT,
+  // HYBRID_BUNDLE, PROMOTION_CAMPAIGN, AFFILIATE_DISCOVERY) is a superset of
+  // Prisma ProductType (PHYSICAL_BOOK vs PHYSICAL_PRODUCT + 2 non-product
+  // targets). A String column stores the exact Zod-enforced vocabulary; the
+  // repository + use-case validate against DeepLinkTargetTypeEnum at the
+  // boundary so DB/GraphQL responses round-trip without lossy mapping.
+  targetType     String
+  targetId       String
+  customPath     String
+  affiliateCode  String?
+  campaignId     String?
+  couponCode     String?
+  signature      String
+  clickCount     Int            @default(0)
+  maxRedemptions Int?
+  expiresAt      DateTime?
+  isActive       Boolean        @default(true)
+  clickLogs      DeepLinkLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([shortCode])
+  @@index([tenantId, targetId])
+}
+
+model DeepLinkLog {
+  id             String    @id @default(uuid())
+  shortLinkId    String
+  shortLink      ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+  environment    String
+  ipAddress      String
+  userAgent      String
+  referer        String?
+  convertedOrder Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  @@index([shortLinkId])
+  @@index([createdAt])
+}
+
+model AffiliateAttribution {
+  id            String   @id @default(uuid())
+  userId        String
+  affiliateCode String
+  tenantId      String
+  touchpointUrl String
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, tenantId])
+  @@index([affiliateCode])
+}
