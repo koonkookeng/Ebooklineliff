@@ -13,10 +13,13 @@ import { SearchProductsHandler } from './application/handlers/search-products.ha
 import { PredictiveSearchHandler } from './application/handlers/predictive-search.handler';
 import { ProductSearchResolver } from './presentation/resolvers/product-search.resolver';
 import { ProductSearchController } from './presentation/rest/product-search.controller';
+import { StorefrontService } from './services/storefront.service';
+import { StorefrontResolver } from './resolvers/storefront.resolver';
+import { StorefrontController } from './presentation/rest/storefront.controller';
 
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single connection pool).
 @Module({
-  controllers: [CatalogAdminController, ProductSearchController],
+  controllers: [CatalogAdminController, ProductSearchController, StorefrontController],
   providers: [
     PrismaCatalogRepository,
     CreateProductUseCase,
@@ -29,7 +32,9 @@ import { ProductSearchController } from './presentation/rest/product-search.cont
     SearchProductsHandler,
     PredictiveSearchHandler,
     ProductSearchResolver,
+    StorefrontService,
+    StorefrontResolver,
   ],
-  exports: [PrismaCatalogRepository, CreateProductUseCase, UpdateStockUseCase, GetProductBySlugUseCase, ListCatalogUseCase, PrismaProductSearchRepository, SearchProductsHandler, PredictiveSearchHandler],
+  exports: [PrismaCatalogRepository, CreateProductUseCase, UpdateStockUseCase, GetProductBySlugUseCase, ListCatalogUseCase, PrismaProductSearchRepository, SearchProductsHandler, PredictiveSearchHandler, StorefrontService],
 })
 export class CatalogModule {}

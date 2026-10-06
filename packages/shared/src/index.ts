@@ -26,3 +26,19 @@ export type {
   ProductSearchResponse,
   PredictiveSuggestion,
 } from './schemas/product-search.schema';
+export {
+  StorefrontBannerSchema,
+  CategoryQuickLinkSchema,
+  ProductCardSchema,
+  ProductDetailSchema,
+  StorefrontFeedSchema,
+  effectivePrice,
+  discountPercent,
+} from './schemas/storefront.schema';
+export type {
+  StorefrontBanner,
+  CategoryQuickLink,
+  ProductCard,
+  ProductDetail,
+  StorefrontFeed,
+} from './schemas/storefront.schema';

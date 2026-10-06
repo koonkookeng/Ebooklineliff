@@ -72,12 +72,18 @@ export async function middleware(req: NextRequest) {
   const tenantHint = param ?? (TENANTS[sub] ? sub : 'default');
   const { pathname } = req.nextUrl;
 
-  // Public routes bypass (branding only)
+  // Public routes bypass (branding only) — Phase 010: storefront home, PDP and
+  // catalog discovery stay public (BDD: user opens LIFF storefront unauthenticated).
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
+    pathname.startsWith('/api/search') ||
+    pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||
-    pathname.startsWith('/login/')
+    pathname.startsWith('/login/') ||
+    pathname === '/' ||
+    pathname.startsWith('/pdp/') ||
+    pathname.startsWith('/catalog')
   ) {
     const res = NextResponse.next();
     applyTenantBranding(res, tenantHint);

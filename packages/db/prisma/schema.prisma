@@ -209,6 +209,9 @@ model Product {
   orderItems     OrderItem[]
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
+  // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
+  isFeatured     Boolean              @default(false)
+  soldCount      Int                  @default(0)
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
@@ -220,6 +223,25 @@ model Product {
   @@index([price])
   @@index([ratingAverage])
   @@index([isPublished])
+  @@index([sellerId, isPublished])
+  @@index([productType, isPublished])
+  @@index([isFeatured, isPublished])
+  @@index([soldCount])
+}
+
+// Phase 010: tenant hero banners for storefront carousel (R2-hosted, zero-egress CDN)
+model Banner {
+  id           String   @id @default(uuid())
+  tenantId     String
+  title        String
+  imageUrl     String
+  targetUrl    String   @default("/")
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, isActive])
 }
 
 model PhysicalDetail {

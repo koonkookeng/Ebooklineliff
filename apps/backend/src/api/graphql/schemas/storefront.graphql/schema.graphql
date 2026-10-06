@@ -1,0 +1,95 @@
+# SSOT Phase 010 §3.2 — Storefront feed & PDP GraphQL intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/storefront.graphql/schema.graphql
+# (legacy src/backend/modules/catalog/* storefront intent)
+
+type StorefrontBanner {
+  id: ID!
+  title: String!
+  imageUrl: String!
+  targetUrl: String!
+  displayOrder: Int!
+}
+
+type CategoryQuickLink {
+  id: ID!
+  name: String!
+  slug: String!
+  productCount: Int!
+}
+
+type ProductCard {
+  id: ID!
+  title: String!
+  slug: String!
+  coverImageUrl: String!
+  productType: String!
+  price: Float!
+  discountPrice: Float
+  rating: Float!
+  soldCount: Int!
+  isBestseller: Boolean!
+}
+
+type CourseLessonCard {
+  id: ID!
+  title: String!
+  durationSec: Int!
+  isPreview: Boolean!
+}
+
+type CourseSectionCard {
+  id: ID!
+  title: String!
+  lessons: [CourseLessonCard!]!
+}
+
+type CourseDetailCard {
+  totalHours: Float!
+  totalLessons: Int!
+  sections: [CourseSectionCard!]!
+}
+
+type PhysicalDetailCard {
+  isbn: String
+  weightGrams: Int!
+  stockQty: Int!
+}
+
+type EbookDetailCard {
+  totalPages: Int!
+  previewPages: Int!
+}
+
+type ProductDetail {
+  id: ID!
+  title: String!
+  slug: String!
+  coverImageUrl: String!
+  productType: String!
+  price: Float!
+  discountPrice: Float
+  rating: Float!
+  soldCount: Int!
+  isBestseller: Boolean!
+  description: String!
+  sellerId: ID!
+  sellerName: String!
+  sellerAvatarUrl: String
+  physicalDetail: PhysicalDetailCard
+  ebookDetail: EbookDetailCard
+  courseDetail: CourseDetailCard
+}
+
+type StorefrontFeedPayload {
+  banners: [StorefrontBanner!]!
+  categories: [CategoryQuickLink!]!
+  featuredProducts: [ProductCard!]!
+  bestsellerProducts: [ProductCard!]!
+  newReleases: [ProductCard!]!
+}
+
+type Query {
+  getStorefrontFeed(tenantId: String!): StorefrontFeedPayload!
+  getProductDetailBySlug(slug: String!, tenantId: String!): ProductDetail!
+  getPredictiveSearch(query: String!, tenantId: String!): [ProductCard!]!
+}
