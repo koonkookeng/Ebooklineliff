@@ -1,8 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 023 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 023 §5.1 — Header input DTO (Zod SSOT re-export; NestJS validation via schemas)
+import { DynamicHeaderInputSchema, DynamicHeaderPayloadSchema } from '@repo/shared';
+
+export const HeaderInputSchema = DynamicHeaderInputSchema;
+export const HeaderPayloadSchema = DynamicHeaderPayloadSchema;
+export type { DynamicHeaderInput, DynamicHeaderPayload } from '@repo/shared';

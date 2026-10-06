@@ -1,4 +1,6 @@
 // SSOT Phase 021 Task 5 — LIFF segment layout (tenant-aware LiffProvider wrapper)
+// Phase 023 §9: DynamicHeaderIntegrator mounted above segment content (null-safe:
+// renders nothing until a page sets header context).
 // Canonical: apps/frontend/app/(liff)/layout.tsx
 // - Reads ?tenant= for multi-tenant LIFF ID resolution (middleware injects x-liff-id)
 // - Dynamic import with ssr:false equivalent: provider is 'use client' + dynamic SDK import
@@ -7,6 +9,7 @@
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { LiffProvider } from './providers/liff-provider';
+import { DynamicHeaderIntegrator } from '../../components/header/DynamicHeaderIntegrator';
 
 function resolveLiffId(tenant: string): string {
   if (typeof window !== 'undefined') {
@@ -25,6 +28,7 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
   const liffId = resolveLiffId(tenantId);
   return (
     <LiffProvider liffId={liffId} tenantId={tenantId}>
+      <DynamicHeaderIntegrator />
       {children}
     </LiffProvider>
   );

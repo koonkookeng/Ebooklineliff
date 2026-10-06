@@ -232,3 +232,15 @@ export type {
   SyncEnvironmentPayload,
   LayoutMode,
 } from './schemas/environment-contract';
+export {
+  HeaderDisplayModeEnum,
+  HeaderActionIconSchema,
+  DynamicHeaderPayloadSchema,
+  DynamicHeaderInputSchema,
+} from './schemas/header-contract';
+export type {
+  DynamicHeaderPayload,
+  DynamicHeaderInput,
+  HeaderDisplayMode,
+  HeaderActionIcon,
+} from './schemas/header-contract';

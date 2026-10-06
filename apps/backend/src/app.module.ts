@@ -1,6 +1,7 @@
 // SSOT Phase 001+003+004+008+011+012+013 — NestJS root module
 // Phase 017: WalletModule (Meb-Killer Credits). Phase 018: LibraryModule (My Library).
 // Phase 019: LineMessagingModule (transactional receipts; event-bound, core untouched).
+// Phase 023: HeaderModule (dynamic header title integrator + edge cache).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -15,8 +16,9 @@ import { PromptPayModule } from './modules/payment/promptpay.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { LibraryModule } from './modules/library/library.module';
 import { LineMessagingModule } from './modules/notification/line-messaging.module';
+import { HeaderModule } from './modules/header/header.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

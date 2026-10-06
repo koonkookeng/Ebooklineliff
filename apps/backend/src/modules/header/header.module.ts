@@ -1,8 +1,13 @@
-/**
- * AUTO-SCAFFOLD Phase 023 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 023 §5.1 — Header integration module
+// Canonical: apps/backend/src/modules/header/header.module.ts
+// (legacy src/backend/modules/header/header.module.ts)
+// NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
 import { Module } from '@nestjs/common';
-@Module({})
-export class HeaderModuleModule {}
+import { HeaderService } from './header.service';
+import { HeaderResolver } from './header.resolver';
+
+@Module({
+  providers: [HeaderService, HeaderResolver],
+  exports: [HeaderService],
+})
+export class HeaderModule {}

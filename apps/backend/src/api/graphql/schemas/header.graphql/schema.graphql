@@ -1,0 +1,45 @@
+# SSOT Phase 023 §3.2 — Dynamic header intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/header.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via HeaderResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod header-contract.ts <-> Prisma HeaderConfig <-> here).
+
+enum HeaderDisplayMode {
+  DEFAULT_STORE
+  EBOOK_READER
+  ELEARNING_LESSON
+  LIVE_STREAM
+  CHECKOUT_FLOW
+}
+
+type HeaderActionIcon {
+  id: ID!
+  iconName: String!
+  actionIntent: String!
+}
+
+type DynamicHeaderContext {
+  tenantId: ID!
+  displayMode: HeaderDisplayMode!
+  mainTitle: String!
+  subtitle: String
+  progressPercentage: Float
+  brandColor: String!
+  logoUrl: String
+  showBackButton: Boolean!
+  backToUrl: String
+  actionIcons: [HeaderActionIcon!]!
+}
+
+input DynamicHeaderInput {
+  productId: ID!
+  chapterOrLessonId: String
+  customTitle: String
+}
+
+extend type Query {
+  getHeaderContext(productId: ID!, chapterOrLessonId: String): DynamicHeaderContext!
+}
+
+extend type Mutation {
+  updateHeaderContext(input: DynamicHeaderInput!): DynamicHeaderContext!
+}

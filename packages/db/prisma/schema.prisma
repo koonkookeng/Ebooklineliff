@@ -215,6 +215,8 @@ model Product {
   cartItems      CartItem[]
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
+  // Atomic Phase 023: per-product header overrides (dynamic title/branding)
+  headerConfig   HeaderConfig?
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
   isFeatured     Boolean                     @default(false)
   soldCount      Int                         @default(0)
@@ -852,4 +854,32 @@ model UserDeviceMetric {
   @@index([environment])
   @@index([tenantId])
   @@index([userId])
+}
+
+// Atomic Phase 023: dynamic header overrides per product + tenant branding fallback
+model HeaderConfig {
+  id                 String   @id @default(uuid())
+  productId          String   @unique
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customHeaderTitle  String?
+  overrideBrandColor String?
+  showProgress       Boolean  @default(true)
+  metadataJson       Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model TenantBranding {
+  id              String   @id @default(uuid())
+  tenantSlug      String   @unique
+  defaultTitle    String
+  logoUrl         String
+  primaryColor    String   @default("#0284C7")
+  headerStyleJson Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantSlug])
 }
