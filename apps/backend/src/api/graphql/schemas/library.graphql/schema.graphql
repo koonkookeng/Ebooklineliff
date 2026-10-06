@@ -1,0 +1,58 @@
+# SSOT Phase 018 §3.2 — My Library intent layer (entitlement assets + gate)
+# Canonical: apps/backend/src/api/graphql/schemas/library.graphql/schema.graphql
+# Runtime is code-first via LibraryResolver; this SDL is the contract supplement
+# (SSOT sync gate: library-contract.ts <-> Prisma Entitlement/progress <-> here).
+
+enum AssetType {
+  EBOOK
+  ELEARNING_COURSE
+  HYBRID_BUNDLE
+  LIVE_CLASS
+}
+
+enum AssetSort {
+  RECENTLY_ACCESSED
+  TITLE_ASC
+  PURCHASE_DATE_DESC
+  PROGRESS_ASC
+}
+
+type DigitalAsset {
+  id: ID!
+  productId: ID!
+  title: String!
+  coverImageUrl: String!
+  assetType: AssetType!
+  accessType: String!
+  expiresAt: String
+  progressPercentage: Float!
+  lastAccessedPage: Int
+  lastAccessedTimeSec: Int
+  totalUnits: Int!
+  completedUnits: Int!
+  lastAccessedAt: String!
+  isDownloadAvailableOffline: Boolean!
+}
+
+type MyLibraryPayload {
+  assets: [DigitalAsset!]!
+  totalCount: Int!
+  currentPage: Int!
+  totalPages: Int!
+  hasMore: Boolean!
+}
+
+type LibraryGateResult {
+  hasAccess: Boolean!
+}
+
+type Query {
+  myLibraryAssets(
+    assetType: String
+    searchQuery: String
+    sortBy: String
+    page: Int
+    limit: Int
+  ): MyLibraryPayload!
+  libraryGate(productId: ID!): LibraryGateResult!
+}

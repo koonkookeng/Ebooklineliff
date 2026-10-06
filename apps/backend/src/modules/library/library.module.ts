@@ -1,8 +1,17 @@
-/**
- * AUTO-SCAFFOLD Phase 018 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 018 §5.1 — library bounded-context module (DDD wiring)
+// Canonical: apps/backend/src/modules/library/library.module.ts
+// (legacy src/backend/modules/library/library.module.ts)
 import { Module } from '@nestjs/common';
-@Module({})
-export class LibraryModuleModule {}
+import { LibraryService } from './services/library.service';
+import { AssetFormatterService } from './services/asset-formatter.service';
+import { LibraryCacheRepository } from './repositories/library-cache.repository';
+import { LibraryResolver } from './resolvers/library.resolver';
+import { LibraryController } from './controllers/library.controller';
+
+// NOTE: PrismaService + RedisClusterService come from global InfraModule.
+@Module({
+  controllers: [LibraryController],
+  providers: [LibraryService, AssetFormatterService, LibraryCacheRepository, LibraryResolver],
+  exports: [LibraryService, LibraryCacheRepository],
+})
+export class LibraryModule {}

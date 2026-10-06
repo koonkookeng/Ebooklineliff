@@ -1,4 +1,5 @@
 // SSOT Phase 001+003+004+008+011+012+013 — NestJS root module
+// Phase 017: WalletModule (Meb-Killer Credits). Phase 018: LibraryModule (My Library).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -11,8 +12,9 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { PromptPayModule } from './modules/payment/promptpay.module';
 import { WalletModule } from './modules/wallet/wallet.module';
+import { LibraryModule } from './modules/library/library.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

@@ -155,6 +155,18 @@ export {
 } from './schemas/slip-picker.schema';
 export type { SlipPickerSource, SlipPickerAnalyticsEvent } from './schemas/slip-picker.schema';
 export {
+  AssetTypeEnum,
+  AssetSortEnum,
+  ContentAccessTypeEnum,
+  DigitalAssetSchema,
+  MyLibraryQueryInputSchema,
+  MyLibraryPayloadSchema,
+  LIBRARY_CACHE_TTL_SEC,
+  libraryCacheKey,
+  libraryGateKey,
+} from './schemas/library-contract';
+export type { AssetType, AssetSort, DigitalAsset, MyLibraryQueryInput, MyLibraryPayload } from './schemas/library-contract';
+export {
   LedgerTypeEnum,
   WalletTopupInputSchema,
   OneClickBuyInputSchema,

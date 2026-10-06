@@ -396,10 +396,14 @@ model Entitlement {
   user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt  DateTime          @default(now())
+  // Atomic Phase 018: library sort/filter indexing (RECENTLY_ACCESSED / access-type tabs)
+  updatedAt  DateTime          @updatedAt
 
   @@unique([userId, productId])
   @@index([userId])
   @@index([productId])
+  @@index([userId, accessType])
+  @@index([createdAt])
 }
 
 // Atomic Phase 012: order lifecycle + payment verification states (expand-contract)
@@ -645,14 +649,17 @@ model SystemHealth {
 }
 
 model EbookReadingProgress {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ebookId   String
-  lastPage  Int      @default(1)
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ebookId    String
+  lastPage   Int      @default(1)
+  // Atomic Phase 018: total pages snapshot for library progress % (no join needed)
+  totalPages Int      @default(1)
+  updatedAt  DateTime @updatedAt
 
   @@unique([userId, ebookId])
+  @@index([userId, updatedAt])
 }
 
 model CourseLearningProgress {
@@ -665,6 +672,7 @@ model CourseLearningProgress {
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, lessonId])
+  @@index([userId, updatedAt])
 }
 
 // Atomic Phase 011: smart hybrid cart (digital/physical split) + carrier rate table.

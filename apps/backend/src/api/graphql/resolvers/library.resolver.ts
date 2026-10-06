@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 018 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class LibraryResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 018 — legacy resolver alias (filefolder inventory path).
+// Canonical implementation: apps/backend/src/modules/library/resolvers/library.resolver.ts
+// This alias intentionally defines NO GraphQL fields (single-field ownership
+// avoids code-first schema collisions); it re-exports the type for imports.
+export { LibraryResolver } from '../../../modules/library/resolvers/library.resolver';
