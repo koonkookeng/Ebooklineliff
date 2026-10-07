@@ -165,6 +165,12 @@ export class R2StorageService {
 
   /** Signed GET object as text (chunk/manifest fetch, BDD Scenario 1). */
   async getObjectText(objectKey: string): Promise<string> {
+    const buf = await this.getObjectBuffer(objectKey);
+    return buf.toString('utf-8');
+  }
+
+  /** Signed GET object as bytes (Phase 043: raw video parts / key material). */
+  async getObjectBuffer(objectKey: string): Promise<Buffer> {
     const cfg = this.config();
     const { amzDate, dateStamp } = amzDates();
     const payloadHash = sha256Hex('');
@@ -178,15 +184,20 @@ export class R2StorageService {
       },
     });
     if (!res.ok) throw new Error(`R2 GET ${res.status} for ${objectKey}`);
-    return res.text();
+    return Buffer.from(await res.arrayBuffer());
   }
 
   /** Signed PUT object (chunk/segment upload, BDD Scenario 3). */
   async putObject(objectKey: string, body: string | Buffer, contentType: string): Promise<{ eTag: string }> {
+    const payload = typeof body === 'string' ? body : body.toString('utf-8');
+    return this.putObjectBuffer(objectKey, Buffer.from(payload, 'utf-8'), contentType);
+  }
+
+  /** Binary-safe signed PUT (Phase 043: .ts segments / key files). */
+  async putObjectBuffer(objectKey: string, body: Buffer, contentType: string): Promise<{ eTag: string }> {
     const cfg = this.config();
     const { amzDate, dateStamp } = amzDates();
-    const payload = typeof body === 'string' ? body : body.toString('utf-8');
-    const payloadHash = sha256Hex(payload);
+    const payloadHash = createHash('sha256').update(body).digest('hex');
     const url = `${this.endpointFor(cfg.accountId)}/${cfg.bucket}/${objectKey}`;
     const res = await fetch(url, {
       method: 'PUT',
@@ -196,7 +207,7 @@ export class R2StorageService {
         'x-amz-date': amzDate,
         'x-amz-content-sha256': payloadHash,
       },
-      body: payload,
+      body: new Uint8Array(body),
     });
     if (!res.ok) {
       this.logger.warn(`R2 PUT failed: ${res.status} for ${objectKey}`);

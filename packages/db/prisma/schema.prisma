@@ -794,6 +794,72 @@ model SecurityViolationLog {
   @@index([violationType])
 }
 
+// Atomic Phase 043: video lifecycle vocabulary (§4.1 verbatim)
+enum VideoStatus {
+  PENDING_UPLOAD
+  UPLOADING
+  TRANSCODING_QUEUED
+  TRANSCODING_PROCESSING
+  READY
+  FAILED
+}
+
+enum VideoResolution {
+  RES_1080P
+  RES_720P
+  RES_480P
+  RES_360P
+}
+
+// Atomic Phase 043: video asset registry (§4.1 verbatim)
+model VideoAsset {
+  id               String      @id @default(uuid())
+  lessonId         String      @unique
+  originalFileName String
+  fileSizeBytes    BigInt
+  durationSec      Int         @default(0)
+  status           VideoStatus @default(PENDING_UPLOAD)
+  rawStorageR2Key  String
+  hlsMasterR2Key   String?
+  thumbnailR2Key   String?
+  errorMessage     String?     @db.Text
+
+  renditions     VideoRendition[]
+  encryptionKeys VideoKeyRotation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([lessonId])
+}
+
+// Atomic Phase 043: per-rendition HLS playlists (§4.1 verbatim)
+model VideoRendition {
+  id            String          @id @default(uuid())
+  videoId       String
+  videoAsset    VideoAsset      @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  resolution    VideoResolution
+  bitrateBps    Int
+  playlistR2Key String
+  segmentPrefix String
+  createdAt     DateTime        @default(now())
+
+  @@unique([videoId, resolution])
+}
+
+// Atomic Phase 043: AES-128 per-lesson key rotation (§4.1 verbatim)
+model VideoKeyRotation {
+  id           String     @id @default(uuid())
+  videoId      String
+  videoAsset   VideoAsset @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  keySecretHex String
+  keyIvHex     String
+  createdAt    DateTime   @default(now())
+
+  @@index([videoId])
+}
+
 model CourseLearningProgress {
   id          String   @id @default(uuid())
   userId      String

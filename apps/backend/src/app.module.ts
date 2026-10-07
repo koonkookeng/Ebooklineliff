@@ -20,6 +20,7 @@
 // Phase 040: ReaderModule (entitled reader service + chunk/progress REST + GQL).
 // Phase 041: reader controls ride ReaderModule (bookmarks/highlights/preferences).
 // Phase 042: WatermarkModule (forensic seed issuance + tamper audit + GQL/REST).
+// Phase 043: StreamModule (upload presign + transcode queue + HLS delivery).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -53,8 +54,9 @@ import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { ChunkCacheModule } from './modules/reader/cache/chunk-cache.module';
 import { ReaderModule } from './modules/reader/reader.module';
 import { WatermarkModule } from './modules/watermark/watermark.module';
+import { StreamModule } from './modules/stream/stream.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
