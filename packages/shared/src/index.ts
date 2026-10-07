@@ -767,3 +767,24 @@ export type {
   LessonStreamState,
   BeaconProgress,
 } from './schemas/progress-sync.schema';
+export {
+  QuizTypeEnum,
+  QuizOptionSchema,
+  InVideoQuizDetailSchema,
+  SubmitQuizAnswerInputSchema,
+  QuizEvaluationResultSchema,
+  QuizCheckpointSchema,
+  QuizAttemptEventSchema,
+  sanitizeCheckpoint,
+  isChoiceCorrect,
+  normalizeShortAnswer,
+} from './schemas/quiz-contract';
+export type {
+  QuizType,
+  QuizOption,
+  InVideoQuizDetail,
+  SubmitQuizAnswerInput,
+  QuizEvaluationResult,
+  QuizCheckpoint,
+  QuizAttemptEvent,
+} from './schemas/quiz-contract';

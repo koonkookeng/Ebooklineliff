@@ -1,8 +1,10 @@
-// SSOT Phase 045 Task 5 — LIFF lesson route (stream state + player composition)
+// SSOT Phase 045 Task 5 + Phase 047 Task 5 — LIFF lesson route
 // Canonical: apps/frontend/app/(liff)/course/[courseId]/lesson/[lessonId]/page.tsx
 // - 5-state machine: LIFF_INIT (splash) → LOADING (lesson-state) →
 //   IDLE/SUCCESS (player + resume + watermark) / ERROR (entitlement/network
 //   + retry). Heartbeat posts watchedSec + isCompleted every 5s.
+// - Phase 047: checkpoints load with state; lessons carrying quizzes render
+//   the pause-lock HlsQuizPlayer, others keep the standard player.
 // - Tenant accent/logo arrive via query params (library-page precedent).
 // - Zero new deps.
 'use client';
@@ -10,7 +12,9 @@
 import { Suspense, use, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { HlsVideoPlayer } from '../../../../../../components/stream/HlsVideoPlayer';
+import { HlsQuizPlayer, type QuizCheckpointProp } from '../../../../../../components/player/HlsQuizPlayer';
 import { fetchLessonState, reportLessonHeartbeat } from '../../../../../../lib/stream/lesson-stream-client';
+import { fetchCheckpoints } from '../../../../../../lib/quiz/quiz-client';
 import type { LessonStreamPayload } from '@repo/shared';
 
 type LessonPageState = 'LIFF_INIT' | 'LOADING' | 'IDLE' | 'SUCCESS' | 'ERROR';
@@ -20,6 +24,7 @@ function LessonInner({ lessonId }: { lessonId: string }) {
   const accent = params.get('color') ?? '#059669';
   const [state, setState] = useState<LessonPageState>('LIFF_INIT');
   const [payload, setPayload] = useState<LessonStreamPayload | null>(null);
+  const [quizzes, setQuizzes] = useState<QuizCheckpointProp[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -27,10 +32,19 @@ function LessonInner({ lessonId }: { lessonId: string }) {
     let cancelled = false;
     setState('LOADING');
     setError(null);
-    fetchLessonState(lessonId)
-      .then((data) => {
+    Promise.all([fetchLessonState(lessonId), fetchCheckpoints(lessonId).catch(() => [])])
+      .then(([data, checkpoints]) => {
         if (cancelled) return;
         setPayload(data);
+        setQuizzes(
+          (checkpoints as Array<{ id: string; timestampSec: number; question: string; quizType: string; options: Array<{ id: string; optionText: string; optionOrder: number }> }>).map((q) => ({
+            id: q.id,
+            timestampSec: q.timestampSec,
+            question: q.question,
+            quizType: q.quizType,
+            options: q.options,
+          })),
+        );
         setState('IDLE');
       })
       .catch((e: unknown) => {
@@ -68,6 +82,11 @@ function LessonInner({ lessonId }: { lessonId: string }) {
         </button>
       </div>
     );
+  }
+
+  if (quizzes.length > 0) {
+    const authed = `${payload.hlsManifestUrl}${payload.hlsManifestUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(payload.signedEdgeToken)}`;
+    return <HlsQuizPlayer hlsStreamUrl={authed} lessonId={payload.lessonId} quizzes={quizzes} />;
   }
 
   return (

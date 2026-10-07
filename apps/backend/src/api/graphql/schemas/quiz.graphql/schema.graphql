@@ -1,0 +1,46 @@
+# SSOT Phase 047 §3.2 — Quiz intent layer (checkpoints + secure submit)
+# Canonical: apps/backend/src/api/graphql/schemas/quiz.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via QuizResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod quiz-contract.ts <-> Prisma LessonQuiz/QuizOption/QuizAttempt <-> here).
+# Gate 4: InVideoQuizCheckpoint carries NO answer keys — ever.
+
+type QuizOptionPayload {
+  id: ID!
+  optionText: String!
+  optionOrder: Int!
+}
+
+type InVideoQuizCheckpoint {
+  id: ID!
+  lessonId: ID!
+  timestampSec: Int!
+  question: String!
+  quizType: String!
+  options: [QuizOptionPayload!]!
+  explanationHint: String
+}
+
+type QuizEvaluationResult {
+  success: Boolean!
+  isCorrect: Boolean!
+  earnedScore: Float!
+  explanation: String
+  aiHint: String
+  nextSegmentToken: String
+}
+
+input SubmitQuizAnswerInput {
+  quizId: ID!
+  lessonId: ID!
+  selectedOptionIds: [ID!]!
+  shortAnswerText: String
+  playbackTimeSec: Float!
+}
+
+extend type Query {
+  getLessonInVideoQuizzes(lessonId: ID!): [InVideoQuizCheckpoint!]!
+}
+
+extend type Mutation {
+  submitInVideoQuizAnswer(input: SubmitQuizAnswerInput!): QuizEvaluationResult!
+}

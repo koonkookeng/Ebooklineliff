@@ -82,6 +82,8 @@ model User {
   cart              Cart?
   readingProgress   EbookReadingProgress[]
   learningProgress  CourseLearningProgress[]
+  // Atomic Phase 047: in-video quiz attempts
+  quizAttempts      QuizAttempt[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -1684,11 +1686,58 @@ model LessonQuiz {
   question    String       @db.Text
   optionsJson Json
   answerKey   String
+  // Atomic Phase 047: in-video checkpoint expansion (all defaulted; legacy rows stay valid)
+  timestampSec    Int       @default(0)
+  quizType        QuizType  @default(SINGLE_CHOICE)
+  passScore       Float     @default(100.0)
+  maxRetries      Int       @default(0)
+  explanation     String?   @db.Text
+  aiPromptContext String?   @db.Text
+  options         QuizOption[]
+  attempts        QuizAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([lessonId])
+  @@index([lessonId, timestampSec])
+}
+
+// Atomic Phase 047: quiz answer options (§4.1 verbatim)
+model QuizOption {
+  id          String     @id @default(uuid())
+  quizId      String
+  quiz        LessonQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  optionText  String     @db.Text
+  isCorrect   Boolean    @default(false)
+  optionOrder Int        @default(0)
+
+  @@index([quizId])
+}
+
+// Atomic Phase 047: per-user attempts (§4.1 verbatim)
+model QuizAttempt {
+  id            String     @id @default(uuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId        String
+  quiz          LessonQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  isPassed      Boolean    @default(false)
+  selectedOpts  String[]
+  shortAnswer   String?    @db.Text
+  scoreObtained Float      @default(0.0)
+  attemptCount  Int        @default(1)
+  createdAt     DateTime   @default(now())
+
+  @@index([userId, quizId])
+}
+
+// Atomic Phase 047: quiz kind vocabulary (§4.1 verbatim)
+enum QuizType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
 }
 
 // Atomic Phase 038 Task 1: book pipeline job + chunk/text records (verbatim canonical).
