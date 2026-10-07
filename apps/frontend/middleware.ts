@@ -141,6 +141,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/tenant/theme' ||
     // Phase 033: cold-start version check carries no auth (versions only).
     pathname === '/api/v1/version/check' ||
+    // Phase 034: OA public config for logged-out LIFF opens (no secrets).
+    pathname === '/api/v1/line-oa/config' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

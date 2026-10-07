@@ -1,0 +1,26 @@
+# SSOT Phase 034 §3.2 — LINE OA friendship intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/line-oa.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via LineOAResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod line-oa-contract.ts <-> Prisma User/TenantConfig/LineOAFriendshipLog <-> here).
+
+type LineOAFriendshipPayload {
+  isOAFriend: Boolean!
+  lineOaBasicId: String!
+  lineOaQrCodeUrl: String!
+  updatedAt: String!
+}
+
+input LineAuthWithOAInput {
+  idToken: String!
+  accessToken: String!
+  tenantId: ID!
+  isOAFriend: Boolean!
+}
+
+extend type Query {
+  getLineOAFriendshipStatus(tenantId: ID!, lineUserId: String!): LineOAFriendshipPayload!
+}
+
+extend type Mutation {
+  syncLineOAFriendship(tenantId: ID!, lineUserId: String!, isOAFriend: Boolean!): Boolean!
+}

@@ -12,6 +12,7 @@
 // Phase 031: KeepAliveModule (viewport keep-alive + cross-device state sync).
 // Phase 032: PermissionModule (device permission audit + reverse geocoding).
 // Phase 033: VersionModule (auto-update check + device fleet log).
+// Phase 034: LineOAModule (OA config/friendship sync) + LineWebhooksModule (follow/unfollow).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -37,8 +38,10 @@ import { TenantThemeModule } from './modules/tenant/tenant-theme.module';
 import { KeepAliveModule } from './modules/keep-alive/keep-alive.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { VersionModule } from './modules/version/version.module';
+import { LineOAModule } from './modules/line-oa/line-oa.module';
+import { LineWebhooksModule } from './webhooks/line-webhooks.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

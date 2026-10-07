@@ -481,3 +481,23 @@ export type {
   ClientDeviceLog,
   LatestRelease,
 } from './schemas/version-contract';
+export {
+  BotPromptModeEnum,
+  LineOAFriendshipStatusSchema,
+  LineAuthWithOAPromptInputSchema,
+  LineWebhookEventSchema,
+  LineOAPublicConfigSchema,
+  OA_EVENT_CHANNEL,
+  OA_BOT_PROMPT_DEFAULT,
+  OA_FRIEND_CACHE_TTL_MS,
+  oaFriendCacheKey,
+  oaAddFriendUrl,
+  oaQrImageUrl,
+} from './schemas/line-oa-contract';
+export type {
+  BotPromptMode,
+  LineOAFriendshipStatus,
+  LineAuthWithOAPromptInput,
+  LineWebhookEvent,
+  LineOAPublicConfig,
+} from './schemas/line-oa-contract';

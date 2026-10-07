@@ -100,12 +100,18 @@ model User {
   // Atomic Phase 032: permission audit trail + district-level location cache
   permissionAudits    PermissionAuditLog[]
   locationCache       UserLocationCache?
+  // Atomic Phase 034: LINE OA friendship flag + audit trail
+  isOAFriend            Boolean               @default(false)
+  oaFriendshipUpdatedAt DateTime?
+  oaFriendshipLogs      LineOAFriendshipLog[]
 
   @@index([lineUserId])
   @@index([email])
   @@index([phone])
   @@index([affiliateCode])
   @@index([tenantId])
+  // Atomic Phase 034: friendship-segment queries (OA conversion funnel)
+  @@index([isOAFriend])
 }
 
 // Atomic Phase 006: tenant registry for LIFF seamless auth (lineChannelId selects verify audience).
@@ -1305,4 +1311,38 @@ model ClientDeviceLog {
   createdAt       DateTime    @default(now())
 
   @@index([tenantId, clientVersion])
+}
+
+// Atomic Phase 034 §4.1: LINE OA auto-add-friend + friendship sync (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: User gains OA columns + log relation; Gate 7 —
+// follow/unfollow flips run inside Prisma atomic transactions with the audit log.
+enum BotPromptMode {
+  NONE
+  NORMAL
+  AGGRESSIVE
+}
+
+model TenantConfig {
+  id                  String        @id @default(uuid())
+  tenantName          String
+  lineOaId            String        @unique
+  lineOaChannelId     String
+  lineOaChannelSecret String
+  lineOaChannelToken  String        @db.Text
+  botPromptMode       BotPromptMode @default(AGGRESSIVE)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model LineOAFriendshipLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType  String
+  rawPayload Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
 }
