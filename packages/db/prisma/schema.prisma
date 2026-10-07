@@ -97,6 +97,9 @@ model User {
   navigationSessions  UserNavigationSession[]
   // Atomic Phase 031: viewport keep-alive rows (one per user/tenant/viewport)
   liffSessionStates   UserLiffSessionState[]
+  // Atomic Phase 032: permission audit trail + district-level location cache
+  permissionAudits    PermissionAuditLog[]
+  locationCache       UserLocationCache?
 
   @@index([lineUserId])
   @@index([email])
@@ -1210,4 +1213,55 @@ model UserLiffSessionState {
   @@unique([userId, tenantId, viewportType])
   @@index([userId, tenantId])
   @@index([lastActiveAt])
+}
+
+// Atomic Phase 032 §4.1: permission audit + location cache (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models; Gate 7 — audit writes
+// are fire-and-forget appends; Gate 4 (PDPA) — only district-level address is
+// persisted, never exact GPS (raw coords stay in the request/response only).
+enum PermissionType {
+  CAMERA
+  PHOTO_LIBRARY
+  GEOLOCATION
+  MICROPHONE
+}
+
+enum PermissionStatus {
+  PROMPT
+  GRANTED
+  DENIED
+  RESTRICTED
+  UNSUPPORTED
+}
+
+model PermissionAuditLog {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionType PermissionType
+  status         PermissionStatus
+  purpose        String
+  devicePlatform String
+  ipAddress      String
+  userAgent      String
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([permissionType])
+}
+
+model UserLocationCache {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  subdistrict String
+  district    String
+  province    String
+  postalCode  String
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }

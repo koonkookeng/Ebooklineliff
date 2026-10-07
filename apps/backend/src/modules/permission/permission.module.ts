@@ -1,8 +1,15 @@
-/**
- * AUTO-SCAFFOLD Phase 032 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 032 §5.1 — Permission module (audit + reverse geocoding)
+// Canonical: apps/backend/src/modules/permission/permission.module.ts
+// (legacy src/backend/modules/permission/permission.module.ts)
+// NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
 import { Module } from '@nestjs/common';
-@Module({})
-export class PermissionModuleModule {}
+import { PermissionAuditService } from './permission-audit.service';
+import { ReverseGeocodingService } from './reverse-geocoding.service';
+import { PermissionAuditController } from './permission-audit.controller';
+
+@Module({
+  controllers: [PermissionAuditController],
+  providers: [PermissionAuditService, ReverseGeocodingService],
+  exports: [PermissionAuditService, ReverseGeocodingService],
+})
+export class PermissionModule {}

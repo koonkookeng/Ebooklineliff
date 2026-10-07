@@ -430,3 +430,29 @@ export type {
   KeepAliveSyncPayload,
   KeepAliveStatus,
 } from './schemas/keep-alive-contract';
+export {
+  PermissionTypeEnum,
+  PermissionStatusEnum,
+  DevicePlatformEnum,
+  PermissionRequestPayloadSchema,
+  GeolocationCoordinatesSchema,
+  ReverseGeocodeResultSchema,
+  PermissionAuditLogSchema,
+  GEOLOCATION_TIMEOUT_MS,
+  GEOCODE_CACHE_TTL_SEC,
+  PERMISSION_ANALYTICS_CHANNEL,
+  geocodeCacheKey,
+  detectDevicePlatform,
+  PERMISSION_SHEET_COPY,
+  SETTINGS_PATH_COPY,
+} from './schemas/permission-contract';
+export type {
+  PermissionType,
+  PermissionStatus,
+  DevicePlatform,
+  PermissionRequestPayload,
+  GeolocationCoordinates,
+  ReverseGeocodeResult,
+  PermissionAuditLog,
+  PermissionSheetCopy,
+} from './schemas/permission-contract';

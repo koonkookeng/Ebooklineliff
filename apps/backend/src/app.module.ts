@@ -10,6 +10,7 @@
 // Phase 029: PerformanceModule (2MB bundle guard + predictive prefetch + RUM telemetry).
 // Phase 030: TenantThemeModule (dynamic navbar branding + WCAG AA contrast guard).
 // Phase 031: KeepAliveModule (viewport keep-alive + cross-device state sync).
+// Phase 032: PermissionModule (device permission audit + reverse geocoding).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -33,8 +34,9 @@ import { SecurityModule } from './infra/security/security.module';
 import { PerformanceModule } from './modules/performance/performance.module';
 import { TenantThemeModule } from './modules/tenant/tenant-theme.module';
 import { KeepAliveModule } from './modules/keep-alive/keep-alive.module';
+import { PermissionModule } from './modules/permission/permission.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
