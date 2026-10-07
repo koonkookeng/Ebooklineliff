@@ -1,0 +1,58 @@
+# SSOT Phase 041 §3.2 — Reader control intent layer (annotations + preferences)
+# Canonical: apps/backend/src/api/graphql/schemas/reader-control.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via ReaderControlResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod reader-control-contract.ts <-> Prisma EbookBookmark/EbookHighlight/UserReaderPreference <-> here).
+
+enum ReaderControlThemeMode {
+  LIGHT
+  DARK
+  SEPIA
+  OLED_BLACK
+}
+
+type ReaderControlBookmarkPayload {
+  id: ID!
+  pageNumber: Int!
+  chapterTitle: String
+  createdAt: String!
+}
+
+type ReaderControlHighlightPayload {
+  id: ID!
+  pageNumber: Int!
+  colorHex: String!
+  boundingRectsJson: String!
+  selectedText: String!
+  noteText: String
+  createdAt: String!
+}
+
+type ReaderControlAnnotationContainer {
+  bookmarks: [ReaderControlBookmarkPayload!]!
+  highlights: [ReaderControlHighlightPayload!]!
+}
+
+type ReaderControlPreferencePayload {
+  theme: ReaderControlThemeMode!
+  fontSizePx: Int!
+  fontFamily: String!
+  lineSpacing: Float!
+  autoHideControls: Boolean!
+}
+
+type ReaderControlBookmarkToggle {
+  isBookmarked: Boolean!
+  bookmark: ReaderControlBookmarkPayload
+}
+
+extend type Query {
+  getEbookAnnotations(productId: ID!): ReaderControlAnnotationContainer!
+  getReaderPreferences: ReaderControlPreferencePayload!
+}
+
+extend type Mutation {
+  toggleBookmark(productId: ID!, pageNumber: Int!, chapterTitle: String): ReaderControlBookmarkToggle!
+  saveHighlight(productId: ID!, pageNumber: Int!, colorHex: String!, boundingRectsJson: String!, selectedText: String!, noteText: String): ReaderControlHighlightPayload!
+  deleteHighlight(highlightId: ID!): Boolean!
+  updateReaderPreferences(theme: ReaderControlThemeMode!, fontSizePx: Int!, fontFamily: String!, lineSpacing: Float!, autoHideControls: Boolean!): ReaderControlPreferencePayload!
+}

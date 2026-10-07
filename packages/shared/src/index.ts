@@ -632,3 +632,24 @@ export type {
   ReaderProgressPayload,
   ProgressSyncResult,
 } from './schemas/reader.schema';
+export {
+  ThemeModeEnum,
+  ReaderPreferenceSchema,
+  BoundingBoxRectSchema,
+  CreateBookmarkInputSchema,
+  CreateHighlightInputSchema,
+  BookmarkToggleResultSchema,
+  ANNOTATION_CACHE_TTL_SEC,
+  PAGE_SLIDER_DEBOUNCE_MS,
+  CONTROLS_AUTOHIDE_MS,
+  annotationCacheKey,
+  defaultReaderPreference,
+} from './schemas/reader-control-contract';
+export type {
+  ThemeMode,
+  ReaderPreference,
+  BoundingBoxRect,
+  CreateBookmarkInput,
+  CreateHighlightInput,
+  BookmarkToggleResult,
+} from './schemas/reader-control-contract';

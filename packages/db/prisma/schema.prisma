@@ -104,6 +104,10 @@ model User {
   isOAFriend            Boolean               @default(false)
   oaFriendshipUpdatedAt DateTime?
   oaFriendshipLogs      LineOAFriendshipLog[]
+  // Atomic Phase 041: reader bookmarks + highlights + reading preferences
+  bookmarks         EbookBookmark[]
+  highlights        EbookHighlight[]
+  readerPreference  UserReaderPreference?
 
   @@index([lineUserId])
   @@index([email])
@@ -304,6 +308,9 @@ model EbookDetail {
   // Atomic Phase 038: pipeline chunk envelopes + AI/search text layer
   chunks         EbookChunk[]
   pageTexts      EbookPageText[]
+  // Atomic Phase 041: reader bookmarks + highlights (cascade with the book)
+  bookmarks      EbookBookmark[]
+  highlights     EbookHighlight[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -698,6 +705,52 @@ model EbookReadingProgress {
 
   @@unique([userId, ebookId])
   @@index([userId, updatedAt])
+}
+
+// Atomic Phase 041: reader bookmarks (§4.1 verbatim)
+model EbookBookmark {
+  id           String      @id @default(uuid())
+  userId       String
+  ebookId      String
+  pageNumber   Int
+  chapterTitle String?
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ebook        EbookDetail @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, ebookId, pageNumber])
+  @@index([userId, ebookId])
+}
+
+// Atomic Phase 041: vector highlight annotations (§4.1 verbatim)
+model EbookHighlight {
+  id               String      @id @default(uuid())
+  userId           String
+  ebookId          String
+  pageNumber       Int
+  colorHex         String      @default("#FFE066")
+  boundingRectsJson Json
+  selectedText     String      @db.Text
+  noteText         String?     @db.Text
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ebook            EbookDetail @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([userId, ebookId, pageNumber])
+}
+
+// Atomic Phase 041: per-user reader preferences (§4.1 verbatim)
+model UserReaderPreference {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String   @default("LIGHT")
+  fontSizePx       Int      @default(18)
+  fontFamily       String   @default("Prompt")
+  lineSpacing      Decimal  @default(1.5) @db.Decimal(3, 2)
+  autoHideControls Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
 }
 
 model CourseLearningProgress {

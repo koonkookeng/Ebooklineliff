@@ -5,10 +5,16 @@
 //   PrismaService arrives via global InfraModule (single pool).
 // - Services stay tsx-importable (no Nest parameter decorators) — this module
 //   is the only place that knows the concrete wiring (useFactory).
+// - Phase 041: reader controls (bookmarks/highlights/preferences) share the
+//   global Prisma pool + RedisClusterService edge (1h annotation cache).
 import { Module } from '@nestjs/common';
 import { ChunkCacheModule } from './cache/chunk-cache.module';
 import { ChunkWarmerService } from './cache/services/chunk-warmer.service';
 import { PrismaService } from '../../infra/database/prisma.service';
+import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
+import { ReaderControlController } from './reader-control.controller';
+import { ReaderControlResolver } from '../../api/graphql/reader-control.resolver';
+import { ReaderControlService, type ReaderControlCache, type ReaderControlPrisma } from './reader-control.service';
 import { ReaderController } from './reader.controller';
 import { ReaderResolver } from './reader.resolver';
 import { ReaderService, type ReaderPrisma } from './reader.service';
@@ -17,7 +23,7 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
 
 @Module({
   imports: [ChunkCacheModule],
-  controllers: [ReaderController],
+  controllers: [ReaderController, ReaderControlController],
   providers: [
     WatermarkGeneratorService,
     {
@@ -42,7 +48,17 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [ChunkWarmerService, PrismaService, WatermarkGeneratorService],
     },
     ReaderResolver,
+    {
+      provide: ReaderControlService,
+      useFactory: (prisma: PrismaService, edge: RedisClusterService): ReaderControlService =>
+        new ReaderControlService(
+          prisma as unknown as ReaderControlPrisma,
+          edge as unknown as ReaderControlCache,
+        ),
+      inject: [PrismaService, RedisClusterService],
+    },
+    ReaderControlResolver,
   ],
-  exports: [ReaderService, SlidingWindowCacheService],
+  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService],
 })
 export class ReaderModule {}
