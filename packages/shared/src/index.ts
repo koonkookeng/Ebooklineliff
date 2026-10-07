@@ -405,3 +405,28 @@ export type {
   TenantBranding,
   UpdateNavbarThemeInput,
 } from './schemas/tenant-branding.schema';
+export {
+  ViewportTypeEnum,
+  EbookKeepAliveStateSchema,
+  VideoKeepAliveStateSchema,
+  CheckoutKeepAliveStateSchema,
+  KeepAliveSyncPayloadSchema,
+  KeepAliveStatusEnum,
+  KEEPALIVE_TTL_SEC,
+  KEEPALIVE_SAVE_INTERVAL_MS,
+  REHYDRATE_BUDGET_MS,
+  KEEPALIVE_DB,
+  KEEPALIVE_STORE,
+  KEEPALIVE_CHANNEL,
+  keepAliveKey,
+  keepAliveRedisKey,
+  pickViewportState,
+} from './schemas/keep-alive-contract';
+export type {
+  ViewportType,
+  EbookKeepAliveState,
+  VideoKeepAliveState,
+  CheckoutKeepAliveState,
+  KeepAliveSyncPayload,
+  KeepAliveStatus,
+} from './schemas/keep-alive-contract';

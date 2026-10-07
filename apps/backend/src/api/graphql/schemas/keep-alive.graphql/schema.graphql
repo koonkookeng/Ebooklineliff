@@ -1,0 +1,46 @@
+# SSOT Phase 031 §3.2 — Keep-alive viewport sync intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/keep-alive.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via KeepAliveResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod keep-alive-contract.ts <-> Prisma UserLiffSessionState <-> here).
+
+enum ViewportType {
+  EBOOK_READER
+  VIDEO_PLAYER
+  CHECKOUT_FORM
+  CATALOG_DISCOVERY
+}
+
+input EbookStateInput {
+  productId: ID!
+  currentPage: Int!
+  scrollOffsetTop: Float
+  zoomScale: Float
+  activeChapterId: ID
+}
+
+input VideoStateInput {
+  lessonId: ID!
+  playedSeconds: Int!
+  playbackRate: Float
+}
+
+input KeepAliveSyncInput {
+  tenantId: String!
+  viewportType: ViewportType!
+  ebookState: EbookStateInput
+  videoState: VideoStateInput
+}
+
+type KeepAliveSyncResponse {
+  success: Boolean!
+  restoredTimestamp: String!
+  message: String
+}
+
+extend type Query {
+  getLatestKeepAliveState(tenantId: String!, viewportType: ViewportType!): KeepAliveSyncResponse!
+}
+
+extend type Mutation {
+  syncKeepAliveState(input: KeepAliveSyncInput!): KeepAliveSyncResponse!
+}

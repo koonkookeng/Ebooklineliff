@@ -4,6 +4,8 @@
  * States: LIFF_INIT -> IDLE -> LOADING -> SUCCESS / ERROR (retry).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useViewportKeepAlive } from '../keep-alive/useKeepAlive';
+import { releaseBlobUrls } from '../../lib/keep-alive/keep-alive-client';
 
 type UiState = 'LIFF_INIT' | 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
 
@@ -14,6 +16,30 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
   const cache = useRef(new Map<number, string>());
   const blobUrls = useRef(new Map<number, string>());
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pageRef = useRef(page);
+  pageRef.current = page;
+
+  // Phase 031 Task 5: viewport keep-alive (page + scroll survive LINE chat
+  // switches; blob/canvas RAM released on hidden, reloaded by sliding window).
+  const keepAlive = useViewportKeepAlive({
+    viewportType: 'EBOOK_READER',
+    resourceId: productId,
+    snapshot: () => ({
+      productId,
+      currentPage: pageRef.current,
+      scrollOffsetTop: typeof window !== 'undefined' ? window.scrollY : 0,
+      zoomScale: 1,
+    }),
+    rehydrate: (s) => {
+      if (s.currentPage !== pageRef.current) setPage(s.currentPage);
+      if (s.scrollOffsetTop > 0 && typeof window !== 'undefined') window.scrollTo(0, s.scrollOffsetTop);
+    },
+    release: () => {
+      releaseBlobUrls(blobUrls.current);
+      const canvas = canvasRef.current;
+      canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+    },
+  });
 
   const loadSlidingWindow = useCallback(
     async (currentPage: number) => {
@@ -57,6 +83,8 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
 
   return (
     <div>
+      {keepAlive.status === 'HYDRATING' && <div aria-busy>Skeleton restoring page…</div>}
+      {keepAlive.status === 'ERROR_FALLBACK' && <div role="status">กู้คืนหน้าจอล่าสุดสำเร็จ</div>}
       {ui === 'LOADING' && <div aria-busy>Skeleton loading page {page}…</div>}
       {ui === 'ERROR' && (
         <div role="alert">

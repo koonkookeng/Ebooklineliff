@@ -95,6 +95,8 @@ model User {
   viralAttributions   ViralAttribution[]
   // Atomic Phase 027: LIFF navigation session (single active snapshot per user)
   navigationSessions  UserNavigationSession[]
+  // Atomic Phase 031: viewport keep-alive rows (one per user/tenant/viewport)
+  liffSessionStates   UserLiffSessionState[]
 
   @@index([lineUserId])
   @@index([email])
@@ -1190,4 +1192,22 @@ model UserNavigationSession {
 
   @@index([userId])
   @@index([tenantId])
+}
+
+// Atomic Phase 031 §4.1: viewport keep-alive persistence (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: @@unique(userId, tenantId, viewportType) → atomic
+// upsert per viewport (Gate 7); stateJson capped at 32KB at the Zod boundary.
+model UserLiffSessionState {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId     String   @default("default")
+  viewportType String
+  stateJson    Json
+  lastActiveAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, tenantId, viewportType])
+  @@index([userId, tenantId])
+  @@index([lastActiveAt])
 }

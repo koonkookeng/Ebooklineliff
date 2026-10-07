@@ -1,8 +1,16 @@
-/**
- * AUTO-SCAFFOLD Phase 031 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 031 §5.1 — Keep-alive module (viewport preservation engine)
+// Canonical: apps/backend/src/modules/keep-alive/keep-alive.module.ts
+// (legacy src/backend/modules/keep-alive/keep-alive.module.ts)
+// NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
 import { Module } from '@nestjs/common';
-@Module({})
-export class KeepAliveModuleModule {}
+import { KeepAliveRedisRepository } from '../../infra/redis/keep-alive-redis.repository';
+import { KeepAliveService } from './keep-alive.service';
+import { KeepAliveController } from './keep-alive.controller';
+import { KeepAliveResolver } from './keep-alive.resolver';
+
+@Module({
+  controllers: [KeepAliveController],
+  providers: [KeepAliveRedisRepository, KeepAliveService, KeepAliveResolver],
+  exports: [KeepAliveService],
+})
+export class KeepAliveModule {}
