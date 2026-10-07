@@ -27,6 +27,7 @@ import { TranscodeJobReaderService } from './services/transcode-job-reader.servi
 import { VideoUploadService } from './services/video-upload.service';
 import { StreamJobResolver } from './stream.resolver';
 import { StreamTranscodeController, TranscodeKeyController } from './stream.controller';
+import { StreamPlaybackResolver } from '../../api/graphql/stream/stream.resolver';
 import { TranscodeWorkerHost } from './transcoder.worker';
 import { VideoTranscodeProcessor044 } from './workers/video-transcode.processor';
 
@@ -118,6 +119,7 @@ const execAsync = promisify(exec);
       inject: [PrismaService, VideoTranscodeQueue, VideoTranscodeProcessor044],
     },
     StreamJobResolver,
+    StreamPlaybackResolver,
   ],
   exports: [VideoUploadService, StreamService, FfmpegWorkerProcessor, VideoTranscodeQueue, FFmpegTranscoderService, TranscodeWorkerHost, TranscodeJobReaderService],
 })

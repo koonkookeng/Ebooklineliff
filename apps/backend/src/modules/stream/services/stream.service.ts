@@ -11,13 +11,24 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   VIDEO_TOKEN_TTL_SEC,
+  isLessonCompleted,
   type HlsManifestStreamPayload,
+  type LessonStreamPayload,
+  type ProgressSyncResponse,
+  type SyncLessonProgress,
 } from '@repo/shared';
 
 export interface StreamLesson {
   id: string;
   isPreview: boolean;
+  durationSec: number;
   section: { course: { productId: string } };
+}
+
+export interface CourseProgressRow {
+  watchedSec: number;
+  isCompleted: boolean;
+  updatedAt: Date;
 }
 
 export interface StreamTables {
@@ -38,6 +49,10 @@ export interface StreamTables {
   };
   videoTranscodeJob?: {
     findUnique(args: unknown): Promise<{ id: string; lessonId: string; encryptionKeyPath: string | null } | null>;
+  };
+  courseLearningProgress?: {
+    findUnique(args: unknown): Promise<CourseProgressRow | null>;
+    upsert(args: unknown): Promise<CourseProgressRow>;
   };
 }
 
@@ -160,5 +175,50 @@ export class StreamService {
       throw new ForbiddenException('ท่านยังไม่มีสิทธิ์เข้าถึงบทเรียนนี้');
     }
     return this.vault.getObjectBuffer(job.encryptionKeyPath);
+  }
+
+  /** Phase 045 §5.2: lesson stream state (manifest + resume + watermark). */
+  async getLessonStreamState(userId: string, lessonId: string, clientIp: string): Promise<LessonStreamPayload> {
+    if (!this.tables) throw new NotFoundException('Stream unavailable');
+    const resolved = await this.productForLesson(lessonId);
+    if (!resolved) throw new NotFoundException('Lesson not found');
+    if (!(await this.entitled(userId, resolved.productId, resolved.lesson.isPreview))) {
+      throw new ForbiddenException('User does not have valid entitlement for this course');
+    }
+    const manifest = await this.getManifest(userId, lessonId, clientIp);
+    const progress = await this.tables.courseLearningProgress
+      ?.findUnique({ where: { userId_lessonId: { userId, lessonId } } })
+      .catch(() => null);
+    return {
+      lessonId: resolved.lesson.id,
+      hlsManifestUrl: manifest.masterPlaylistUrl,
+      signedEdgeToken: manifest.securityToken,
+      lastWatchedSec: progress?.watchedSec ?? 0,
+      durationSec: resolved.lesson.durationSec,
+      forensicWatermark: {
+        userIdHash: manifest.watermarkMetadata.userIdHash,
+        displayName: manifest.watermarkMetadata.displayName,
+        timestamp: new Date().toISOString(),
+      },
+    };
+  }
+
+  /** Phase 045 §5.2/BDD-3: 5s heartbeat (DB upsert + drop-off stream event). */
+  async syncLessonProgress(userId: string, input: SyncLessonProgress): Promise<ProgressSyncResponse> {
+    if (!this.tables?.courseLearningProgress) throw new NotFoundException('Stream unavailable');
+    const done = isLessonCompleted(input.watchedSec, input.durationSec, input.isCompleted);
+    const row = await this.tables.courseLearningProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId: input.lessonId } },
+      create: { userId, lessonId: input.lessonId, watchedSec: input.watchedSec, isCompleted: done },
+      update: { watchedSec: input.watchedSec, isCompleted: done },
+    });
+    try {
+      // Drop-off routing is consumer-side (VIDEO_DROPOFF_STREAM keyed by
+      // lessonId); the sink stays transport-shaped like reportProgress.
+      this.onProgress?.({ userId, lessonId: input.lessonId, watchedSec: input.watchedSec });
+    } catch {
+      // Analytics must never fail the heartbeat.
+    }
+    return { success: true, updatedAt: row.updatedAt.toISOString(), isCompleted: row.isCompleted };
   }
 }

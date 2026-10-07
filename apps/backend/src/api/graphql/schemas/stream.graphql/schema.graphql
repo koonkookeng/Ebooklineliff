@@ -1,0 +1,40 @@
+# SSOT Phase 045 §3.2 — Stream playback intent layer (state + heartbeat)
+# Canonical: apps/backend/src/api/graphql/schemas/stream.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via StreamPlaybackResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod stream-contract.ts <-> Prisma CourseLesson/CourseLearningProgress <-> here).
+
+type StreamWatermarkPayload {
+  userIdHash: String!
+  displayName: String!
+  timestamp: String!
+}
+
+type LessonStreamPayload {
+  lessonId: ID!
+  hlsManifestUrl: String!
+  signedEdgeToken: String!
+  lastWatchedSec: Int!
+  durationSec: Int!
+  forensicWatermark: StreamWatermarkPayload!
+}
+
+type StreamProgressSyncResponse {
+  success: Boolean!
+  updatedAt: String!
+  isCompleted: Boolean!
+}
+
+extend type Query {
+  getLessonStreamState(lessonId: ID!): LessonStreamPayload!
+}
+
+extend type Mutation {
+  syncLessonProgress(input: SyncLessonProgressInput!): StreamProgressSyncResponse!
+}
+
+input SyncLessonProgressInput {
+  lessonId: ID!
+  watchedSec: Int!
+  durationSec: Int!
+  isCompleted: Boolean!
+}

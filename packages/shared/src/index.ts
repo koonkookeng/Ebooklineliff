@@ -727,3 +727,22 @@ export type {
   HlsVariantMetadata,
   SubmitTranscodeJob,
 } from './schemas/video-transcode.contract';
+export {
+  PlaybackSpeedEnum,
+  VideoQualityEnum,
+  LessonStreamPayloadSchema,
+  SyncLessonProgressSchema,
+  ProgressSyncResponseSchema,
+  VIDEO_DROPOFF_STREAM,
+  LESSON_STATE_CACHE_SEC,
+  LESSON_COMPLETION_RATIO,
+  isLessonCompleted,
+  clampResumeSec,
+} from './schemas/stream-contract';
+export type {
+  PlaybackSpeed,
+  StreamVideoQuality,
+  LessonStreamPayload,
+  SyncLessonProgress,
+  ProgressSyncResponse,
+} from './schemas/stream-contract';

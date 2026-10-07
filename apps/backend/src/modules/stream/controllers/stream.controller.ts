@@ -1,13 +1,17 @@
-// SSOT Phase 043 Task 5 — StreamController (manifest/key/progress REST)
+// SSOT Phase 043 Task 5 + Phase 045 §5.2 — StreamController (delivery REST)
 // Canonical: apps/backend/src/modules/stream/controllers/stream.controller.ts
 // - GET  /api/v1/stream/manifest?lessonId= (JWT, entitlement-gated)
 // - GET  /api/v1/stream/key?videoId=&token= (JWT + short-lived token; key
 //   bytes served with no-store, never logged)
 // - POST /api/v1/stream/progress {lessonId,watchedSec} (JWT, 5s cadence)
+// - GET  /api/v1/stream/lesson-state?lessonId= (JWT, Phase 045: manifest +
+//   resume + watermark in one call)
+// - POST /api/v1/stream/lesson-progress {lessonId,watchedSec,durationSec,
+//   isCompleted} (JWT, Phase 045: DB upsert + heatmap event)
 // - Zero new deps.
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
-import { VideoProgressReportSchema } from '@repo/shared';
+import { SyncLessonProgressSchema, VideoProgressReportSchema } from '@repo/shared';
 import { StreamService } from '../services/stream.service';
 
 interface StreamReq {
@@ -61,5 +65,20 @@ export class StreamController {
     const parsed = VideoProgressReportSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('Invalid progress report');
     return this.stream.reportProgress(identityOf(req), parsed.data.lessonId, parsed.data.watchedSec);
+  }
+
+  @Get('lesson-state')
+  @UseGuards(JwtAuthGuard)
+  async lessonState(@Query('lessonId') lessonId: string | undefined, @Req() req: StreamReq) {
+    if (!lessonId) throw new BadRequestException('Missing lesson id');
+    return this.stream.getLessonStreamState(identityOf(req), lessonId, ipOf(req));
+  }
+
+  @Post('lesson-progress')
+  @UseGuards(JwtAuthGuard)
+  async lessonProgress(@Body() body: Record<string, unknown>, @Req() req: StreamReq) {
+    const parsed = SyncLessonProgressSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Invalid lesson progress');
+    return this.stream.syncLessonProgress(identityOf(req), parsed.data);
   }
 }
