@@ -1,0 +1,42 @@
+# SSOT Phase 027 §3.2 — Navigation intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/navigation.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via NavigationResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod navigation.schema.ts <-> Prisma UserNavigationSession <-> here).
+
+type NavigationStackItem {
+  id: ID!
+  pathname: String!
+  timestamp: Float!
+  isDirty: Boolean!
+}
+
+type NavigationStatePayload {
+  tenantId: String!
+  currentRoute: String!
+  canGoBack: Boolean!
+  stackDepth: Int!
+  isDirtyState: Boolean!
+  historyStack: [NavigationStackItem!]!
+}
+
+type NavigationRestoreResult {
+  found: Boolean!
+  lastPathname: String
+  payload: NavigationStatePayload
+}
+
+input SyncNavigationSessionInput {
+  userId: ID!
+  lineUserId: String!
+  currentRoute: String!
+  stateSnapshotJson: String!
+}
+
+extend type Query {
+  getNavigationSession(userId: ID!): NavigationRestoreResult!
+}
+
+extend type Mutation {
+  syncNavigationSession(input: SyncNavigationSessionInput!): Boolean!
+  clearNavigationSession(userId: ID!): Boolean!
+}

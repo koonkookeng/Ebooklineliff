@@ -1,8 +1,16 @@
-/**
- * AUTO-SCAFFOLD Phase 027 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 027 §5.1 — Navigation module
+// Canonical: apps/backend/src/modules/navigation/navigation.module.ts
+// (legacy src/backend/modules/navigation/navigation.module.ts)
+// NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
 import { Module } from '@nestjs/common';
-@Module({})
-export class NavigationModuleModule {}
+import { NavigationService } from './navigation.service';
+import { NavigationController } from './navigation.controller';
+import { NavigationResolver } from './navigation.resolver';
+import { LiffSessionGuard } from './guards/liff-session.guard';
+
+@Module({
+  controllers: [NavigationController],
+  providers: [NavigationService, NavigationResolver, LiffSessionGuard],
+  exports: [NavigationService],
+})
+export class NavigationModule {}

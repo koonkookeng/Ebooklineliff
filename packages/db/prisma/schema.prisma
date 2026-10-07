@@ -93,6 +93,8 @@ model User {
   // Atomic Phase 026: viral share logs + referral attributions
   shareLogs           ShareLog[]
   viralAttributions   ViralAttribution[]
+  // Atomic Phase 027: LIFF navigation session (single active snapshot per user)
+  navigationSessions  UserNavigationSession[]
 
   @@index([lineUserId])
   @@index([email])
@@ -1065,4 +1067,24 @@ model AffiliateAttribution {
 
   @@unique([userId, tenantId])
   @@index([affiliateCode])
+}
+
+// Atomic Phase 027 §4.1: LIFF navigation session persistence.
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: single active row per user (@unique userId → atomic upsert,
+// Gate 7); stateSnapshotJson capped at 32KB at the Zod boundary (Gate 5 RAM guard).
+model UserNavigationSession {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId          String   @default("default")
+  lastPathname      String
+  stackDepth        Int      @default(1)
+  isDirtyState      Boolean  @default(false)
+  stateSnapshotJson Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tenantId])
 }

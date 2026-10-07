@@ -307,3 +307,24 @@ export type {
   ShareTargetPickerResult,
   GenerateFlexShareResponse,
 } from './schemas/social-share.schema';
+export {
+  NavigationStackItemSchema,
+  NavigationStateSchema,
+  NavigationSyncPayloadSchema,
+  NavUiStateEnum,
+  NavDropOffEventSchema,
+  NAV_STACK_MAX_DEPTH,
+  NAV_SNAPSHOT_MAX_BYTES,
+  NAV_SESSION_TTL_SEC,
+  NAV_DROP_OFF_CHANNEL,
+  NAV_STACK_BUDGET_MB,
+  navSessionKey,
+  deriveNavUiState,
+} from './schemas/navigation.schema';
+export type {
+  NavigationStackItem,
+  NavigationState,
+  NavigationSyncPayload,
+  NavUiState,
+  NavDropOffEvent,
+} from './schemas/navigation.schema';

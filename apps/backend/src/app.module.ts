@@ -5,6 +5,7 @@
 // Phase 024: LineServiceMessageModule (zero-broadcast transactional dispatcher).
 // Phase 025: ResolverModule (permanent mini-app scheme + dynamic deep-linking).
 // Phase 026: SocialShareModule (native share picker + viral attribution).
+// Phase 027: NavigationModule (LIFF shell router + dirty-state guard persistence).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -23,8 +24,9 @@ import { HeaderModule } from './modules/header/header.module';
 import { LineServiceMessageModule } from './modules/line-service-message/line-service-message.module';
 import { ResolverModule } from './modules/resolver/resolver.module';
 import { SocialShareModule } from './modules/social-share/social-share.module';
+import { NavigationModule } from './modules/navigation/navigation.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

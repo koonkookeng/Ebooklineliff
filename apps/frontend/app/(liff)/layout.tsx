@@ -10,6 +10,7 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { LiffProvider } from './providers/liff-provider';
 import { DynamicHeaderIntegrator } from '../../components/header/DynamicHeaderIntegrator';
+import { LiffRouterProvider } from '../../components/navigation/liff-router-provider';
 
 function resolveLiffId(tenant: string): string {
   if (typeof window !== 'undefined') {
@@ -28,8 +29,10 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
   const liffId = resolveLiffId(tenantId);
   return (
     <LiffProvider liffId={liffId} tenantId={tenantId}>
-      <DynamicHeaderIntegrator />
-      {children}
+      <LiffRouterProvider>
+        <DynamicHeaderIntegrator />
+        {children}
+      </LiffRouterProvider>
     </LiffProvider>
   );
 }
