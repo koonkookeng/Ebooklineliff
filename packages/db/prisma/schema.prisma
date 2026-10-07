@@ -296,6 +296,9 @@ model EbookDetail {
   storagePathR2 String
   fileHash      String         @db.VarChar(64)
   chapters      EbookChapter[]
+  // Atomic Phase 036: R2 vault mapping + per-page chunk manifests
+  r2VaultAsset   StorageVaultAsset? @relation("EbookR2Source")
+  chunkManifests EbookChunkMeta[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -352,6 +355,10 @@ model CourseLesson {
   videoHlsUrl String
   durationSec Int           @default(0)
   isPreview   Boolean       @default(false)
+  // Atomic Phase 036: R2 HLS prefix + segment manifests + vault mapping
+  r2HlsPrefix   String?
+  r2VaultAsset  StorageVaultAsset? @relation("LessonVideoR2Source")
+  hlsSegments   HlsSegmentMeta[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1385,4 +1392,59 @@ model LineSandboxResultItem {
   createdAt         DateTime                @default(now())
 
   @@index([auditId])
+}
+
+// Atomic Phase 036 §4.1: R2 media vault registry (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: new tables only (+ back-relations above); Gate 7 —
+// chunk/segment rows upsert by their @@unique keys (no duplicate manifests).
+// NOTE: fileSizeBytes is BigInt — services convert at the JSON boundary
+// (BigInt is not JSON-serializable).
+model StorageVaultAsset {
+  id              String   @id @default(uuid())
+  bucketName      String   @default("omni-commerce-vault")
+  objectKey       String   @unique
+  fileSizeBytes   BigInt
+  mimeType        String
+  sha256Checksum  String
+  storageClass    String   @default("STANDARD")
+  isPublic        Boolean  @default(false)
+
+  ebookDetailId   String?      @unique
+  ebookDetail     EbookDetail? @relation("EbookR2Source", fields: [ebookDetailId], references: [id], onDelete: Cascade)
+
+  courseLessonId  String?       @unique
+  courseLesson    CourseLesson? @relation("LessonVideoR2Source", fields: [courseLessonId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([objectKey])
+  @@index([mimeType])
+}
+
+model EbookChunkMeta {
+  id             String      @id @default(uuid())
+  ebookId        String
+  ebook          EbookDetail @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+  pageNumber     Int
+  r2ObjectKey    String
+  chunkSizeBytes Int
+  vectorChecksum String
+
+  @@unique([ebookId, pageNumber])
+  @@index([ebookId])
+}
+
+model HlsSegmentMeta {
+  id           String       @id @default(uuid())
+  lessonId     String
+  lesson       CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  segmentIndex Int
+  resolution   String
+  r2ObjectKey  String
+  durationSec  Float
+
+  @@unique([lessonId, resolution, segmentIndex])
+  @@index([lessonId])
 }

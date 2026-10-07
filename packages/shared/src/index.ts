@@ -522,3 +522,31 @@ export type {
   SandboxSignals,
   RunAuditInput,
 } from './schemas/line-review-contract';
+export {
+  StorageProviderEnum,
+  MediaTypeEnum,
+  R2ObjectMetadataSchema,
+  EbookChunkFetchRequestSchema,
+  HlsQualityEnum,
+  HlsStreamSignedUrlRequestSchema,
+  SignedStreamUrlResponseSchema,
+  R2UploadRequestSchema,
+  R2_DEFAULT_BUCKET,
+  R2_CHUNK_CACHE_TTL_SEC,
+  HLS_TOKEN_TTL_SEC,
+  R2_PREVIEW_MAX_PAGE,
+  HLS_LADDER,
+  chunkObjectKey,
+  hlsObjectPrefix,
+  chunkCacheKey,
+} from './schemas/r2-storage-contract';
+export type {
+  StorageProvider,
+  MediaType,
+  R2ObjectMetadata,
+  EbookChunkFetchRequest,
+  HlsQuality,
+  HlsStreamSignedUrlRequest,
+  SignedStreamUrlResponse,
+  R2UploadRequest,
+} from './schemas/r2-storage-contract';
