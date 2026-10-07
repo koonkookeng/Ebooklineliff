@@ -4,6 +4,7 @@
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ProductDetailPage, type PdpUiState } from '../../../../components/pdp/ProductDetailPage';
+import { NativeActionButton } from '../../../../components/share/NativeActionButton';
 import { fetchProductDetail, type ProductDetail } from '../../../../lib/storefront';
 
 function LiffPdpInner() {
@@ -33,7 +34,24 @@ function LiffPdpInner() {
     void load();
   }, [load]);
 
-  return <ProductDetailPage product={product} uiState={uiState} onRetry={load} />;
+  // Atomic Phase 026: share slot (EBOOK→page, COURSE→lesson, else bundle).
+  const shareType = product?.productType === 'EBOOK'
+    ? 'EBOOK_SUMMARY'
+    : product?.productType === 'ELEARNING_COURSE'
+      ? 'COURSE_LESSON'
+      : 'PRODUCT_BUNDLE';
+  return (
+    <ProductDetailPage
+      product={product}
+      uiState={uiState}
+      onRetry={load}
+      shareSlot={product ? (
+        <div className="flex-1">
+          <NativeActionButton productId={product.id} contentType={shareType} variant="inline" />
+        </div>
+      ) : undefined}
+    />
+  );
 }
 
 export default function LiffPdpPage() {

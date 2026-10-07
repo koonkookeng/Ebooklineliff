@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 026, 080 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class ShareResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 026 legacy alias — canonical implementation lives in the
+// social-share module (single source, zero duplication).
+// Canonical: apps/backend/src/api/graphql/resolvers/share.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/share.resolver.ts)
+export { SocialShareResolver as ShareResolver } from '../../../modules/social-share/resolvers/social-share.resolver';

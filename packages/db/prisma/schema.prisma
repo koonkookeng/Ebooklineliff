@@ -90,6 +90,9 @@ model User {
   wallets           Wallet[]
   // Atomic Phase 022: device viewport/safe-area metrics (async analytics, nullable user)
   userDeviceMetrics UserDeviceMetric[]
+  // Atomic Phase 026: viral share logs + referral attributions
+  shareLogs           ShareLog[]
+  viralAttributions   ViralAttribution[]
 
   @@index([lineUserId])
   @@index([email])
@@ -217,6 +220,8 @@ model Product {
   deletedAt      DateTime?
   // Atomic Phase 023: per-product header overrides (dynamic title/branding)
   headerConfig   HeaderConfig?
+  // Atomic Phase 026: viral share logs
+  shareLogs      ShareLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
   isFeatured     Boolean                     @default(false)
   soldCount      Int                         @default(0)
@@ -948,6 +953,56 @@ model NotificationLog {
   @@index([lineUserId])
   @@index([status])
   @@index([createdAt])
+}
+
+// Atomic Phase 026 §4.1: social share & viral attribution.
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models beyond back-relations.
+enum ShareTargetType {
+  INDIVIDUAL
+  GROUP
+  ROOM
+  EXTERNAL_URL
+}
+
+enum ShareStatus {
+  SUCCESS
+  CANCELLED
+  FAILED
+}
+
+model ShareLog {
+  id                  String            @id @default(uuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shareToken          String            @unique
+  targetType          ShareTargetType   @default(INDIVIDUAL)
+  status              ShareStatus       @default(SUCCESS)
+  rewardPointsAwarded Int               @default(0)
+  clickCount          Int               @default(0)
+  conversionCount     Int               @default(0)
+  attributions        ViralAttribution[]
+  createdAt           DateTime          @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([shareToken])
+}
+
+model ViralAttribution {
+  id             String    @id @default(uuid())
+  shareLogId     String
+  shareLog       ShareLog  @relation(fields: [shareLogId], references: [id], onDelete: Cascade)
+  referredUserId String
+  referredUser   User      @relation(fields: [referredUserId], references: [id], onDelete: Cascade)
+  orderId        String?   @unique
+  commissionAmt  Decimal   @default(0.00) @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now())
+
+  @@index([shareLogId])
+  @@index([referredUserId])
 }
 
 // Atomic Phase 025 §4.1: resolver, deep-linking & affiliate attribution.

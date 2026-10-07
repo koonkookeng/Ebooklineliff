@@ -15,9 +15,11 @@ interface Props {
   onRetry?: () => void;
   onAddToCart?: (product: ProductDetail) => void;
   onBuyNow?: (product: ProductDetail) => void;
+  // Atomic Phase 026: optional share slot (host page injects NativeActionButton).
+  shareSlot?: React.ReactNode;
 }
 
-export function ProductDetailPage({ product, uiState, previewAssetUrl = null, onRetry, onAddToCart, onBuyNow }: Props) {
+export function ProductDetailPage({ product, uiState, previewAssetUrl = null, onRetry, onAddToCart, onBuyNow, shareSlot = null }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum'>('overview');
   const [preview, setPreview] = useState<PreviewKind | null>(null);
 
@@ -106,6 +108,9 @@ export function ProductDetailPage({ product, uiState, previewAssetUrl = null, on
           <p>น้ำหนัก {product.physicalDetail.weightGrams} กรัม · จัดส่ง 2–4 วันทำการ</p>
         </div>
       )}
+
+      {/* Atomic Phase 026: viral share slot (all product types, host-injected). */}
+      {shareSlot && <div className="px-4 py-2 border-b border-gray-100">{shareSlot}</div>}
 
       <div className="p-4">
         <div className="flex border-b border-gray-200 mb-3" role="tablist">

@@ -284,3 +284,26 @@ export type {
   ShortCodeParam,
   ResolveShortCodeResponse,
 } from './schemas/resolver-contract';
+export {
+  ShareTargetTypeEnum,
+  ShareStatusEnum,
+  ShareContentTypeEnum,
+  DynamicFlexShareInputSchema,
+  FlexMessagePayloadSchema,
+  RecordShareLogInputSchema,
+  ShareTargetPickerResultSchema,
+  GenerateFlexShareResponseSchema,
+  SHARE_REWARD_POINTS,
+  REFERRAL_BIND_DAYS,
+  SHARE_PREVIEW_MAX_PAGE,
+} from './schemas/social-share.schema';
+export type {
+  ShareTargetType,
+  ShareStatus,
+  ShareContentType,
+  DynamicFlexShareInput,
+  FlexMessagePayload,
+  RecordShareLogInput,
+  ShareTargetPickerResult,
+  GenerateFlexShareResponse,
+} from './schemas/social-share.schema';

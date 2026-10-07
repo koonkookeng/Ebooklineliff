@@ -116,6 +116,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
     pathname.startsWith('/api/v1/resolver/') ||
+    // Phase 026: viral preview is public (recipients may be logged out).
+    pathname === '/api/v1/social-share/preview' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

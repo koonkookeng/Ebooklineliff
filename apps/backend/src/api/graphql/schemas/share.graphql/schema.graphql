@@ -1,0 +1,53 @@
+# SSOT Phase 026 §3.2 — Social share intent layer (supplement; supplements code-first SocialShareResolver)
+# Canonical: apps/backend/src/api/graphql/schemas/share.graphql/schema.graphql
+# Pins the enum + object vocabulary shared with Zod (Gate 1) + Prisma (Gate 1).
+
+enum ShareTargetType {
+  INDIVIDUAL
+  GROUP
+  ROOM
+  EXTERNAL_URL
+}
+
+enum ShareContentType {
+  EBOOK_PAGE
+  EBOOK_SUMMARY
+  COURSE_LESSON
+  CERTIFICATE
+  PRODUCT_BUNDLE
+}
+
+input DynamicFlexShareInput {
+  productId: ID!
+  contentType: String!
+  targetPageNumber: Int
+  targetLessonId: ID
+  customQuote: String
+}
+
+type FlexSharePayload {
+  flexMessageJson: String!
+  shareToken: String!
+  affiliateCode: String!
+  deepLinkUrl: String!
+}
+
+type ShareLogResultPayload {
+  success: Boolean!
+  shareLogId: ID
+  rewardPointsEarned: Int!
+  message: String!
+}
+
+extend type Query {
+  generateProductFlexShare(input: DynamicFlexShareInput!): FlexSharePayload!
+}
+
+extend type Mutation {
+  recordShareLog(
+    productId: ID!
+    targetType: String!
+    status: String!
+    shareToken: String!
+  ): ShareLogResultPayload!
+}
