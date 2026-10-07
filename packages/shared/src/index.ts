@@ -653,3 +653,25 @@ export type {
   CreateHighlightInput,
   BookmarkToggleResult,
 } from './schemas/reader-control-contract';
+export {
+  WatermarkMotionModeEnum,
+  WatermarkSeedPayloadSchema,
+  ForensicVerificationPayloadSchema,
+  WATERMARK_SEED_TTL_SEC,
+  WATERMARK_STEGO_SIZE_PX,
+  WATERMARK_OPACITY_MIN,
+  WATERMARK_OPACITY_MAX,
+  WATERMARK_IDLE_AFTER_MS,
+  WATERMARK_ACTIVE_FPS,
+  WATERMARK_IDLE_FPS,
+  WATERMARK_EVENT_STREAM,
+  WatermarkViolationTypeEnum,
+  lissajousPosition,
+  watermarkHmacMessage,
+} from './schemas/watermark-contract';
+export type {
+  WatermarkMotionMode,
+  WatermarkSeedPayload,
+  ForensicVerificationPayload,
+  WatermarkViolationType,
+} from './schemas/watermark-contract';

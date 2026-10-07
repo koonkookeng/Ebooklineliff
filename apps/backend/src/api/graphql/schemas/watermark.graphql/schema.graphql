@@ -1,0 +1,41 @@
+# SSOT Phase 042 §3.2 — Watermark intent layer (seed issuance + forensic verify)
+# Canonical: apps/backend/src/api/graphql/schemas/watermark.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via WatermarkResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod watermark-contract.ts <-> Prisma WatermarkSeedLog/SecurityViolationLog <-> here).
+# NOTE: extractForensicWatermark carries the client-read alpha manifest alongside the
+# bytes (ADR-042) — the server holds no image-CV dependency by LIFF policy.
+
+type WatermarkConfig {
+  opacityMin: Float!
+  opacityMax: Float!
+  fontSizePx: Int!
+  motionMode: String!
+  steganographyEnabled: Boolean!
+}
+
+type WatermarkSeedPayload {
+  seedId: String!
+  userIdHash: String!
+  lineUserId: String
+  displayName: String!
+  clientIp: String!
+  timestamp: String!
+  hmacSignature: String!
+  config: WatermarkConfig!
+}
+
+type ForensicVerificationResult {
+  extractedUserIdHash: String!
+  extractedLineUserId: String
+  extractedTimestamp: String!
+  confidenceScore: Float!
+  isTampered: Boolean!
+}
+
+extend type Query {
+  getWatermarkSeed(productId: ID!): WatermarkSeedPayload!
+}
+
+extend type Mutation {
+  extractForensicWatermark(imageDataBase64: String!, seedId: String!, userIdHash: String!, timestamp: String!, hmacSignature: String!): ForensicVerificationResult!
+}
