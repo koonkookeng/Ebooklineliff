@@ -10,7 +10,10 @@
 import { z } from 'zod';
 
 export const ChunkCacheKeyParamsSchema = z.object({
-  tenantId: z.string().min(1),
+  // ADR-040 compat: Phase 000 CanvasReader calls the edge route without a
+  // tenant hint — default keeps those reads working inside the global-namespace
+  // uuid key space (productIds are uuids; '' stays invalid).
+  tenantId: z.string().min(1).default('default'),
   productId: z.string().uuid(),
   pageNumber: z.number().int().positive(),
 });

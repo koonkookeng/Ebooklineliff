@@ -6,13 +6,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useViewportKeepAlive } from '../keep-alive/useKeepAlive';
 import { releaseBlobUrls } from '../../lib/keep-alive/keep-alive-client';
+import { ForensicWatermark } from './watermark/ForensicWatermark';
 
 type UiState = 'LIFF_INIT' | 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
+
+interface ChunkWire {
+  vectorSvgContent: string;
+  forensicWatermark?: { watermarkText: string; userIdHash: string };
+}
 
 export default function CanvasReader({ productId, userIdHash }: { productId: string; userIdHash: string }) {
   const [page, setPage] = useState(1);
   const [ui, setUi] = useState<UiState>('IDLE');
   const [error, setError] = useState<string | null>(null);
+  const [watermark, setWatermark] = useState<{ watermarkText: string; userIdHash: string } | null>(null);
   const cache = useRef(new Map<number, string>());
   const blobUrls = useRef(new Map<number, string>());
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,6 +52,7 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
     async (currentPage: number) => {
       setUi('LOADING');
       setError(null);
+      setWatermark(null);
       try {
         const targets = [currentPage - 1, currentPage, currentPage + 1].filter((p) => p > 0);
         const next = new Map<number, string>();
@@ -55,8 +63,16 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
           }
           const res = await fetch(`/api/reader/chunk?productId=${productId}&page=${p}`);
           if (!res.ok) throw new Error(`chunk ${p}: ${res.status}`);
-          const data = await res.json();
+          const data = (await res.json()) as ChunkWire;
           next.set(p, data.vectorSvgContent as string);
+          // Phase 040: entitled payloads carry the dynamic forensic watermark
+          // (v1 route); legacy edge payloads omit it and keep the data-attr div.
+          if (p === currentPage && data.forensicWatermark?.watermarkText && data.forensicWatermark?.userIdHash) {
+            setWatermark({
+              watermarkText: data.forensicWatermark.watermarkText,
+              userIdHash: data.forensicWatermark.userIdHash,
+            });
+          }
         }
         // GC N-2: revoke blob URL + clear canvas (RAM < 30MB)
         for (const [p, url] of blobUrls.current) {
@@ -91,7 +107,12 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
           {error} <button onClick={() => void loadSlidingWindow(page)}>Retry</button>
         </div>
       )}
-      <canvas ref={canvasRef} width={390} height={844} aria-label={`ebook page ${page}`} />
+      <div className="relative">
+        <canvas ref={canvasRef} width={390} height={844} aria-label={`ebook page ${page}`} />
+        {watermark && (
+          <ForensicWatermark watermarkText={watermark.watermarkText} userIdHash={watermark.userIdHash} />
+        )}
+      </div>
       <div
         aria-hidden
         style={{ pointerEvents: 'none' }}

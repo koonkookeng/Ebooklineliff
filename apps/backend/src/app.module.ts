@@ -17,6 +17,7 @@
 // Phase 036: R2StorageModule (zero-egress vault transport + media delivery).
 // Phase 038: PipelineModule (book ingestion worker engine).
 // Phase 039: ChunkCacheModule (Redis edge chunk delivery + R2 warm path).
+// Phase 040: ReaderModule (entitled reader service + chunk/progress REST + GQL).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -48,8 +49,9 @@ import { LineSandboxModule } from './modules/line-sandbox/line-sandbox.module';
 import { R2StorageModule } from './infra/cloudflare/r2-storage.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { ChunkCacheModule } from './modules/reader/cache/chunk-cache.module';
+import { ReaderModule } from './modules/reader/reader.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

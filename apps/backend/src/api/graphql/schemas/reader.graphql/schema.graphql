@@ -1,0 +1,34 @@
+# SSOT Phase 040 §3.2 — Reader intent layer (entitled chunk + progress sync)
+# Canonical: apps/backend/src/api/graphql/schemas/reader.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via ReaderResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod reader.schema.ts <-> Prisma Entitlement/EbookDetail/EbookReadingProgress <-> here).
+
+type ForensicWatermarkPayload {
+  watermarkText: String!
+  userIdHash: String!
+  timestamp: String!
+}
+
+type EbookChunkPayload {
+  productId: ID!
+  pageNumber: Int!
+  totalPages: Int!
+  vectorSvgContent: String!
+  forensicWatermark: ForensicWatermarkPayload!
+  hasPrevious: Boolean!
+  hasNext: Boolean!
+}
+
+type ProgressSyncPayload {
+  success: Boolean!
+  lastPage: Int!
+  updatedAt: String!
+}
+
+extend type Query {
+  getEbookPageChunk(productId: ID!, pageNumber: Int!): EbookChunkPayload!
+}
+
+extend type Mutation {
+  syncEbookProgress(productId: ID!, pageNumber: Int!, readDurationSec: Int!): ProgressSyncPayload!
+}

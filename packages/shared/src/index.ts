@@ -613,3 +613,22 @@ export type {
   RedisChunkPayload,
   CacheMetrics,
 } from './schemas/chunk-cache.schema';
+export {
+  ForensicWatermarkSchema,
+  EbookChunkPayloadSchema,
+  ReaderProgressPayloadSchema,
+  ProgressSyncResultSchema,
+  READER_CHUNK_TTL_SEC,
+  READER_RAM_BUDGET_MB,
+  READER_RAM_WARN_MB,
+  READER_WINDOW_RADIUS,
+  readerLegacyCacheKey,
+  readerWindowPages,
+  readerEvictedPages,
+} from './schemas/reader.schema';
+export type {
+  ForensicWatermark,
+  EbookChunkPayload,
+  ReaderProgressPayload,
+  ProgressSyncResult,
+} from './schemas/reader.schema';

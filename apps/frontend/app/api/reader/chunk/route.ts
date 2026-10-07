@@ -2,6 +2,8 @@
 // Canonical: apps/frontend/app/api/reader/chunk/route.ts
 // - Forwards tenantId/productId/page to the NestJS edge gateway
 //   (GET /api/reader/chunk); no auth round-trip so canvas renders <10ms.
+// - ADR-040 compat: tenantId optional (backend Zod defaults to 'default'),
+//   keeping the Phase 000 CanvasReader path working.
 // - 404/503 pass through so the hook can enter ERROR + IndexedDB fallback.
 import { NextResponse } from 'next/server';
 
@@ -11,13 +13,14 @@ export async function GET(req: Request) {
   const tenantId = url.searchParams.get('tenantId');
   const productId = url.searchParams.get('productId');
   const page = url.searchParams.get('page');
-  if (!tenantId || !productId || !page) {
+  if (!productId || !page) {
     return NextResponse.json({ message: 'Missing chunk identity' }, { status: 400 });
   }
   try {
-    const res = await fetch(
-      `${backend}/api/reader/chunk?tenantId=${encodeURIComponent(tenantId)}&productId=${encodeURIComponent(productId)}&page=${encodeURIComponent(page)}`,
-    );
+    const qs =
+      `${tenantId ? `tenantId=${encodeURIComponent(tenantId)}&` : ''}` +
+      `productId=${encodeURIComponent(productId)}&page=${encodeURIComponent(page)}`;
+    const res = await fetch(`${backend}/api/reader/chunk?${qs}`);
     const data = await res.json().catch(() => null);
     return NextResponse.json(data, { status: res.status });
   } catch {
