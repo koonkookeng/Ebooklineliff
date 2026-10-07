@@ -1265,3 +1265,44 @@ model UserLocationCache {
 
   @@index([userId])
 }
+
+// Atomic Phase 033 §4.1: auto-update release + device fleet log (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models; Gate 7 — device-log
+// writes are fire-and-forget appends (never block the <20ms edge fast path).
+model AppVersion {
+  id                  String   @id @default(uuid())
+  tenantId            String
+  version             String
+  buildHash           String   @unique
+  minSupportedVersion String
+  updatePolicy        String   @default("OPTIONAL")
+  releaseNotes        String?  @db.Text
+  assetsManifestUrl   String?
+  isActive            Boolean  @default(true)
+  releasedAt          DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  clientDeviceLogs    ClientDeviceLog[]
+
+  @@index([tenantId, isActive])
+  @@index([version])
+}
+
+model ClientDeviceLog {
+  id              String      @id @default(uuid())
+  tenantId        String
+  lineUserId      String?
+  clientVersion   String
+  clientBuildHash String
+  platform        String
+  ipAddress       String?
+  userAgent       String?
+  appVersionId    String?
+  appVersion      AppVersion? @relation(fields: [appVersionId], references: [id])
+  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime    @default(now())
+
+  @@index([tenantId, clientVersion])
+}

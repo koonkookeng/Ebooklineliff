@@ -1,8 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 033 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 033 §3.1 — Check version DTO (Zod SSOT re-export)
+// Canonical: apps/backend/src/modules/version/dto/check-version.dto.ts
+// (legacy src/backend/modules/version/dto/check-version.dto.ts)
+// - Single source: packages/shared/src/schemas/version-contract.ts (no forked shapes).
+import { VersionCheckRequestSchema } from '@repo/shared';
+import type { VersionCheckRequest } from '@repo/shared';
+
+export { VersionCheckRequestSchema };
+export type CheckVersionDto = VersionCheckRequest;

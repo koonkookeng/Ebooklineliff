@@ -18,6 +18,11 @@ import { RumReporter } from '../../components/performance/RumReporter';
 import { TenantThemeProvider } from '../../providers/TenantThemeProvider';
 // Phase 031 Task 4: viewport keep-alive (chat-switch state preservation).
 import { KeepAliveProvider } from '../../components/keep-alive/KeepAliveProvider';
+// Phase 033 Task 3: instant auto-update checker (null-render when current).
+import { AutoUpdateChecker } from '../../components/updater/AutoUpdateChecker';
+
+const CLIENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0-dev';
+const CLIENT_BUILD_HASH = process.env.NEXT_PUBLIC_BUILD_HASH ?? 'dev-local';
 
 function resolveLiffId(tenant: string): string {
   if (typeof window !== 'undefined') {
@@ -42,6 +47,7 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
             <DynamicHeaderIntegrator />
             <PrefetchObserver />
             <RumReporter />
+            <AutoUpdateChecker currentVersion={CLIENT_VERSION} currentBuildHash={CLIENT_BUILD_HASH} />
             {children}
           </KeepAliveProvider>
         </TenantThemeProvider>

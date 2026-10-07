@@ -139,6 +139,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/performance/telemetry' ||
     // Phase 030: public branding fetch (logged-out LIFF opens need the theme).
     pathname === '/api/v1/tenant/theme' ||
+    // Phase 033: cold-start version check carries no auth (versions only).
+    pathname === '/api/v1/version/check' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

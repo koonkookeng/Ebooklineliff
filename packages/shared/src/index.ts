@@ -456,3 +456,28 @@ export type {
   PermissionAuditLog,
   PermissionSheetCopy,
 } from './schemas/permission-contract';
+export {
+  UpdatePolicyEnum,
+  AppVersionSchema,
+  VersionPlatformEnum,
+  VersionCheckRequestSchema,
+  VersionCheckResponseSchema,
+  LatestReleaseSchema,
+  ClientDeviceLogSchema,
+  VERSION_CACHE_TTL_SEC,
+  VERSION_CACHE_PREFIX,
+  UPDATE_LOOP_MAX,
+  UPDATE_LOOP_KEY,
+  versionCacheKey,
+  compareSemver,
+  evaluateUpdate,
+} from './schemas/version-contract';
+export type {
+  UpdatePolicy,
+  AppVersion,
+  VersionPlatform,
+  VersionCheckRequest,
+  VersionCheckResponse,
+  ClientDeviceLog,
+  LatestRelease,
+} from './schemas/version-contract';

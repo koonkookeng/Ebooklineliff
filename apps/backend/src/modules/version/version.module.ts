@@ -1,8 +1,14 @@
-/**
- * AUTO-SCAFFOLD Phase 033 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 033 §5.1 — Version module (auto-update check + fleet log)
+// Canonical: apps/backend/src/modules/version/version.module.ts
+// (legacy src/backend/modules/version/version.module.ts)
+// NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
 import { Module } from '@nestjs/common';
-@Module({})
-export class VersionModuleModule {}
+import { VersionService } from './version.service';
+import { VersionController } from './version.controller';
+
+@Module({
+  controllers: [VersionController],
+  providers: [VersionService],
+  exports: [VersionService],
+})
+export class VersionModule {}
