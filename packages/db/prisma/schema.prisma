@@ -86,6 +86,8 @@ model User {
   quizAttempts      QuizAttempt[]
   // Atomic Phase 048: course certificates
   courseCertificates CourseCertificate[]
+  // Atomic Phase 049: DRM sessions (ephemeral tile-permutation grants)
+  drmSessions       DrmSession[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -242,6 +244,8 @@ model Product {
   entitlements   Entitlement[]
   orderItems     OrderItem[]
   cartItems      CartItem[]
+  // Atomic Phase 049: DRM sessions bound to this product
+  drmSessions    DrmSession[]
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
   // Atomic Phase 023: per-product header overrides (dynamic title/branding)
@@ -377,6 +381,50 @@ model CourseCertificate {
   @@unique([userId, courseId])
   @@index([certificateNo])
   @@index([userId])
+}
+
+// Atomic Phase 049: DRM Canvas Shuffling (ephemeral sessions + violation audit)
+enum DrmViolationType {
+  SCREENSHOT_ATTEMPT
+  DEVTOOLS_CANVAS_DUMP
+  UNAUTHORIZED_DOM_INJECTION
+  SESSION_HIJACK_ATTEMPT
+}
+
+model DrmSession {
+  id                String            @id @default(uuid())
+  userId            String
+  productId         String
+  pageNumber        Int
+  sessionSeed       String
+  permutationVector Json
+  tileWidth         Int               @default(64)
+  tileHeight        Int               @default(64)
+  gridCols          Int
+  gridRows          Int
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  createdAt         DateTime          @default(now())
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product           Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  violationLogs     DrmViolationLog[]
+
+  @@index([userId, productId])
+  @@index([expiresAt])
+}
+
+model DrmViolationLog {
+  id            String           @id @default(uuid())
+  sessionId     String
+  drmSession    DrmSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  violationType DrmViolationType
+  ipAddress     String
+  userAgent     String
+  metadata      Json?
+  createdAt     DateTime         @default(now())
+
+  @@index([violationType])
+  @@index([createdAt])
 }
 
 model CourseSection {

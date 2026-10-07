@@ -1,0 +1,44 @@
+# SSOT Phase 049 §3.2 — DRM intent layer (session grant + chunk + violation)
+# Canonical: apps/backend/src/api/graphql/schemas/drm.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via DrmResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod drm-contract.ts <-> Prisma DrmSession/DrmViolationLog <-> here).
+
+type PixelTileMatrix {
+  tileWidth: Int!
+  tileHeight: Int!
+  gridCols: Int!
+  gridRows: Int!
+  permutationVector: [Int!]!
+  seedHash: String!
+}
+
+type DrmSessionHandshake {
+  sessionId: ID!
+  productId: ID!
+  pageNumber: Int!
+  expiresAt: String!
+  tileMatrix: PixelTileMatrix!
+}
+
+type ForensicData {
+  userIdHash: String!
+  tenantId: String!
+  ipAddressHash: String!
+  timestamp: String!
+}
+
+type DecryptChunkPayload {
+  pageNumber: Int!
+  encryptedChunkUrl: String!
+  drmSession: DrmSessionHandshake!
+  forensicData: ForensicData!
+}
+
+extend type Query {
+  getEbookPageDrmChunk(productId: ID!, pageNumber: Int!, sessionId: ID!): DecryptChunkPayload!
+}
+
+extend type Mutation {
+  initDrmSession(productId: ID!, pageNumber: Int!): DrmSessionHandshake!
+  reportPiracyViolation(sessionId: ID!, violationType: String!, detailJson: String): Boolean!
+}
