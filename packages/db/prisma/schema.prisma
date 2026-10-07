@@ -1346,3 +1346,43 @@ model LineOAFriendshipLog {
   @@index([userId])
   @@index([eventType])
 }
+
+// Atomic Phase 035 §4.1: LINE review sandbox audit trail (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models; Gate 7 — audit + items
+// persist in a single nested create (atomic); Gate 8 — event published after.
+enum LineReviewCategory {
+  AUTHENTICATION_SECURITY
+  MEMORY_PERFORMANCE
+  PRIVACY_CONSENT
+  UI_NAVIGATION_COMPLIANCE
+  PAYMENT_EXTERNAL_POLICY
+  MEDIA_STREAMING_DRM
+}
+
+model LineMiniAppSandboxAudit {
+  id                      String                  @id @default(uuid())
+  tenantId                String
+  overallScore            Float                   @default(0.0)
+  isApprovedForSubmission Boolean                 @default(false)
+  testedByUserId          String
+  testResults             LineSandboxResultItem[]
+  createdAt               DateTime                @default(now())
+
+  @@index([tenantId])
+}
+
+model LineSandboxResultItem {
+  id                String                  @id @default(uuid())
+  auditId           String
+  audit             LineMiniAppSandboxAudit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  category          LineReviewCategory
+  checkPointName    String
+  isPassed          Boolean
+  executionTimeMs   Int
+  memoryUsageMB     Float
+  diagnosticMessage String?
+  createdAt         DateTime                @default(now())
+
+  @@index([auditId])
+}
