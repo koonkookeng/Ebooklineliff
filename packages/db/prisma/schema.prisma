@@ -860,6 +860,62 @@ model VideoKeyRotation {
   @@index([videoId])
 }
 
+// Atomic Phase 044: transcode lifecycle vocabulary (§4.1 verbatim)
+enum TranscodeStatus {
+  QUEUED
+  PROCESSING_UPLOAD
+  TRANSCODING
+  UPLOADING_R2
+  COMPLETED
+  FAILED
+}
+
+enum VideoQuality {
+  RES_1080P
+  RES_720P
+  RES_480P
+  RES_360P
+}
+
+// Atomic Phase 044: lesson transcode job ledger (§4.1 verbatim)
+model VideoTranscodeJob {
+  id                 String          @id @default(uuid())
+  lessonId           String          @unique
+  originalFileName   String
+  originalFileR2Path String
+  fileSizeBytes      BigInt
+  durationSeconds    Float           @default(0.0)
+  status             TranscodeStatus @default(QUEUED)
+  progressPercentage Float           @default(0.0)
+  masterPlaylistUrl  String?
+  encryptionKeyPath  String?
+  errorMessage       String?         @db.Text
+  variants           VideoQualityVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lessonId])
+  @@index([status])
+}
+
+// Atomic Phase 044: per-quality variant manifests (§4.1 verbatim)
+model VideoQualityVariant {
+  id                String            @id @default(uuid())
+  transcodeJobId    String
+  transcodeJob      VideoTranscodeJob @relation(fields: [transcodeJobId], references: [id], onDelete: Cascade)
+  quality           VideoQuality
+  bandwidth         Int
+  width             Int
+  height            Int
+  playlistPath      String
+  totalChunks       Int               @default(0)
+  avgChunkSizeBytes Int               @default(0)
+  createdAt         DateTime          @default(now())
+
+  @@unique([transcodeJobId, quality])
+}
+
 model CourseLearningProgress {
   id          String   @id @default(uuid())
   userId      String

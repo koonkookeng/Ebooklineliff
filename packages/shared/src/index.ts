@@ -706,3 +706,24 @@ export type {
   VideoWorkerEvent,
   VideoProgressReport,
 } from './schemas/video-pipeline-contract';
+export {
+  TranscodeQualityEnum,
+  TranscodeStatusEnum,
+  VideoTranscodeJobSchema,
+  HlsVariantMetadataSchema,
+  HLS_SEGMENT_MAX_BYTES,
+  HLS_SEGMENT_SECONDS,
+  TRANSCODE_STAGE_WEIGHTS,
+  TRANSCODE_POLL_MS,
+  lessonHlsPrefix,
+  lessonMasterKey,
+  lessonVariantPlaylist,
+  SubmitTranscodeJobSchema,
+} from './schemas/video-transcode.contract';
+export type {
+  TranscodeQuality,
+  TranscodeStatus,
+  VideoTranscodeJob,
+  HlsVariantMetadata,
+  SubmitTranscodeJob,
+} from './schemas/video-transcode.contract';

@@ -36,10 +36,14 @@ export interface StreamTables {
   user: {
     findUnique(args: unknown): Promise<{ displayName: string } | null>;
   };
+  videoTranscodeJob?: {
+    findUnique(args: unknown): Promise<{ id: string; lessonId: string; encryptionKeyPath: string | null } | null>;
+  };
 }
 
 export interface StreamVault {
   presignedGetUrl(objectKey: string, expiresInSeconds: number): string;
+  getObjectBuffer?(key: string): Promise<Buffer>;
 }
 
 export interface StreamCache {
@@ -141,5 +145,20 @@ export class StreamService {
       // Heatmap sink must never fail the 5s cadence.
     }
     return { recorded: true };
+  }
+
+  /** Phase 044 §8.1: DRM key gate by transcode job (JWT + entitlement, no-store bytes). */
+  async getKeyByTranscodeJob(userId: string, jobId: string): Promise<Buffer> {
+    if (!this.tables?.videoTranscodeJob || !this.vault?.getObjectBuffer) {
+      throw new NotFoundException('Stream unavailable');
+    }
+    const job = await this.tables.videoTranscodeJob.findUnique({ where: { id: jobId } }).catch(() => null);
+    if (!job || !job.encryptionKeyPath) throw new NotFoundException('Encryption key not found');
+    const resolved = await this.productForLesson(job.lessonId);
+    if (!resolved) throw new NotFoundException('Lesson not found');
+    if (!(await this.entitled(userId, resolved.productId, resolved.lesson.isPreview))) {
+      throw new ForbiddenException('ท่านยังไม่มีสิทธิ์เข้าถึงบทเรียนนี้');
+    }
+    return this.vault.getObjectBuffer(job.encryptionKeyPath);
   }
 }

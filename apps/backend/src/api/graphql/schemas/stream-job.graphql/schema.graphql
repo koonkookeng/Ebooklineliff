@@ -1,0 +1,24 @@
+# SSOT Phase 044 — Transcode job intent layer (studio status reads)
+# Canonical: apps/backend/src/api/graphql/schemas/stream-job.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via StreamJobResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod video-transcode.contract.ts <-> Prisma VideoTranscodeJob/VideoQualityVariant <-> here).
+
+type TranscodeVariantStatus {
+  quality: String!
+  totalChunks: Int!
+  avgChunkSizeBytes: Int!
+}
+
+type TranscodeJobStatusPayload {
+  jobId: ID!
+  lessonId: ID!
+  status: String!
+  progressPercentage: Float!
+  masterPlaylistUrl: String
+  errorMessage: String
+  variants: [TranscodeVariantStatus!]!
+}
+
+extend type Query {
+  getTranscodeJobStatus(jobId: ID!): TranscodeJobStatusPayload!
+}
