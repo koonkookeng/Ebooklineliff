@@ -746,3 +746,24 @@ export type {
   SyncLessonProgress,
   ProgressSyncResponse,
 } from './schemas/stream-contract';
+export {
+  SyncProgressInputSchema,
+  SyncProgressPayloadSchema,
+  LessonStreamStateSchema,
+  PROGRESS_SYNC_INTERVAL_MS,
+  PROGRESS_FLUSH_INTERVAL_SEC,
+  PROGRESS_RATE_LIMIT,
+  PROGRESS_RATE_WINDOW_SEC,
+  PROGRESS_COMPLETION_RATIO,
+  progressBufferKey,
+  heatmapKey,
+  secondBucket,
+  bufferCompleted,
+  BeaconProgressSchema,
+} from './schemas/progress-sync.schema';
+export type {
+  SyncProgressInput,
+  SyncProgressPayload,
+  LessonStreamState,
+  BeaconProgress,
+} from './schemas/progress-sync.schema';

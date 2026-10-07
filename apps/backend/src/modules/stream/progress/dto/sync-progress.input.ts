@@ -1,6 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 046 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 046 — Progress DTO (Zod SSOT re-export)
+// Canonical: apps/backend/src/modules/stream/progress/dto/sync-progress.input.ts
+// (legacy src/backend/modules/stream/progress/dto/sync-progress.input.ts)
+// - Single source: packages/shared/src/schemas/progress-sync.schema.ts.
+import { SyncProgressInputSchema, BeaconProgressSchema } from '@repo/shared';
+import type { SyncProgressInput, BeaconProgress } from '@repo/shared';
+
+export { SyncProgressInputSchema, BeaconProgressSchema };
+export type ProgressSyncInputDto = SyncProgressInput;
+export type BeaconProgressDto = BeaconProgress;

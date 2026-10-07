@@ -28,13 +28,14 @@ import { VideoUploadService } from './services/video-upload.service';
 import { StreamJobResolver } from './stream.resolver';
 import { StreamTranscodeController, TranscodeKeyController } from './stream.controller';
 import { StreamPlaybackResolver } from '../../api/graphql/stream/stream.resolver';
+import { ProgressModule } from './progress/progress.module';
 import { TranscodeWorkerHost } from './transcoder.worker';
 import { VideoTranscodeProcessor044 } from './workers/video-transcode.processor';
 
 const execAsync = promisify(exec);
 
 @Module({
-  imports: [R2StorageModule],
+  imports: [R2StorageModule, ProgressModule],
   controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController],
   providers: [
     VideoTranscodeQueue,

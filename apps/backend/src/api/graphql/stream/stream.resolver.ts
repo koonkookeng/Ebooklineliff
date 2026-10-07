@@ -4,14 +4,18 @@
 // Runtime is code-first (autoSchemaFile); SDL supplement lives at
 // apps/backend/src/api/graphql/schemas/stream.graphql/schema.graphql.
 // - Query.getLessonStreamState(lessonId): manifest + resume + watermark.
-// - Mutation.syncLessonProgress: 5s heartbeat (DB upsert + heatmap event).
-// - Both ride StreamService (no HTTP hop); identity from @Context().
+// - Mutation.syncLessonProgress: 5s heartbeat — Phase 046 delegates it to
+//   the write-behind buffer (same field name/shape, <20ms) instead of the
+//   direct upsert; the buffered variant also exists as
+//   syncLessonProgressBuffered (ProgressResolver).
+// - Both ride module services (no HTTP hop); identity from @Context().
 // - Zero new deps.
 import { Args, Context, Field, Float, ID, InputType, Int, Mutation, ObjectType, Query, Resolver } from '@nestjs/graphql';
 import { BadRequestException, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { SyncLessonProgressSchema } from '@repo/shared';
 import { StreamService } from '../../../modules/stream/services/stream.service';
+import { ProgressService } from '../../../modules/stream/progress/progress.service';
 import { resolveReaderIdentity, type ReaderGqlContext } from '../../../modules/reader/reader-identity';
 
 @ObjectType('StreamWatermarkPayload')
@@ -58,7 +62,10 @@ function ipOf(ctx: ReaderGqlContext | undefined): string {
 
 @Resolver('Stream')
 export class StreamPlaybackResolver {
-  constructor(private readonly stream: StreamService) {}
+  constructor(
+    private readonly stream: StreamService,
+    private readonly progress: ProgressService,
+  ) {}
 
   @Query('getLessonStreamState')
   @UseGuards(JwtAuthGuard)
@@ -77,6 +84,10 @@ export class StreamPlaybackResolver {
     const parsed = SyncLessonProgressSchema.safeParse(input);
     if (!parsed.success) throw new BadRequestException('Invalid lesson progress');
     const { userId } = resolveReaderIdentity(gqlCtx);
-    return this.stream.syncLessonProgress(userId, parsed.data);
+    const buffered = await this.progress.bufferProgressSync(userId, {
+      ...parsed.data,
+      clientTimestamp: new Date().toISOString(),
+    });
+    return { success: buffered.success, updatedAt: buffered.serverTimestamp, isCompleted: buffered.isCompleted };
   }
 }

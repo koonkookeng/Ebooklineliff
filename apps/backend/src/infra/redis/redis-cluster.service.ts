@@ -142,6 +142,24 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     return found;
   }
 
+  // Phase 046 §4.2 — write-behind progress buffer primitives (additive)
+  async hset(key: string, fields: Record<string, string>): Promise<void> {
+    await this.client.hset(key, fields);
+  }
+
+  async hgetall(key: string): Promise<Record<string, string>> {
+    return (await this.client.hgetall(key)) as Record<string, string>;
+  }
+
+  async zincrby(key: string, increment: number, member: string): Promise<void> {
+    await this.client.zincrby(key, increment, member);
+  }
+
+  // Phase 046 §8.1 — fixed-window rate-limit counter (additive)
+  async incr(key: string): Promise<number> {
+    return await this.client.incr(key);
+  }
+
   onModuleDestroy() {
     this.client.disconnect();
   }
