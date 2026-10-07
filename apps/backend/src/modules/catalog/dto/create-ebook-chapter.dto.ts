@@ -1,8 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 037 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 037 Task 3 — Create chapter DTO (Zod SSOT re-export)
+// Canonical: apps/backend/src/modules/catalog/dto/create-ebook-chapter.dto.ts
+// (legacy src/backend/modules/catalog/dto/create-ebook-chapter.dto.ts)
+// - Ordering is server-assigned (chapterIndex = max + 1); never client-asserted.
+import { CreateEbookChapterSchema } from '@repo/shared';
+import type { CreateEbookChapter } from '@repo/shared';
+
+export { CreateEbookChapterSchema };
+export type CreateEbookChapterDto = CreateEbookChapter;

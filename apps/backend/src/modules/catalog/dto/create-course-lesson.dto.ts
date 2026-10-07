@@ -1,8 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 037 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 037 Task 3 — Create lesson DTO (Zod SSOT re-export)
+// Canonical: apps/backend/src/modules/catalog/dto/create-course-lesson.dto.ts
+// (legacy src/backend/modules/catalog/dto/create-course-lesson.dto.ts)
+// - Ordering is server-assigned (lessonOrder = count + 1); never client-asserted.
+import { CreateCourseLessonSchema } from '@repo/shared';
+import type { CreateCourseLesson } from '@repo/shared';
+
+export { CreateCourseLessonSchema };
+export type CreateCourseLessonDto = CreateCourseLesson;

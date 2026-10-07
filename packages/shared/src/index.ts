@@ -550,3 +550,28 @@ export type {
   SignedStreamUrlResponse,
   R2UploadRequest,
 } from './schemas/r2-storage-contract';
+export {
+  EbookChapterSchema,
+  EbookDetailSchema,
+  LessonQuizSchema,
+  CourseLessonSchema,
+  CourseSectionSchema,
+  CourseDetailSchema,
+  CreateEbookChapterSchema,
+  CreateCourseLessonSchema,
+  CurriculumQuerySchema,
+  totalHoursOf,
+  byLessonOrder,
+  byOrderIndex,
+} from './schemas/ebook-course-contract';
+export type {
+  EbookChapter,
+  EbookDetail,
+  LessonQuiz,
+  CourseLesson,
+  CourseSection,
+  CourseDetail,
+  CreateEbookChapter,
+  CreateCourseLesson,
+  CurriculumQuery,
+} from './schemas/ebook-course-contract';

@@ -355,6 +355,8 @@ model CourseLesson {
   videoHlsUrl String
   durationSec Int           @default(0)
   isPreview   Boolean       @default(false)
+  // Atomic Phase 037: in-lesson quizzes (simple spec shape; quiz engine expands)
+  quizzes     LessonQuiz[]
   // Atomic Phase 036: R2 HLS prefix + segment manifests + vault mapping
   r2HlsPrefix   String?
   r2VaultAsset  StorageVaultAsset? @relation("LessonVideoR2Source")
@@ -1446,5 +1448,24 @@ model HlsSegmentMeta {
   durationSec  Float
 
   @@unique([lessonId, resolution, segmentIndex])
+  @@index([lessonId])
+}
+
+// Atomic Phase 037 Task 1: in-lesson quiz (spec-verbatim simple shape).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: new table + CourseLesson.quizzes back-relation only.
+// NOTE: the richer Phase 047/093 quiz engine (options/attempts) expands this
+// table later — the spec-simple columns below are its forward-compatible core.
+model LessonQuiz {
+  id          String       @id @default(uuid())
+  lessonId    String
+  lesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  question    String       @db.Text
+  optionsJson Json
+  answerKey   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([lessonId])
 }

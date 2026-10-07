@@ -143,6 +143,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/version/check' ||
     // Phase 034: OA public config for logged-out LIFF opens (no secrets).
     pathname === '/api/v1/line-oa/config' ||
+    // Phase 037: public TOC/curriculum for logged-out PDP/discovery.
+    pathname.startsWith('/api/v1/catalog/structure/') ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

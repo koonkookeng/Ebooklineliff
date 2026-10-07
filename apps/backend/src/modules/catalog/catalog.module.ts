@@ -16,10 +16,16 @@ import { ProductSearchController } from './presentation/rest/product-search.cont
 import { StorefrontService } from './services/storefront.service';
 import { StorefrontResolver } from './resolvers/storefront.resolver';
 import { StorefrontController } from './presentation/rest/storefront.controller';
+// Phase 037: hierarchy structure (TOC/curriculum reads + ordered writes).
+import { EbookDetailRepository } from './repositories/ebook-detail.repository';
+import { CourseDetailRepository } from './repositories/course-detail.repository';
+import { EbookStructureService } from './services/ebook-structure.service';
+import { CourseStructureService } from './services/course-structure.service';
+import { CatalogStructureController } from './controllers/catalog-structure.controller';
 
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single connection pool).
 @Module({
-  controllers: [CatalogAdminController, ProductSearchController, StorefrontController],
+  controllers: [CatalogAdminController, ProductSearchController, StorefrontController, CatalogStructureController],
   providers: [
     PrismaCatalogRepository,
     CreateProductUseCase,
@@ -34,6 +40,10 @@ import { StorefrontController } from './presentation/rest/storefront.controller'
     ProductSearchResolver,
     StorefrontService,
     StorefrontResolver,
+    EbookDetailRepository,
+    CourseDetailRepository,
+    EbookStructureService,
+    CourseStructureService,
   ],
   exports: [PrismaCatalogRepository, CreateProductUseCase, UpdateStockUseCase, GetProductBySlugUseCase, ListCatalogUseCase, PrismaProductSearchRepository, SearchProductsHandler, PredictiveSearchHandler, StorefrontService],
 })

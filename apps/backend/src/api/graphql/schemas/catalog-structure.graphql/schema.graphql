@@ -1,0 +1,64 @@
+# SSOT Phase 037 §3.2 — Ebook/course hierarchy intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/catalog-structure.graphql/schema.graphql
+# (spec IN_SCOPE names src/backend/api/graphql/schema/catalog.graphql; canonical
+# follows the established schemas/<name>.graphql convention — Phases 023–035.)
+# Runtime is code-first; this SDL is the contract supplement
+# (SSOT sync gate: Zod ebook-course-contract.ts <-> Prisma hierarchy <-> here).
+
+type EbookDetail {
+  id: ID!
+  productId: ID!
+  totalPages: Int!
+  previewPages: Int!
+  storagePathR2: String!
+  fileHash: String!
+  chapters: [EbookChapter!]!
+}
+
+type EbookChapter {
+  id: ID!
+  ebookId: ID!
+  chapterIndex: Int!
+  title: String!
+  chunkCount: Int!
+  chunkR2Prefix: String!
+}
+
+type CourseDetail {
+  id: ID!
+  productId: ID!
+  totalHours: Float!
+  sections: [CourseSection!]!
+}
+
+type CourseSection {
+  id: ID!
+  courseId: ID!
+  sectionOrder: Int!
+  title: String!
+  lessons: [CourseLesson!]!
+}
+
+type CourseLesson {
+  id: ID!
+  sectionId: ID!
+  lessonOrder: Int!
+  title: String!
+  videoHlsUrl: String!
+  durationSec: Int!
+  isPreview: Boolean!
+  quizzes: [LessonQuiz!]!
+}
+
+type LessonQuiz {
+  id: ID!
+  lessonId: ID!
+  question: String!
+  optionsJson: String!
+  answerKey: String!
+}
+
+extend type Query {
+  ebookToc(productId: ID!): [EbookChapter!]!
+  courseCurriculum(productId: ID!): CourseDetail
+}
