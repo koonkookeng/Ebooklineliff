@@ -1,8 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 039 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class RedisEdgeServiceService {}
+// SSOT Phase 039 — legacy-path alias (canonical impl lives in ./services/)
+// Canonical: apps/backend/src/modules/reader/cache/redis-edge.service.ts
+// (legacy src/backend/modules/reader/cache/redis-edge.service.ts)
+export { RedisEdgeService, EdgeCacheTelemetry } from './services/redis-edge.service';

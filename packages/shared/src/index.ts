@@ -594,3 +594,22 @@ export type {
   BookPipelineStatusResponse,
   PagePayload,
 } from './schemas/book-pipeline.zod';
+export {
+  ChunkCacheKeyParamsSchema,
+  RedisChunkPayloadSchema,
+  CacheMetricsSchema,
+  CHUNK_CACHE_TTL_SEC,
+  EDGE_HIT_SLA_MS,
+  EDGE_SELFHEAL_MS,
+  EDGE_WARM_BUDGET_MS,
+  CHUNK_WINDOW_RADIUS,
+  buildChunkCacheKey,
+  chunkInvalidationPattern,
+  slidingWindowPages,
+  chunkR2ObjectKey,
+} from './schemas/chunk-cache.schema';
+export type {
+  ChunkCacheKeyParams,
+  RedisChunkPayload,
+  CacheMetrics,
+} from './schemas/chunk-cache.schema';

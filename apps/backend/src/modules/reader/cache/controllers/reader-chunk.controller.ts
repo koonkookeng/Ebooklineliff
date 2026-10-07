@@ -1,10 +1,3 @@
-/**
- * AUTO-SCAFFOLD Phase 039 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class ReaderChunkControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 039 — cache-tree alias (canonical controller lives in
+// apps/backend/src/modules/reader/controllers/reader-chunk.controller.ts)
+export { ReaderChunkController } from '../../controllers/reader-chunk.controller';

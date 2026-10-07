@@ -52,8 +52,9 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.setex(key, ttlSeconds, value);
   }
 
-  async del(key: string): Promise<void> {
-    await this.client.del(key);
+  async del(...keys: string[]): Promise<void> {
+    if (keys.length === 0) return;
+    await this.client.del(...keys);
   }
 
   // Phase 006 §7.1 — auth analytics events (best-effort; consumers subscribe to `auth-events`)
@@ -113,6 +114,32 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
 
   async setEntitlementFlag(key: string, ttlSeconds = 3600): Promise<void> {
     await this.client.setex(key, ttlSeconds, 'TRUE');
+  }
+
+  // Phase 039 §5.2 — binary-safe edge chunk surface (additive; no behavior change)
+  async set(key: string, value: string | Buffer, ...args: Array<string | number>): Promise<unknown> {
+    const setFn = this.client.set.bind(this.client) as (...a: unknown[]) => Promise<unknown>;
+    return setFn(key, value, ...args);
+  }
+
+  async getBuffer(key: string): Promise<Buffer | null> {
+    return (await this.client.getBuffer(key)) as Buffer | null;
+  }
+
+  async expire(key: string, seconds: number): Promise<void> {
+    await this.client.expire(key, seconds);
+  }
+
+  /** Paginated SCAN for pattern invalidation (BDD-3 <100ms cluster sweep). */
+  async scanKeys(pattern: string, pageSize = 100): Promise<string[]> {
+    const found: string[] = [];
+    let cursor = '0';
+    do {
+      const [next, batch] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', pageSize);
+      cursor = next;
+      found.push(...batch);
+    } while (cursor !== '0');
+    return found;
   }
 
   onModuleDestroy() {
