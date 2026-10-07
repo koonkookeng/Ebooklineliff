@@ -15,6 +15,7 @@
 // Phase 034: LineOAModule (OA config/friendship sync) + LineWebhooksModule (follow/unfollow).
 // Phase 035: LineSandboxModule (review sandbox audit runner + verification).
 // Phase 036: R2StorageModule (zero-egress vault transport + media delivery).
+// Phase 038: PipelineModule (book ingestion worker engine).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -44,8 +45,9 @@ import { LineOAModule } from './modules/line-oa/line-oa.module';
 import { LineWebhooksModule } from './webhooks/line-webhooks.module';
 import { LineSandboxModule } from './modules/line-sandbox/line-sandbox.module';
 import { R2StorageModule } from './infra/cloudflare/r2-storage.module';
+import { PipelineModule } from './modules/pipeline/pipeline.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule, LineSandboxModule, R2StorageModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule, LineSandboxModule, R2StorageModule, PipelineModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

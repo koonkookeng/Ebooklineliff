@@ -221,6 +221,8 @@ model Product {
   physicalDetail PhysicalDetail?
   ebookDetail    EbookDetail?
   courseDetail   CourseDetail?
+  // Atomic Phase 038: 1:1 pipeline job per product (ingestion state machine)
+  bookProcessingJob BookProcessingJob?
   // Hybrid Bundle self-referential many-to-many (parent bundle -> child products)
   bundleParents  BundleItem[]                @relation("ChildProducts")
   bundleChildren BundleItem[]                @relation("ParentBundle")
@@ -299,6 +301,9 @@ model EbookDetail {
   // Atomic Phase 036: R2 vault mapping + per-page chunk manifests
   r2VaultAsset   StorageVaultAsset? @relation("EbookR2Source")
   chunkManifests EbookChunkMeta[]
+  // Atomic Phase 038: pipeline chunk envelopes + AI/search text layer
+  chunks         EbookChunk[]
+  pageTexts      EbookPageText[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1468,4 +1473,60 @@ model LessonQuiz {
   updatedAt DateTime @updatedAt
 
   @@index([lessonId])
+}
+
+// Atomic Phase 038 Task 1: book pipeline job + chunk/text records (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: new tables + EbookDetail back-relations only;
+// Gate 7 — chunk/text rows upsert by @@unique (idempotent re-runs/retries).
+enum BookJobStatus {
+  QUEUED
+  PARSING_STRUCTURE
+  GENERATING_VECTOR_CHUNKS
+  ENCRYPTING_ASSETS
+  UPLOADING_R2
+  COMPLETED
+  FAILED
+}
+
+model BookProcessingJob {
+  id                 String        @id @default(uuid())
+  productId          String        @unique
+  product            Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status             BookJobStatus @default(QUEUED)
+  progressPercentage Float         @default(0.0)
+  totalPages         Int           @default(0)
+  processedPages     Int           @default(0)
+  errorMessage       String?       @db.Text
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model EbookChunk {
+  id             String      @id @default(uuid())
+  ebookDetailId  String
+  ebookDetail    EbookDetail @relation(fields: [ebookDetailId], references: [id], onDelete: Cascade)
+  pageNumber     Int
+  chunkR2Path    String
+  fileSizeBytes  Int
+  chunkHash      String
+  createdAt      DateTime    @default(now())
+
+  @@unique([ebookDetailId, pageNumber])
+  @@index([ebookDetailId])
+}
+
+model EbookPageText {
+  id            String      @id @default(uuid())
+  ebookDetailId String
+  ebookDetail   EbookDetail @relation(fields: [ebookDetailId], references: [id], onDelete: Cascade)
+  pageNumber    Int
+  extractedText String      @db.Text
+
+  @@unique([ebookDetailId, pageNumber])
+  @@index([ebookDetailId])
 }

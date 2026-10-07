@@ -1,0 +1,20 @@
+# SSOT Phase 038 §3.2 — Book pipeline intent layer (status reads)
+# Canonical: apps/backend/src/api/graphql/schemas/book-pipeline.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via BookPipelineResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod book-pipeline.zod.ts <-> Prisma pipeline tables <-> here).
+# NOTE: start/retry mutations ride the REST controller (page payloads are JSON
+# bodies, not GraphQL args) — the intent layer exposes the status Query only.
+
+type BookPipelineStatusPayload {
+  jobId: ID!
+  bookId: ID!
+  status: String!
+  progressPercentage: Float!
+  processedPages: Int!
+  totalPages: Int!
+  errorMessage: String
+}
+
+extend type Query {
+  getBookPipelineStatus(productId: ID!): BookPipelineStatusPayload!
+}

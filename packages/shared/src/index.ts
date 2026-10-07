@@ -575,3 +575,22 @@ export type {
   CreateCourseLesson,
   CurriculumQuery,
 } from './schemas/ebook-course-contract';
+export {
+  BookJobStatusEnum,
+  ProcessBookJobInputSchema,
+  EbookChunkMetadataSchema,
+  BookPipelineStatusResponseSchema,
+  PagePayloadSchema,
+  SVG_PAGE_MAX_BYTES,
+  PIPELINE_CHUNK_TTL_SEC,
+  PIPELINE_MAX_RETRIES,
+  chunkR2Path,
+  progressFor,
+} from './schemas/book-pipeline.zod';
+export type {
+  BookJobStatus,
+  ProcessBookJobInput,
+  EbookChunkMetadata,
+  BookPipelineStatusResponse,
+  PagePayload,
+} from './schemas/book-pipeline.zod';
