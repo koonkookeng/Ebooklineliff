@@ -1,0 +1,35 @@
+# SSOT Phase 030 §3.2 — Tenant branding + navbar theme intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/tenant-theme.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via TenantThemeResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod tenant-branding.schema.ts <-> Prisma TenantBranding <-> here).
+
+type TenantBranding {
+  tenantId: ID!
+  brandName: String!
+  logoUrl: String
+  primaryColor: String!
+  navBarBgColor: String!
+  navBarTextColor: String!
+  iconTheme: String!
+  enableCustomCloseButton: Boolean!
+  enableShareOptionMenu: Boolean!
+  updatedAt: String
+}
+
+input UpdateNavbarThemeInput {
+  tenantId: ID!
+  primaryColor: String!
+  navBarBgColor: String!
+  navBarTextColor: String!
+  iconTheme: String
+  enableCustomCloseButton: Boolean
+  enableShareOptionMenu: Boolean
+}
+
+extend type Query {
+  tenantBranding(slug: String!): TenantBranding!
+}
+
+extend type Mutation {
+  updateNavbarTheme(input: UpdateNavbarThemeInput!): Boolean!
+}

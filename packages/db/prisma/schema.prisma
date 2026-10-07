@@ -879,14 +879,21 @@ model HeaderConfig {
 }
 
 model TenantBranding {
-  id              String   @id @default(uuid())
-  tenantSlug      String   @unique
-  defaultTitle    String
-  logoUrl         String
-  primaryColor    String   @default("#0284C7")
-  headerStyleJson Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                      String   @id @default(uuid())
+  tenantSlug              String   @unique
+  defaultTitle            String
+  logoUrl                 String
+  primaryColor            String   @default("#0284C7")
+  headerStyleJson         Json?
+  // Atomic Phase 030 §4.1: navbar customizer columns (expand-contract, additive;
+  // slug stays the key — middleware tenant hints are slugs, Phase 023 shape kept).
+  navBarBgColor           String   @default("#0F172A")
+  navBarTextColor         String   @default("#FFFFFF")
+  iconTheme               String   @default("LIGHT")
+  enableCustomCloseButton Boolean  @default(true)
+  enableShareOptionMenu   Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@index([tenantSlug])
 }

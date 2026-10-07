@@ -137,6 +137,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/security/csp-report' ||
     // Phase 029: RUM beacons carry no auth (sendBeacon from any page).
     pathname === '/api/v1/performance/telemetry' ||
+    // Phase 030: public branding fetch (logged-out LIFF opens need the theme).
+    pathname === '/api/v1/tenant/theme' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

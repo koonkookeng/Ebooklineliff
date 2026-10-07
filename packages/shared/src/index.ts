@@ -387,3 +387,21 @@ export type {
   PrefetchPayload,
   TelemetryIngest,
 } from './schemas/performance.schema';
+export {
+  NavigationBarIconThemeEnum,
+  TenantBrandingSchema,
+  UpdateNavbarThemeInputSchema,
+  tenantThemeKey,
+  TENANT_THEME_TTL_SEC,
+  THEME_ANALYTICS_CHANNEL,
+  WCAG_AA_MIN_RATIO,
+  relativeLuminance,
+  contrastRatio,
+  ensureReadableText,
+  resolveIconTheme,
+} from './schemas/tenant-branding.schema';
+export type {
+  NavigationBarIconTheme,
+  TenantBranding,
+  UpdateNavbarThemeInput,
+} from './schemas/tenant-branding.schema';

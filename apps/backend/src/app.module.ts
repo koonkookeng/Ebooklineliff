@@ -8,6 +8,7 @@
 // Phase 027: NavigationModule (LIFF shell router + dirty-state guard persistence).
 // Phase 028: SecurityModule (strict CSP + CORS whitelist + violation report sink).
 // Phase 029: PerformanceModule (2MB bundle guard + predictive prefetch + RUM telemetry).
+// Phase 030: TenantThemeModule (dynamic navbar branding + WCAG AA contrast guard).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -29,8 +30,9 @@ import { SocialShareModule } from './modules/social-share/social-share.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
 import { SecurityModule } from './infra/security/security.module';
 import { PerformanceModule } from './modules/performance/performance.module';
+import { TenantThemeModule } from './modules/tenant/tenant-theme.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
