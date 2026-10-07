@@ -1,8 +1,68 @@
-/**
- * AUTO-SCAFFOLD Phase 105 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 048 Task 5/6 — CertificateModule (Auto-Certificate wiring)
+// Canonical: apps/backend/src/modules/certificate/certificate.module.ts
+// (legacy src/backend/modules/certificate/certificate.module.ts)
+// - useFactory wiring keeps services tsx-importable (Phase 027–047 precedent).
+// - PrismaService arrives via global InfraModule; R2 via R2StorageModule.
+// - EventEmitter2 for certificate.issued analytics events (Phase 048 §7.1).
+// - Zero new deps.
 import { Module } from '@nestjs/common';
-@Module({})
-export class CertificateModuleModule {}
+import { EventEmitter } from 'node:events';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
+import { PrismaService } from '../../infra/database/prisma.service';
+import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
+import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
+import { CertificatePdfGeneratorService } from './application/services/certificate-pdf-generator.service';
+import { CertificateVerificationService } from './application/services/certificate-verification.service';
+import { CourseCompletedEventHandler, CERTIFICATE_EVENT_BUS } from './application/event-handlers/course-completed.handler';
+import { CertificateResolver } from './presentation/certificate.resolver';
+import { CertificateVerifyController } from './presentation/certificate-verify.controller';
+import { ChromiumPdfRendererAdapter } from './infrastructure/pdf-engine/chromium-pdf-renderer.adapter';
+import { QrCodeGeneratorAdapter } from './infrastructure/qr-engine/qr-code-generator.adapter';
+
+@Module({
+  imports: [R2StorageModule],
+  controllers: [CertificateVerifyController],
+  providers: [
+    {
+      provide: CERTIFICATE_EVENT_BUS,
+      useFactory: (): EventEmitter => new EventEmitter(),
+    },
+    {
+      provide: ChromiumPdfRendererAdapter,
+      useFactory: (): ChromiumPdfRendererAdapter => new ChromiumPdfRendererAdapter(),
+    },
+    {
+      provide: QrCodeGeneratorAdapter,
+      useFactory: (): QrCodeGeneratorAdapter => new QrCodeGeneratorAdapter(),
+    },
+    {
+      provide: CertificatePdfGeneratorService,
+      useFactory: (
+        prisma: PrismaService,
+        r2: R2StorageService,
+        pdfRenderer: ChromiumPdfRendererAdapter,
+        qrGenerator: QrCodeGeneratorAdapter,
+      ): CertificatePdfGeneratorService =>
+        new CertificatePdfGeneratorService(prisma, r2, pdfRenderer, qrGenerator),
+      inject: [PrismaService, R2StorageService, ChromiumPdfRendererAdapter, QrCodeGeneratorAdapter],
+    },
+    {
+      provide: CertificateVerificationService,
+      useFactory: (prisma: PrismaService, redis: RedisClusterService): CertificateVerificationService =>
+        new CertificateVerificationService(prisma, redis),
+      inject: [PrismaService, RedisClusterService],
+    },
+    {
+      provide: CourseCompletedEventHandler,
+      useFactory: (
+        certService: CertificatePdfGeneratorService,
+        eventBus: EventEmitter,
+        prisma: PrismaService,
+      ): CourseCompletedEventHandler => new CourseCompletedEventHandler(certService, eventBus, prisma),
+      inject: [CertificatePdfGeneratorService, CERTIFICATE_EVENT_BUS, PrismaService],
+    },
+    CertificateResolver,
+  ],
+  exports: [CertificatePdfGeneratorService, CertificateVerificationService],
+})
+export class CertificateModule {}

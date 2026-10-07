@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 048 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class CertificateResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 048 — Legacy alias (canonical lives in modules/certificate).
+// Canonical: apps/backend/src/api/graphql/certificate.resolver.ts
+// (legacy src/backend/api/graphql/certificate.resolver.ts)
+export * from '../../modules/certificate/presentation/certificate.resolver';

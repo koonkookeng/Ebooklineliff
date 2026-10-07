@@ -84,6 +84,8 @@ model User {
   learningProgress  CourseLearningProgress[]
   // Atomic Phase 047: in-video quiz attempts
   quizAttempts      QuizAttempt[]
+  // Atomic Phase 048: course certificates
+  courseCertificates CourseCertificate[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -346,9 +348,35 @@ model CourseDetail {
   certificateEnabled Boolean         @default(true)
   dripContentEnabled Boolean         @default(false)
   sections           CourseSection[]
+  // Atomic Phase 048: course certificates
+  certificates       CourseCertificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Atomic Phase 048: Auto-Certificate PDF Engine with QR Code & HMAC-SHA256
+model CourseCertificate {
+  id                   String       @id @default(uuid())
+  certificateNo        String       @unique
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId             String
+  course               CourseDetail @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenantId             String?
+  issuedAt             DateTime     @default(now())
+  pdfStoragePathR2     String
+  qrCodeUrl            String
+  digitalSignatureHash String
+  status               String       @default("ISSUED") // ISSUED, REVOKED, EXPIRED
+  metadataJson         Json?        // Additional custom fields (e.g., Grade, Hours)
+
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([certificateNo])
+  @@index([userId])
 }
 
 model CourseSection {

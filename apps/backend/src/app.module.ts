@@ -22,6 +22,7 @@
 // Phase 042: WatermarkModule (forensic seed issuance + tamper audit + GQL/REST).
 // Phase 043: StreamModule (upload presign + transcode queue + HLS delivery).
 // Phase 047: QuizModule (in-video quiz grading + checkpoints + unlock tokens).
+// Phase 048: CertificateModule (auto-certificate PDF + QR + HMAC verification).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -57,8 +58,9 @@ import { ReaderModule } from './modules/reader/reader.module';
 import { WatermarkModule } from './modules/watermark/watermark.module';
 import { StreamModule } from './modules/stream/stream.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { CertificateModule } from './modules/certificate/certificate.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

@@ -1,10 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 048 — REST webhook
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class CertificateVerifyControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 048 — Legacy alias (canonical lives in modules/certificate).
+// Canonical: apps/backend/src/api/webhooks/certificate-verify.controller.ts
+// (legacy src/backend/api/webhooks/certificate-verify.controller.ts)
+export * from '../../modules/certificate/presentation/certificate-verify.controller';

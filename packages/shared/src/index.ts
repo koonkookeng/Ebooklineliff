@@ -779,6 +779,28 @@ export {
   isChoiceCorrect,
   normalizeShortAnswer,
 } from './schemas/quiz-contract';
+export {
+  CertificateStatusEnum,
+  GenerateCertificateInputSchema,
+  VerifyCertificateResponseSchema,
+  CertificatePayloadSchema,
+  CertificateItemSchema,
+  generateCertificateNo,
+  buildVerifyUrl,
+  buildHmacPayload,
+  signCertificate,
+  verifyCertificateSignature,
+  certificateR2Path,
+  verifyUrl,
+  rateLimitKey,
+} from './schemas/certificate-contract';
+export type {
+  CertificateStatus,
+  GenerateCertificateInput,
+  VerifyCertificateResponse,
+  CertificatePayload,
+  CertificateItem,
+} from './schemas/certificate-contract';
 export type {
   QuizType,
   QuizOption,

@@ -1,0 +1,44 @@
+# SSOT Phase 048 §3.2 — Certificate intent layer (issuance + public verification)
+# Canonical: apps/backend/src/api/graphql/schemas/certificate.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via CertificateResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod certificate-contract.ts <-> Prisma CourseCertificate <-> here).
+
+type CertificateVerificationResult {
+  isValid: Boolean!
+  certificateNo: String!
+  studentName: String!
+  courseTitle: String!
+  issuedAt: String!
+  issuerName: String!
+  digitalSignatureHash: String!
+  pdfUrl: String!
+}
+
+type CertificateItem {
+  id: ID!
+  certificateNo: String!
+  courseTitle: String!
+  coverImageUrl: String!
+  issuedAt: String!
+  pdfUrl: String!
+  qrCodeUrl: String!
+}
+
+type CertificatePayload {
+  success: Boolean!
+  certificateNo: String!
+  pdfUrl: String!
+  qrCodeUrl: String!
+}
+
+extend type Query {
+  # Intent: Public Verification Lookup for Third-Party Auditors
+  verifyCertificate(certificateNo: String!): CertificateVerificationResult!
+  # Intent: Get All Certificates Earned by Current Student
+  getMyCertificates: [CertificateItem!]!
+}
+
+extend type Mutation {
+  # Intent: Manual or Automated Re-issuance of Certificate
+  issueCourseCertificate(courseId: ID!): CertificatePayload!
+}
