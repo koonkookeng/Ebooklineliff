@@ -7,6 +7,7 @@
 // - Phase 021: Dynamic LIFF ID per tenant (x-liff-id header for LIFF SDK init)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { buildEdgeCspHeader, mintEdgeNonce } from './lib/security/csp-header';
 
 const TENANTS: Record<string, { primary: string; logo: string; font: string; brand: string; liffId: string }> = {
   default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif', brand: 'Ebook LIFF', liffId: process.env.NEXT_PUBLIC_DEFAULT_LIFF_ID ?? 'default-liff-id' },
@@ -67,12 +68,26 @@ function applyTenantBranding(res: NextResponse, tenant: string): void {
   res.cookies.set('tenant-theme', JSON.stringify(theme), { path: '/', maxAge: 3600 });
 }
 
+// SSOT Phase 028 §6.1 — strict CSP on every edge response (first millisecond,
+// before HTML render). Directives byte-mirror buildCspHeader() (@repo/shared);
+// parity enforced by scripts/test-phase028-contracts.ts.
+function applyCsp(res: NextResponse, nonce: string, isDev: boolean): NextResponse {
+  res.headers.set('Content-Security-Policy', buildEdgeCspHeader({ nonce, isDev }));
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('X-CSP-Nonce', nonce);
+  return res;
+}
+
 export async function middleware(req: NextRequest) {
   const host = req.headers.get('host') ?? '';
   const sub = host.split('.')[0];
   const param = req.nextUrl.searchParams.get('tenant');
   const tenantHint = param ?? (TENANTS[sub] ? sub : 'default');
   const { pathname } = req.nextUrl;
+  // Phase 028 §6.1: per-request nonce + strict CSP (dev keeps unsafe-eval for HMR).
+  const nonce = mintEdgeNonce();
+  const isDev = process.env.NODE_ENV === 'development';
 
   // Phase 025 §6.1: permanent mini-app scheme resolver (public link entry).
   // /r/:shortCode and /resolve bypass auth (resolution itself is public; the
@@ -97,7 +112,7 @@ export async function middleware(req: NextRequest) {
           headers: { Location: nativeScheme, 'Cache-Control': 'no-store' },
         });
         applyTenantBranding(redirect, tenantHint);
-        return redirect;
+        return applyCsp(redirect, nonce, isDev);
       }
       const rewriteUrl = req.nextUrl.clone();
       rewriteUrl.pathname = '/resolve';
@@ -105,9 +120,9 @@ export async function middleware(req: NextRequest) {
       rewriteUrl.searchParams.set('tenant', tenantHint);
       const rewritten = NextResponse.rewrite(rewriteUrl);
       applyTenantBranding(rewritten, tenantHint);
-      return rewritten;
+      return applyCsp(rewritten, nonce, isDev);
     }
-    return res;
+    return applyCsp(res, nonce, isDev);
   }
 
   // Public routes bypass (branding only) — Phase 010: storefront home, PDP and
@@ -118,6 +133,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/v1/resolver/') ||
     // Phase 026: viral preview is public (recipients may be logged out).
     pathname === '/api/v1/social-share/preview' ||
+    // Phase 028: CSP violation beacons carry no auth (sendBeacon from any page).
+    pathname === '/api/security/csp-report' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||
@@ -128,7 +145,7 @@ export async function middleware(req: NextRequest) {
   ) {
     const res = NextResponse.next();
     applyTenantBranding(res, tenantHint);
-    return res;
+    return applyCsp(res, nonce, isDev);
   }
 
   const token =
@@ -136,28 +153,29 @@ export async function middleware(req: NextRequest) {
     req.headers.get('authorization')?.replace(/^Bearer /, '');
   if (!token) {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 });
+      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev);
     }
-    return NextResponse.redirect(new URL('/login', req.url));
+    return applyCsp(NextResponse.redirect(new URL('/login', req.url)), nonce, isDev);
   }
 
   const secret = process.env.JWT_SECRET ?? 'secret-key-144-xz-dev-only-change-me';
   const claims = await verifyHs256(token, secret);
   if (!claims?.sub) {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 });
+      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev);
     }
-    return NextResponse.redirect(new URL('/login?error=session_expired', req.url));
+    return applyCsp(NextResponse.redirect(new URL('/login?error=session_expired', req.url)), nonce, isDev);
   }
 
   const headers = new Headers(req.headers);
   headers.set('x-user-id', claims.sub);
   if (claims.role) headers.set('x-user-role', claims.role);
   headers.set('x-tenant-id', claims.tenantId ?? tenantHint);
+  headers.set('x-csp-nonce', nonce);
 
   const res = NextResponse.next({ request: { headers } });
   applyTenantBranding(res, claims.tenantId ?? tenantHint);
-  return res;
+  return applyCsp(res, nonce, isDev);
 }
 
 export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] };

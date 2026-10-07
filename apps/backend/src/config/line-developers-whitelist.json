@@ -1,0 +1,18 @@
+[
+  {
+    "tenantId": "default",
+    "liffAppId": "2000000000-abcDEF12",
+    "primaryDomain": "https://liff.omnichannel.com",
+    "whitelistedDomains": [
+      "https://liff.omnichannel.com",
+      "https://app.omnichannel.com",
+      "https://api.omnichannel.com",
+      "https://cdn.omnichannel.com",
+      "https://videocdn.omnichannel.com",
+      "https://static.line-scdn.net"
+    ],
+    "hlsCdnOrigin": "https://videocdn.omnichannel.com",
+    "ebookCdnOrigin": "https://cdn.omnichannel.com",
+    "isActive": true
+  }
+]

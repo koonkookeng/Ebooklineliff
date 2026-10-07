@@ -1,1 +1,14 @@
-{}
+[
+  {
+    "AllowedOrigins": [
+      "https://liff.omnichannel.com",
+      "https://app.omnichannel.com",
+      "https://*.line-scdn.net",
+      "https://liff.line.me"
+    ],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["Range", "Authorization", "Content-Type", "If-Match", "If-Modified-Since"],
+    "ExposeHeaders": ["Content-Range", "Content-Length", "ETag", "Accept-Ranges"],
+    "MaxAgeSeconds": 3600
+  }
+]

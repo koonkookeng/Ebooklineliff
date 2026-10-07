@@ -1069,6 +1069,49 @@ model AffiliateAttribution {
   @@index([affiliateCode])
 }
 
+// Atomic Phase 028 §4.1: CSP audit + LINE whitelist registry (security segment).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract (verbatim from schema.md canonical Phase 028): no edits to
+// existing models; Gate 7 — writes are fire-and-forget append-only (<10ms, non-blocking).
+enum SecuritySeverity {
+  INFO
+  WARNING
+  CRITICAL
+  BLOCKED_XSS
+}
+
+model SecurityCspLog {
+  id                String           @id @default(uuid())
+  tenantId          String?
+  userId            String?
+  ipAddress         String
+  userAgent         String
+  documentUri       String
+  violatedDirective String
+  blockedUri        String
+  originalPolicy    String           @db.Text
+  severity          SecuritySeverity @default(WARNING)
+  createdAt         DateTime         @default(now())
+
+  @@index([tenantId])
+  @@index([violatedDirective])
+  @@index([createdAt])
+}
+
+model DomainWhitelistRegistry {
+  id              String   @id @default(uuid())
+  tenantId        String   @unique
+  liffId          String
+  domainUrl       String
+  hlsCdnDomain    String
+  r2StorageDomain String
+  isVerified      Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId])
+}
+
 // Atomic Phase 027 §4.1: LIFF navigation session persistence.
 // Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
 // Additive expand-contract: single active row per user (@unique userId → atomic upsert,

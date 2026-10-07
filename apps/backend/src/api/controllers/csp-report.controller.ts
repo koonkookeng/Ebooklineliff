@@ -1,10 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 028 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class CspReportControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 028 §7.2 — legacy alias (canonical lives in infra/security)
+// Canonical: apps/backend/src/api/controllers/csp-report.controller.ts
+// (legacy src/backend/api/controllers/csp-report.controller.ts)
+// Re-export only (Phase 026 social-share precedent); registered once via SecurityModule.
+export { CspReportController } from '../../infra/security/csp-report.controller';
