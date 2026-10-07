@@ -361,3 +361,29 @@ export type {
   SecuritySeverity,
   CspHeaderOptions,
 } from './schemas/security-csp.schema';
+export {
+  PerformanceMetricTypeEnum,
+  BundleGuardMetricSchema,
+  PrefetchResourceTypeEnum,
+  PrefetchRequestSchema,
+  PrefetchPayloadSchema,
+  TelemetryIngestSchema,
+  BUNDLE_MAX_BYTES,
+  BUNDLE_CHUNK_MAX_BYTES,
+  PREFETCH_TTL_SEC,
+  PREFETCH_DWELL_MS,
+  VELOCITY_FAST_SEC_PER_PAGE,
+  VELOCITY_SLOW_SEC_PER_PAGE,
+  PERF_TELEMETRY_CHANNEL,
+  prefetchCacheKey,
+  rumToMetricType,
+  velocityPrefetchCount,
+} from './schemas/performance.schema';
+export type {
+  PerformanceMetricType,
+  BundleGuardMetric,
+  PrefetchResourceType,
+  PrefetchRequest,
+  PrefetchPayload,
+  TelemetryIngest,
+} from './schemas/performance.schema';

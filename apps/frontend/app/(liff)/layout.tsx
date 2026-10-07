@@ -11,6 +11,9 @@ import { useSearchParams } from 'next/navigation';
 import { LiffProvider } from './providers/liff-provider';
 import { DynamicHeaderIntegrator } from '../../components/header/DynamicHeaderIntegrator';
 import { LiffRouterProvider } from '../../components/navigation/liff-router-provider';
+// Phase 029 §6: null-render perf hosts (dwell prefetch + RUM beacons, zero-touch).
+import { PrefetchObserver } from '../../components/performance/PrefetchObserver';
+import { RumReporter } from '../../components/performance/RumReporter';
 
 function resolveLiffId(tenant: string): string {
   if (typeof window !== 'undefined') {
@@ -31,6 +34,8 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
     <LiffProvider liffId={liffId} tenantId={tenantId}>
       <LiffRouterProvider>
         <DynamicHeaderIntegrator />
+        <PrefetchObserver />
+        <RumReporter />
         {children}
       </LiffRouterProvider>
     </LiffProvider>

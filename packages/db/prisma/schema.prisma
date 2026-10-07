@@ -1069,6 +1069,59 @@ model AffiliateAttribution {
   @@index([affiliateCode])
 }
 
+// Atomic Phase 029 §4.1: performance guard + prefetch analytics (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: no edits to existing models; Gate 7 — telemetry writes
+// are fire-and-forget append-only (never block the reader/player hot path).
+enum MetricType {
+  INITIAL_BUNDLE_SIZE
+  LCP_MS
+  FID_MS
+  CLS_SCORE
+  PREFETCH_HIT
+  PREFETCH_MISS
+}
+
+model PerformanceMetric {
+  id            String      @id @default(uuid())
+  tenantId      String      @default("default")
+  metricType    MetricType
+  metricValue   Decimal     @db.Decimal(10, 4)
+  route         String
+  deviceMemory  Int?
+  effectiveType String?
+  userAgent     String?     @db.Text
+  createdAt     DateTime    @default(now())
+
+  @@index([tenantId, metricType])
+  @@index([createdAt])
+}
+
+model BundleManifest {
+  id             String   @id @default(uuid())
+  buildHash      String   @unique
+  totalSizeBytes Int
+  gzipSizeBytes  Int
+  isPassedGuard  Boolean  @default(true)
+  chunksJson     Json
+  createdAt      DateTime @default(now())
+
+  @@index([buildHash])
+}
+
+model PrefetchAnalytics {
+  id             String   @id @default(uuid())
+  userId         String
+  productId      String
+  resourceKey    String
+  isHit          Boolean  @default(false)
+  latencySavedMs Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([userId, productId])
+  @@index([isHit])
+}
+
 // Atomic Phase 028 §4.1: CSP audit + LINE whitelist registry (security segment).
 // Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
 // Additive expand-contract (verbatim from schema.md canonical Phase 028): no edits to

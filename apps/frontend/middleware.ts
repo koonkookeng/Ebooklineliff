@@ -135,6 +135,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/social-share/preview' ||
     // Phase 028: CSP violation beacons carry no auth (sendBeacon from any page).
     pathname === '/api/security/csp-report' ||
+    // Phase 029: RUM beacons carry no auth (sendBeacon from any page).
+    pathname === '/api/v1/performance/telemetry' ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||

@@ -1,0 +1,35 @@
+# SSOT Phase 029 §3.2 — Performance guard + prefetch intent layer
+# Canonical: apps/backend/src/api/graphql/schemas/performance.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via PrefetchResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod performance.schema.ts <-> Prisma PerformanceMetric/BundleManifest/PrefetchAnalytics <-> here).
+
+type PerformanceReport {
+  id: ID!
+  tenantId: String!
+  bundleSizeBytes: Int!
+  lcpMs: Float!
+  status: String!
+}
+
+type PrefetchPayload {
+  success: Boolean!
+  prefetchedCount: Int!
+  cacheStorageKeys: [String!]!
+  ttlSeconds: Int!
+}
+
+input PrefetchInput {
+  productId: ID!
+  currentResourceType: String!
+  currentResourceId: String!
+  predictedNextResourceIds: [String!]!
+}
+
+extend type Query {
+  getBundlePerformanceMetrics(tenantId: ID!): PerformanceReport!
+}
+
+extend type Mutation {
+  triggerPredictivePrefetch(input: PrefetchInput!, userId: ID): PrefetchPayload!
+  reportClientPerformanceMetrics(metricType: String!, value: Float!, route: String!): Boolean!
+}
