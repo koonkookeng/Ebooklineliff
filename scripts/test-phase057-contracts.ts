@@ -233,7 +233,11 @@ function sectionParity(): void {
     assert.ok(sdl.includes(t), `sync SDL missing: ${t}`);
   }
   const hook = readFileSync('apps/frontend/hooks/useProgressSync.ts', 'utf8');
-  for (const t of ['useProgressSync', 'EventSource', 'SYNC_CLIENT_THROTTLE_MS', 'SYNC_INIT', 'SYNC_CONFLICT', 'SYNC_ERROR', 'zene-sync', 'dismissConflict', 'emitEbookPageTurn', 'emitVideoTimeUpdate']) {
+  // Phase 064 consolidation: hook offline fallback rides the single shared
+  // IndexedDB queue (saveProgressToIndexedDB → pendingSyncRecords, drained by
+  // flushProgressQueue) instead of the Phase 057-local 'zene-sync' store,
+  // which was write-only and never flushed (data-loss risk).
+  for (const t of ['useProgressSync', 'EventSource', 'SYNC_CLIENT_THROTTLE_MS', 'SYNC_INIT', 'SYNC_CONFLICT', 'SYNC_ERROR', 'saveProgressToIndexedDB', 'dismissConflict', 'emitEbookPageTurn', 'emitVideoTimeUpdate']) {
     assert.ok(hook.includes(t), `hook missing: ${t}`);
   }
   assert.ok(!hook.includes("from 'socket.io-client'") && !hook.includes('from "socket.io-client"'), 'LIFF hook must not import socket.io-client');

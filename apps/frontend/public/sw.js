@@ -177,7 +177,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-user-progress') {
+  if (event.tag === 'sync-user-progress' || event.tag === 'sync-offline-progress') {
     event.waitUntil(
       (async () => {
         const clients = await self.clients.matchAll({ includeUncontrolled: true });

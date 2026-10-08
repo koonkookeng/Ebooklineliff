@@ -1,0 +1,34 @@
+# SSOT Phase 064 §3.2 — Offline progress batch GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/progress-batch.graphql
+# Runtime is code-first via EbookProgressResolver / CourseProgressResolver.
+
+input EbookProgressBatchItem {
+  id: ID!
+  productId: ID!
+  lastPage: Int!
+  chapterIndex: Int
+  clientTimestamp: String!
+  signature: String!
+}
+
+input CourseProgressBatchItem {
+  id: ID!
+  lessonId: ID!
+  watchedSec: Int!
+  isCompleted: Boolean!
+  clientTimestamp: String!
+  signature: String!
+}
+
+type OfflineSyncResult {
+  success: Boolean!
+  syncedEbookIds: [String!]!
+  syncedLessonIds: [String!]!
+  conflictsResolved: Int!
+  serverTimestamp: String!
+}
+
+extend type Mutation {
+  syncOfflineEbookBatch(items: [EbookProgressBatchItem!]!): OfflineSyncResult!
+  syncOfflineCourseBatch(items: [CourseProgressBatchItem!]!): OfflineSyncResult!
+}

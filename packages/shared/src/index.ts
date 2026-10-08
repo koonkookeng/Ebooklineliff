@@ -1236,3 +1236,27 @@ export type {
   OfflineVideoSegment,
   OfflineProgressSyncPayload,
 } from './schemas/offline-sync.schema';
+export {
+  ProgressTypeEnum,
+  EbookProgressSyncItemSchema,
+  CourseProgressSyncItemSchema,
+  BatchProgressSyncPayloadSchema,
+  SyncResponseSchema,
+  SYNC_BATCH_BUDGET_MS,
+  SYNC_PAYLOAD_MAX_BYTES,
+  SYNC_QUEUE_RAM_MB,
+  SYNC_IDEMPOTENCY_TTL_SEC,
+  SYNC_BACKOFF_BASE_MS,
+  SYNC_BACKOFF_MAX_MS,
+  SYNC_STALE_QUEUE_LIMIT,
+  syncBatchDedupeKey,
+  syncItemCanonical,
+  syncBackoffMs,
+} from './schemas/progress-sync.schema';
+export type {
+  ProgressType,
+  EbookProgressSyncItem,
+  CourseProgressSyncItem,
+  BatchProgressSyncPayload,
+  SyncResponse,
+} from './schemas/progress-sync.schema';

@@ -1,10 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 064 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class BatchSyncControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 064 §5.1 — root-path alias (duplicate scaffold consolidation)
+// Canonical: apps/backend/src/modules/progress/batch-sync.controller.ts
+// - Re-export only; implementation lives in ./controllers/batch-sync.controller.ts.
+export * from './controllers/batch-sync.controller';

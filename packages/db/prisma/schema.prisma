@@ -515,6 +515,20 @@ model OfflineSyncLog {
   @@index([userId])
 }
 
+// Atomic Phase 064: batch sync audit log (additive).
+model ProgressSyncAuditLog {
+  id               String   @id @default(uuid())
+  userId           String
+  syncBatchId      String   @unique
+  itemCount        Int
+  conflictsHandled Int      @default(0)
+  ipAddress        String
+  userAgent        String
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+}
+
 // Atomic Phase 063 Task 2: offline DRM lease registry (additive).
 model DrmOfflineLease {
   id              String   @id @default(uuid())

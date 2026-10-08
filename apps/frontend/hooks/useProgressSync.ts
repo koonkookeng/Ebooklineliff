@@ -1,13 +1,11 @@
-// SSOT Phase 057 §6.1 — Realtime progress sync hook (SSE + REST, zero-dep)
+// SSOT Phase 057 §6.1 + Phase 064 — Realtime + offline progress sync hook
 // Canonical: apps/frontend/hooks/useProgressSync.ts
-// (legacy src/frontend/hooks/useProgressSync.ts)
-// - TRANSPORT NOTE (ADR-057): socket.io-client is NOT used (heavy LIFF dep).
-//   Server→client rides native EventSource (SSE room stream); client→server
-//   rides throttled fetch POST (3s cadence, <200-byte payloads).
+// - TRANSPORT NOTE (ADR-057): socket.io-client is NOT used.
+//   Server→client: EventSource (SSE); client→server: throttled POST.
+//   Offline: IndexedDB queue (Phase 064) + Background Sync API.
 // - 5-state machine: SYNC_INIT → SYNC_IDLE → SYNC_PUSHING / SYNC_CONFLICT /
-//   SYNC_ERROR (IndexedDB offline queue + max-progress flush on reconnect).
-// - LIFF memory guard: EventSource closed + refs nulled on unmount; remote
-//   payloads are scalar-only (no retained objects).
+//   SYNC_ERROR (offline queue + max-progress flush on reconnect).
+// - LIFF memory guard: EventSource closed + refs nulled; remote scalar-only.
 // - Zero new deps.
 'use client';
 
@@ -17,6 +15,8 @@ import {
   isSyncPayloadWithinBudget,
   lastWriteWins,
 } from '@repo/shared';
+import { getPendingSyncCount, saveProgressToIndexedDB } from '../lib/offline/indexeddb-queue';
+import { flushProgressQueue, registerProgressSync } from '../lib/offline/background-sync-manager';
 
 export type SyncUiState = 'SYNC_INIT' | 'SYNC_IDLE' | 'SYNC_PUSHING' | 'SYNC_CONFLICT' | 'SYNC_ERROR';
 
@@ -41,32 +41,18 @@ export interface RemoteVideoSec {
   deviceId: string;
 }
 
-const IDB_DB = 'zene-sync';
-const IDB_STORE = 'pending-sync';
-
-function idb(): Promise<IDBDatabase | null> {
-  return new Promise((resolve) => {
-    try {
-      const req = window.indexedDB.open(IDB_DB, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE, { autoIncrement: true });
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    } catch {
-      resolve(null);
-    }
-  });
-}
-
-async function queueOffline(item: unknown): Promise<void> {
-  const db = await idb();
-  if (!db) return;
+/** Phase 064 offline fallback: single shared queue (indexeddb-queue). */
+async function queueOffline(kind: 'ebook' | 'video', body: Record<string, unknown>): Promise<void> {
   try {
-    const tx = db.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).add({ item, at: Date.now() });
+    if (kind === 'ebook') {
+      const entityId = String(body['ebookId'] ?? body['productId'] ?? '');
+      await saveProgressToIndexedDB('EBOOK_PAGE', entityId, body);
+    } else {
+      const entityId = String(body['lessonId'] ?? '');
+      await saveProgressToIndexedDB('COURSE_LESSON', entityId, body);
+    }
   } catch {
     // offline queue best-effort only
-  } finally {
-    db.close();
   }
 }
 
@@ -74,6 +60,7 @@ export function useProgressSync({ tenantId, userId, deviceId, productId, enabled
   const [uiState, setUiState] = useState<SyncUiState>('SYNC_INIT');
   const [remoteEbookPage, setRemoteEbookPage] = useState<RemoteEbookPage | null>(null);
   const [remoteVideoSec, setRemoteVideoSec] = useState<RemoteVideoSec | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
   const sourceRef = useRef<EventSource | null>(null);
   const lastEmitRef = useRef(0);
   const optsRef = useRef({ tenantId, userId, deviceId, productId });
@@ -82,6 +69,30 @@ export function useProgressSync({ tenantId, userId, deviceId, productId, enabled
   const localVideoRef = useRef<{ sec: number; at: number }>({ sec: 0, at: 0 });
 
   const isConnected = uiState === 'SYNC_IDLE' || uiState === 'SYNC_PUSHING';
+
+  // Phase 064: pending count from offline queue
+  useEffect(() => {
+    if (!enabled) return;
+    getPendingSyncCount().then(setPendingCount);
+    const unsub = (typeof BroadcastChannel !== 'undefined') ? (() => {
+      const ch = new BroadcastChannel('offline-sync-channel');
+      ch.onmessage = (e) => {
+        if (e.data?.type === 'SYNC_COMPLETED') getPendingSyncCount().then(setPendingCount);
+      };
+      return () => ch.close();
+    }) : (() => {});
+    const handleOnlineFlush = () => void flushProgressQueue();
+    window.addEventListener('online', handleOnlineFlush);
+    return () => {
+      window.removeEventListener('online', handleOnlineFlush);
+      unsub?.();
+    };
+  }, [enabled]);
+
+  // Phase 064: register background sync on online
+  useEffect(() => {
+    if (enabled) registerProgressSync();
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled || !userId) {
@@ -140,7 +151,9 @@ export function useProgressSync({ tenantId, userId, deviceId, productId, enabled
       setUiState('SYNC_IDLE');
     } catch {
       setUiState('SYNC_ERROR');
-      await queueOffline({ kind, body });
+      // Phase 064: queue on any failure (offline or mid-way request failure)
+      await queueOffline(kind, body);
+      getPendingSyncCount().then(setPendingCount);
     }
   }, []);
 
@@ -193,7 +206,7 @@ export function useProgressSync({ tenantId, userId, deviceId, productId, enabled
     setUiState('SYNC_IDLE');
   }, []);
 
-  return { uiState, isConnected, remoteEbookPage, remoteVideoSec, emitEbookPageTurn, emitVideoTimeUpdate, dismissConflict };
+  return { uiState, isConnected, remoteEbookPage, remoteVideoSec, emitEbookPageTurn, emitVideoTimeUpdate, dismissConflict, pendingCount };
 }
 
 export default useProgressSync;
