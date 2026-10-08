@@ -160,6 +160,11 @@ model User {
   // Atomic Phase 082: tax profile (1:1) + 50 Tawi certificates
   taxProfile           UserTaxProfile?
   taxCertificates      WithholdingTaxCertificate[]
+  // Atomic Phase 083: streak (1:1) + check-ins + badges + redemptions
+  streak               UserStreak?
+  checkins             DailyCheckin[]
+  userBadges           UserBadge[]
+  redemptions          RewardRedemption[]
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -169,6 +174,118 @@ model User {
   @@index([tenantId])
   // Atomic Phase 034: friendship-segment queries (OA conversion funnel)
   @@index([isOAFriend])
+}
+
+// Atomic Phase 083 §4.1: gamification segment (schema.md canonical).
+enum BadgeCategory {
+  READING_MILESTONE
+  LEARNING_STREAK
+  PURCHASE_COMMUNITY
+  SOCIAL_AFFILIATE
+  SPECIAL_EVENT
+}
+
+enum RewardType {
+  EBOOK_UNLOCK
+  COURSE_UNLOCK
+  DISCOUNT_COUPON
+  PHYSICAL_ITEM
+  STREAK_FREEZE_ITEM
+}
+
+enum RedemptionStatus {
+  COMPLETED
+  PENDING_SHIPMENT
+  CANCELLED
+}
+
+model UserStreak {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak     Int       @default(0)
+  longestStreak     Int       @default(0)
+  lastCheckinDate   DateTime? @db.Date
+  streakFreezeCount Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model DailyCheckin {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkinDate     DateTime @db.Date
+  streakCount     Int      @default(1)
+  pointsEarned    Int      @default(10)
+  bonusMultiplier Decimal  @default(1.00) @db.Decimal(3, 2)
+  isFrozenUsed    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, checkinDate])
+  @@index([userId])
+  @@index([checkinDate])
+}
+
+model Badge {
+  id                String        @id @default(uuid())
+  code              String        @unique
+  name              String
+  description       String
+  iconUrl           String
+  category          BadgeCategory @default(READING_MILESTONE)
+  criteriaType      String
+  criteriaThreshold Int
+  pointsReward      Int           @default(100)
+  userBadges        UserBadge[]
+  createdAt         DateTime      @default(now())
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  userId     String
+  badgeId    String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model RewardItem {
+  id             String             @id @default(uuid())
+  title          String
+  description    String             @db.Text
+  imageUrl       String
+  rewardType     RewardType
+  pointsRequired Int
+  stockQty       Int                @default(0)
+  productId      String?
+  discountAmount Decimal?           @db.Decimal(10, 2)
+  isPublished    Boolean            @default(true)
+  redemptions    RewardRedemption[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([rewardType])
+}
+
+model RewardRedemption {
+  id             String           @id @default(uuid())
+  redemptionCode String           @unique @default(uuid())
+  userId         String
+  rewardItemId   String
+  pointsSpent    Int
+  status         RedemptionStatus @default(COMPLETED)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardItem     RewardItem       @relation(fields: [rewardItemId], references: [id])
+  redeemedAt     DateTime         @default(now())
+
+  @@index([userId])
+  @@index([redemptionCode])
 }
 
 // Atomic Phase 006: tenant registry for LIFF seamless auth (lineChannelId selects verify audience).

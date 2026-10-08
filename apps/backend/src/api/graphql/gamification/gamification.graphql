@@ -1,0 +1,75 @@
+# SSOT Phase 083 §3.2 — Gamification GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/gamification/gamification.graphql
+# Runtime is code-first (modules/gamification/presentation/graphql/gamification.resolver.ts).
+
+type GamificationProfile {
+  currentStreak: Int!
+  longestStreak: Int!
+  lastCheckinDate: String
+  streakFreezeCount: Int!
+  hasCheckedInToday: Boolean!
+  rewardPoints: Int!
+  unlockedBadgesCount: Int!
+}
+
+type BadgeUnlocked {
+  badgeId: ID!
+  badgeName: String!
+  iconUrl: String!
+}
+
+type DailyCheckinResult {
+  success: Boolean!
+  message: String!
+  currentStreak: Int!
+  pointsEarned: Int!
+  bonusMultiplier: Float!
+  badgeUnlocked: BadgeUnlocked
+}
+
+type Badge {
+  id: ID!
+  code: String!
+  name: String!
+  description: String!
+  iconUrl: String!
+  category: String!
+  pointsReward: Int!
+  isUnlocked: Boolean!
+  unlockedAt: String
+}
+
+type RewardItem {
+  id: ID!
+  title: String!
+  description: String!
+  imageUrl: String!
+  rewardType: String!
+  pointsRequired: Int!
+  stockQty: Int!
+  isAvailable: Boolean!
+}
+
+type RedemptionResult {
+  success: Boolean!
+  redemptionCode: String!
+  remainingPoints: Int!
+  entitlementGranted: Boolean!
+}
+
+extend type Query {
+  getGamificationProfile: GamificationProfile!
+  getUserBadges: [Badge!]!
+  getRewardCatalog: [RewardItem!]!
+}
+
+extend type Mutation {
+  executeDailyCheckin: DailyCheckinResult!
+  redeemReward(input: RewardRedemptionInput!): RedemptionResult!
+  buyStreakFreezeWithPoints: GamificationProfile!
+}
+
+input RewardRedemptionInput {
+  rewardItemId: ID!
+  shippingAddressId: ID
+}
