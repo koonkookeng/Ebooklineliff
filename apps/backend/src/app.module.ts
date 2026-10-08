@@ -48,6 +48,7 @@ import { NavigationModule } from './modules/navigation/navigation.module';
 import { SecurityModule } from './infra/security/security.module';
 import { PerformanceModule } from './modules/performance/performance.module';
 import { TenantThemeModule } from './modules/tenant/tenant-theme.module';
+import { TenantResolverModule } from './modules/tenant/tenant-resolver.module';
 import { KeepAliveModule } from './modules/keep-alive/keep-alive.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { VersionModule } from './modules/version/version.module';
@@ -79,6 +80,6 @@ import { OfflineLicenseModule } from './modules/offline-license/offline-license.
 import { NetworkHealthModule } from './modules/network/network-health.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, NetworkHealthModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, TenantResolverModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, NetworkHealthModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

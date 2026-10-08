@@ -8,6 +8,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { buildEdgeCspHeader, mintEdgeNonce } from './lib/security/csp-header';
+// Phase 071 §6.1: canonical tenant resolution (query > subdomain > custom >
+// default) — edge-safe zero-dep parity with @repo/shared tenant-contract.
+import { resolveTenantIdentifier } from './lib/tenant/tenant-resolver';
 
 const TENANTS: Record<string, { primary: string; logo: string; font: string; brand: string; liffId: string }> = {
   default: { primary: '#16a34a', logo: '/logo.svg', font: 'Prompt, sans-serif', brand: 'Ebook LIFF', liffId: process.env.NEXT_PUBLIC_DEFAULT_LIFF_ID ?? 'default-liff-id' },
@@ -62,6 +65,9 @@ async function verifyHs256(token: string, secret: string): Promise<JwtClaims | n
 function applyTenantBranding(res: NextResponse, tenant: string): void {
   const theme = TENANTS[tenant] ?? TENANTS.default;
   res.headers.set('x-tenant', tenant);
+  // Phase 071 §6.1 step 3: canonical identifier for the internal pipeline
+  // (backend TenantGuard + TenantHeaderInterceptor consume X-Tenant-ID).
+  res.headers.set('x-tenant-identifier', tenant);
   res.headers.set('x-primary-color', theme.primary);
   res.headers.set('x-brand-name', theme.brand);
   res.headers.set('x-liff-id', theme.liffId);
@@ -81,9 +87,18 @@ function applyCsp(res: NextResponse, nonce: string, isDev: boolean): NextRespons
 
 export async function middleware(req: NextRequest) {
   const host = req.headers.get('host') ?? '';
-  const sub = host.split('.')[0];
   const param = req.nextUrl.searchParams.get('tenant');
-  const tenantHint = param ?? (TENANTS[sub] ? sub : 'default');
+  // Phase 071 §6.1: subdomain / custom-domain / LIFF-query resolution
+  // (query `?tenant=` overrides subdomain; unknown hosts route as
+  // `custom:<host>` for backend verification instead of silent hub merge).
+  // DEVIATION (documented): no `/_tenants/<id>` rewrite — that route tree
+  // does not exist and a rewrite would 404 every tenant request. Isolation
+  // travels via x-tenant-identifier / x-tenant-id headers (Zero Redundant).
+  const tenantHint = resolveTenantIdentifier({
+    hostname: host,
+    queryTenant: param,
+    baseDomain: process.env.NEXT_PUBLIC_BASE_DOMAIN || 'omnichannel.com',
+  });
   const { pathname } = req.nextUrl;
   // Phase 028 §6.1: per-request nonce + strict CSP (dev keeps unsafe-eval for HMR).
   const nonce = mintEdgeNonce();
@@ -181,6 +196,7 @@ export async function middleware(req: NextRequest) {
   headers.set('x-user-id', claims.sub);
   if (claims.role) headers.set('x-user-role', claims.role);
   headers.set('x-tenant-id', claims.tenantId ?? tenantHint);
+  headers.set('x-tenant-identifier', tenantHint);
   headers.set('x-csp-nonce', nonce);
 
   const res = NextResponse.next({ request: { headers } });

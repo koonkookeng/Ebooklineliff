@@ -1,0 +1,20 @@
+# SSOT Phase 071 §3.2 — GraphQL Intent Schema Extension (SDL supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/tenant.graphql
+# Intent: Resolve Tenant Branding Configuration for Client Hydration.
+# Runtime is code-first (apps/backend/src/api/graphql/tenant.resolver.ts);
+# this SDL is the contract record (Gate 1 SSOT sync).
+
+type TenantBrandingConfig {
+  tenantId: ID!
+  tenantSlug: String!
+  brandName: String!
+  logoUrl: String!
+  primaryColor: String!
+  secondaryColor: String!
+  accentColor: String!
+  customDomain: String
+}
+
+type Query {
+  getTenantBranding(tenantSlug: String, customDomain: String): TenantBrandingConfig!
+}

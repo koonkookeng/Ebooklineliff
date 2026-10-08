@@ -1407,3 +1407,32 @@ export type {
   CrossDeviceSyncPayload,
   SessionHandshakeQrPayload,
 } from './schemas/cross-device-sync.schema';
+export {
+  TenantStatusEnum,
+  // Aliased: Phase 030 tenant-branding.schema.ts already owns the
+  // `TenantBrandingSchema` / `TenantBranding` barrel names (navbar theme).
+  TenantBrandingSchema as TenantEngineBrandingSchema,
+  TenantContextResolverSchema,
+  TenantResolveInputSchema,
+  TenantIdentifierSchema,
+  TENANT_RESOLVER_BUDGET_MS,
+  TENANT_RESOLVER_SELFHEAL_MS,
+  TENANT_STATUS_TTL_SEC,
+  TENANT_DOMAIN_TTL_SEC,
+  TENANT_EVENT_CHANNEL,
+  DEFAULT_TENANT_SLUG,
+  tenantStatusKey,
+  tenantSlugKey,
+  tenantDomainKey,
+  tenantVaultPrefix,
+  resolveTenantIdentifier,
+  isCustomDomainIdentifier,
+  customDomainOf,
+} from './schemas/tenant-contract';
+export type {
+  TenantStatus,
+  TenantBranding as TenantEngineBranding,
+  TenantContextResolver,
+  TenantResolveInput,
+  TenantIdentifier,
+} from './schemas/tenant-contract';
