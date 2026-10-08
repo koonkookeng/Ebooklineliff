@@ -88,6 +88,9 @@ model User {
   courseCertificates CourseCertificate[]
   // Atomic Phase 049: DRM sessions (ephemeral tile-permutation grants)
   drmSessions       DrmSession[]
+  // Atomic Phase 061: dual-DRM ephemeral session keys (HMAC permutation grants)
+  drmSecurityKeys   DrmSecurityKey[]
+  drmViolationLogs  DrmViolationLog[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -266,6 +269,9 @@ model Product {
   cartItems      CartItem[]
   // Atomic Phase 049: DRM sessions bound to this product
   drmSessions    DrmSession[]
+  // Atomic Phase 061: dual-DRM ephemeral session keys bound to this product
+  drmSecurityKeys DrmSecurityKey[]
+  drmViolationLogs DrmViolationLog[]
   // Soft-delete: unpublished + timestamped, stock rows preserved for fulfillment
   deletedAt      DateTime?
   // Atomic Phase 023: per-product header overrides (dynamic title/branding)
@@ -406,6 +412,13 @@ model CourseCertificate {
 }
 
 // Atomic Phase 049: DRM Canvas Shuffling (ephemeral sessions + violation audit)
+// Atomic Phase 061: shuffle algorithm set (canonical per schema.md §DrmAlgorithm).
+enum DrmAlgorithm {
+  TILE_GRID_PERMUTATION
+  PIXEL_BYTE_XOR_SHUFFLE
+  HYBRID_WEBGL_MATRIX
+}
+
 enum DrmViolationType {
   SCREENSHOT_ATTEMPT
   DEVTOOLS_CANVAS_DUMP
@@ -437,16 +450,46 @@ model DrmSession {
 
 model DrmViolationLog {
   id            String           @id @default(uuid())
-  sessionId     String
-  drmSession    DrmSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  // Atomic Phase 061: trap violations may arrive without a Phase-049
+  // DrmSession (nullable FK; all existing rows keep their sessionId).
+  sessionId     String?
+  drmSession    DrmSession?      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   violationType DrmViolationType
   ipAddress     String
   userAgent     String
   metadata      Json?
   createdAt     DateTime         @default(now())
+  // Atomic Phase 061: dual-DRM trap attribution (additive; nullable so all
+  // Phase 049 rows stay valid). violationType stays an enum (stricter than
+  // the §4.1 String sketch — RISK_CALL deviation, documented in ADR-061).
+  userId        String?
+  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  productId     String?
+  product       Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  pageNumber    Int?
 
   @@index([violationType])
   @@index([createdAt])
+  @@index([userId])
+  @@index([productId])
+}
+
+// Atomic Phase 061 Task 1: dual-DRM ephemeral session keys (additive;
+// zero rewrites — OUT_OF_SCOPE_STRICT respected).
+model DrmSecurityKey {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sessionNonce String       @unique @default(uuid())
+  hmacSecret   String
+  algorithm    DrmAlgorithm @default(HYBRID_WEBGL_MATRIX)
+  expiresAt    DateTime
+  createdAt    DateTime     @default(now())
+
+  @@index([userId, productId])
+  @@index([sessionNonce])
 }
 
 model CourseSection {

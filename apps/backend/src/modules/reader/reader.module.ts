@@ -19,6 +19,10 @@ import { ReaderControlResolver } from '../../api/graphql/reader-control.resolver
 import { ReaderPreferenceService } from './application/reader-preference.service';
 import { ReaderPreferenceResolver } from './infrastructure/api/reader-preference.resolver';
 import { ReaderNavigationController } from './reader-navigation.controller';
+import { DrmReaderResolver } from '../../api/graphql/resolvers/drm-reader.resolver';
+import { DrmChunkController } from './drm/drm-chunk.controller';
+import { CanvasShufflingService } from './drm/canvas-shuffling.service';
+import { PixelMatrixGeneratorService } from './drm/pixel-matrix.generator';
 import { RetinaReaderController } from './controllers/retina-reader.controller';
 import { VectorChunkService } from './services/vector-chunk.service';
 import { RetinaScalerService } from './services/retina-scaler.service';
@@ -36,7 +40,7 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
 
 @Module({
   imports: [ChunkCacheModule, R2StorageModule],
-  controllers: [ReaderController, ReaderControlController, ReaderNavigationController, RetinaReaderController],
+  controllers: [ReaderController, ReaderControlController, ReaderNavigationController, RetinaReaderController, DrmChunkController],
   providers: [
     WatermarkGeneratorService,
     {
@@ -88,6 +92,27 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [PrismaService, RedisClusterService],
     },
     ReaderControlResolver,
+    DrmReaderResolver,
+    PixelMatrixGeneratorService,
+    {
+      provide: CanvasShufflingService,
+      useFactory: (
+        prisma: PrismaService,
+        edge: RedisClusterService,
+        vault: R2StorageService,
+        matrices: PixelMatrixGeneratorService,
+      ): CanvasShufflingService =>
+        new CanvasShufflingService(
+          matrices,
+          prisma as never,
+          {
+            get: (key: string) => edge.get(key),
+            set: (key: string, value: string, ...args: Array<string | number>) => edge.set(key, value, ...args),
+          },
+          { presignedGetUrl: (objectKey: string, ttl: number) => vault.presignedGetUrl(objectKey, ttl) },
+        ),
+      inject: [PrismaService, RedisClusterService, R2StorageService, PixelMatrixGeneratorService],
+    },
     RetinaScalerService,
     {
       provide: VectorChunkService,
@@ -112,6 +137,6 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [PrismaService],
     },
   ],
-  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService, ReaderPreferenceService, VectorChunkService, RetinaScalerService],
+  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService, ReaderPreferenceService, VectorChunkService, RetinaScalerService, CanvasShufflingService, PixelMatrixGeneratorService],
 })
 export class ReaderModule {}

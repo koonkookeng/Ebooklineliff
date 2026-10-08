@@ -1,0 +1,49 @@
+# SSOT Phase 061 §3.1/§5.1 — Dual DRM reader GraphQL SDL (contract supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/drm-reader.graphql
+# Runtime is code-first via DrmReaderResolver.
+
+enum DrmShuffleAlgorithm {
+  TILE_GRID_PERMUTATION
+  PIXEL_BYTE_XOR_SHUFFLE
+  HYBRID_WEBGL_MATRIX
+}
+
+type ShufflingMatrixSeed {
+  seed: String!
+  gridX: Int!
+  gridY: Int!
+  permutationArray: [Int!]!
+  expiresAt: String!
+  sessionNonce: ID!
+}
+
+type DrmForensicWatermark {
+  watermarkText: String!
+  userIdHash: String!
+  userIp: String!
+  timestamp: String!
+}
+
+type EncryptedDrmChunkPayload {
+  pageNumber: Int!
+  scrambledBlobUrl: String!
+  shufflingMatrix: ShufflingMatrixSeed!
+  forensicWatermark: DrmForensicWatermark!
+  algorithm: DrmShuffleAlgorithm!
+}
+
+input DrmViolationInput {
+  sessionNonce: ID!
+  productId: ID!
+  pageNumber: Int!
+  violationType: String!
+  userAgent: String
+}
+
+extend type Query {
+  getDrmScrambledChunk(productId: ID!, pageNumber: Int!): EncryptedDrmChunkPayload!
+}
+
+extend type Mutation {
+  reportDrmViolation(input: DrmViolationInput!): Boolean!
+}

@@ -1157,3 +1157,33 @@ export type {
   CanvasResolutionConfig,
   EbookMultiResChunkPayload,
 } from './schemas/canvas-scaler.schema';
+export {
+  DrmShuffleAlgorithmEnum,
+  ShufflingMatrixSeedSchema,
+  EncryptedDrmChunkPayloadSchema,
+  DRM_SEED_MIN_LEN,
+  DRM_GRID_MIN,
+  DRM_GRID_MAX,
+  DRM_GRID_DEFAULT,
+  DRM_SESSION_TTL_MIN,
+  DRM_BLOB_URL_TTL_SEC,
+  DRM_VIOLATION_BUDGET_MS,
+  DRM_DESHUFFLE_BUDGET_MS,
+  DRM_LIFF_RAM_MB,
+  DRM_SESSION_CACHE_PREFIX,
+  DRM_VIOLATION_STREAM_KEY,
+  drmSessionCacheKey,
+  lcgNext,
+  permutationFromSeed,
+  tileRects,
+  isBijection,
+} from './schemas/drm-shuffling.schema';
+// NOTE Phase 061: invertPermutation intentionally NOT re-exported here —
+// Phase 049 drm-contract.ts already owns that barrel name (Zero Redundant
+// Code); the 061 twin stays importable via the direct schema path.
+export { invertPermutation as invertDrmShufflePermutation } from './schemas/drm-shuffling.schema';
+export type {
+  DrmShuffleAlgorithm,
+  ShufflingMatrixSeed,
+  EncryptedDrmChunkPayload,
+} from './schemas/drm-shuffling.schema';
