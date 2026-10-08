@@ -1609,3 +1609,33 @@ export type {
   StudioHlsUploadPresign,
   StudioHlsWebhook,
 } from './schemas/course-studio-contract';
+export {
+  AffiliateTierLevelEnum,
+  CommissionStatusEnum,
+  PayoutStatusEnum,
+  ReferralLinkGenerateSchema,
+  CommissionCalculateSchema,
+  AffiliatePayoutRequestSchema,
+  LINEFlexSharePayloadSchema,
+  TIER_RATE_TABLE,
+  PAYOUT_MIN_THB,
+  AFFILIATE_WITHHOLDING_TAX_RATE,
+  AFFILIATE_ATTRIBUTION_DAYS,
+  AFFILIATE_FRAUD_STREAM,
+  AFFILIATE_COMMISSION_STREAM,
+  tierCommission,
+  payoutSplit,
+  payoutNumber,
+  referralUrl,
+  isAcyclicChain,
+  kFactor,
+} from './schemas/affiliate-contract';
+export type {
+  AffiliateTierLevel,
+  CommissionStatus,
+  PayoutStatus,
+  ReferralLinkGenerate,
+  CommissionCalculate,
+  AffiliatePayoutRequest,
+  LINEFlexSharePayload,
+} from './schemas/affiliate-contract';

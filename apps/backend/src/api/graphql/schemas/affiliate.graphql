@@ -1,0 +1,48 @@
+# SSOT Phase 079 §3.2 — Affiliate GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/affiliate.graphql
+# Runtime is code-first (affiliate/resolvers/affiliate.resolver.ts).
+
+type AffiliateDashboardPayload {
+  totalEarnings: Float!
+  pendingEarnings: Float!
+  tier1ReferralsCount: Int!
+  tier2ReferralsCount: Int!
+  affiliateCode: String!
+  referralLink: String!
+}
+
+type FlexSharePayload {
+  flexMessageJson: String!
+  shareUrl: String!
+}
+
+type ReferralLinkPayload {
+  signedUrl: String!
+  qrCodeUrl: String!
+  affiliateCode: String!
+}
+
+type PayoutResponsePayload {
+  payoutId: ID!
+  requestedAmount: Float!
+  taxWithheld3Percent: Float!
+  netPayoutAmount: Float!
+  status: String!
+}
+
+input PayoutRequestInput {
+  amount: Float!
+  bankName: String!
+  bankAccountNumber: String!
+  bankAccountName: String!
+}
+
+type Query {
+  getAffiliateDashboard: AffiliateDashboardPayload!
+  generateProductFlexShare(productId: ID!): FlexSharePayload!
+}
+
+type Mutation {
+  createReferralLink(productId: ID!, campaignTag: String): ReferralLinkPayload!
+  requestAffiliatePayout(input: PayoutRequestInput!): PayoutResponsePayload!
+}

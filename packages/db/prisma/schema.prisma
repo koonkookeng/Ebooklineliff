@@ -152,6 +152,11 @@ model User {
   merchantProfile     MerchantProfile?
   // Atomic Phase 075: stock audit authorship
   stockMovementLogs   StockMovementLog[]
+  // Atomic Phase 079: multi-tier affiliate ledger
+  commissionsEarned    CommissionLog[] @relation("EarnedCommissions")
+  commissionsGenerated CommissionLog[] @relation("GeneratedCommissions")
+  affiliatePayouts     AffiliatePayout[]
+  shareEvents          ShareEvent[]
 
   @@index([lineUserId])
   @@index([email])
@@ -298,6 +303,23 @@ enum PayoutStatus {
   PROCESSING
   COMPLETED
   REJECTED
+  // Atomic Phase 079: affiliate payout request lifecycle (schema.md canonical union)
+  REQUESTED
+}
+
+// Atomic Phase 079: multi-tier affiliate vocabulary (schema.md canonical).
+enum AffiliateTierLevel {
+  TIER_1_DIRECT
+  TIER_2_INDIRECT
+  TIER_3_COMMUNITY
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+  BLOCKED_FRAUD
 }
 
 model MerchantProfile {
@@ -512,6 +534,80 @@ model LogisticsWebhookLog {
   createdAt    DateTime @default(now())
 }
 
+// Atomic Phase 079: per-product (or global NULL) tier rate card.
+model AffiliateTierConfig {
+  id               String   @id @default(uuid())
+  productId        String?  @unique
+  tier1RatePercent Decimal  @default(10.00) @db.Decimal(5, 2)
+  tier2RatePercent Decimal  @default(3.00) @db.Decimal(5, 2)
+  tier3RatePercent Decimal  @default(1.00) @db.Decimal(5, 2)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Atomic Phase 079: immutable per-tier commission ledger (audit trail).
+model CommissionLog {
+  id               String             @id @default(uuid())
+  orderId          String
+  order            Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  beneficiaryId    String
+  beneficiary      User               @relation("EarnedCommissions", fields: [beneficiaryId], references: [id])
+  originBuyerId    String
+  originBuyer      User               @relation("GeneratedCommissions", fields: [originBuyerId], references: [id])
+  tierLevel        AffiliateTierLevel
+  orderAmount      Decimal            @db.Decimal(10, 2)
+  commissionRate   Decimal            @db.Decimal(5, 2)
+  commissionAmount  Decimal            @db.Decimal(10, 2)
+  status           CommissionStatus   @default(APPROVED)
+  fraudReason      String?
+  createdAt        DateTime           @default(now())
+
+  @@index([beneficiaryId])
+  @@index([orderId])
+  @@index([originBuyerId])
+}
+
+// Atomic Phase 079: payout request with 3% e-withholding tax split.
+model AffiliatePayout {
+  id                 String       @id @default(uuid())
+  payoutNo           String       @unique
+  userId             String
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestedAmount    Decimal      @db.Decimal(10, 2)
+  taxWithheldAmount  Decimal      @db.Decimal(10, 2)
+  netPayoutAmount    Decimal      @db.Decimal(10, 2)
+  bankName           String
+  bankAccountNumber  String
+  bankAccountName    String
+  status             PayoutStatus @default(REQUESTED)
+  processedAt        DateTime?
+  rejectionReason    String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([payoutNo])
+}
+
+// Atomic Phase 079 (+080): viral share event with signed ref token.
+model ShareEvent {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  targetType   String   @default("PRODUCT_PDP")
+  refToken     String   @unique
+  shareChannel String   @default("LINE_FLEX")
+  clickCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([refToken])
+}
+
 model PayoutTransaction {
   id                String          @id @default(uuid())
   merchantProfileId String
@@ -719,6 +815,8 @@ model Product {
   headerConfig   HeaderConfig?
   // Atomic Phase 026: viral share logs
   shareLogs      ShareLog[]
+  // Atomic Phase 079: signed referral share events
+  shareEvents    ShareEvent[]
   // Atomic Phase 042: watermark seed issuance per product
   watermarkSeeds WatermarkSeedLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
@@ -1227,6 +1325,8 @@ model Order {
   fulfillmentItems     FulfillmentItem[]
   // Atomic Phase 077: shipment tracking ledger (webhook-driven status)
   shipments            Shipment[]
+  // Atomic Phase 079: multi-tier commission ledger
+  commissionLogs       CommissionLog[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 

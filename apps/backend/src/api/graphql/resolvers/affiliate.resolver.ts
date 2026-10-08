@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 079 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class AffiliateResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 079 §3.2 — legacy alias (canonical lives in modules/affiliate)
+// Canonical: apps/backend/src/api/graphql/resolvers/affiliate.resolver.ts
+// Re-export only (078 precedent); registered once via AffiliateModule.
+export { AffiliateResolver } from '../../../modules/affiliate/resolvers/affiliate.resolver';
