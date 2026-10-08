@@ -1,12 +1,12 @@
 // SSOT Phase 081 Task 5 — 3% e-Withholding tax engine + certificate PDF
 // Canonical: apps/backend/src/modules/finance/application/tax-calculator.service.ts
-// - withholdingFor: §8.2 formula (T = gross × 0.03, net = gross − T).
-// - issueCertificate: persists the WithholdingTaxRecord (Gate 8 input for
-//   Revenue Department reporting) and uploads a dep-free %PDF certificate
-//   to the R2 vault (048 dep-free PDF precedent; R2 zero-egress).
+// - §9 single-source (082): all withholding math delegates to
+//   TaxCalculatorDomainService.calculate3PercentWithholding — this service
+//   only owns the 081 payout-record persistence + R2 upload path.
 // - Port-based for DB-free tests. Zero new deps.
 import { Injectable } from '@nestjs/common';
-import { FINANCE_WITHHOLDING_TAX_RATE, taxCertificateNo, withholdingSplit } from '@repo/shared';
+import { FINANCE_WITHHOLDING_TAX_RATE, taxCertificateNo } from '@repo/shared';
+import { TaxCalculatorDomainService } from '../../tax/domain/services/tax-calculator.domain-service';
 import type { LedgerRepository } from '../infrastructure/prisma-ledger.repository';
 
 export interface R2TaxVault {
@@ -51,8 +51,8 @@ export class TaxCalculatorService {
   ) {}
 
   withholdingFor(grossAmount: number): { tax: number; net: number; rate: number } {
-    const { tax, net } = withholdingSplit(grossAmount);
-    return { tax, net, rate: FINANCE_WITHHOLDING_TAX_RATE };
+    const calc = TaxCalculatorDomainService.calculate3PercentWithholding(grossAmount);
+    return { tax: calc.taxWithheld, net: calc.netAmount, rate: FINANCE_WITHHOLDING_TAX_RATE };
   }
 
   async issueCertificate(args: {
@@ -63,7 +63,8 @@ export class TaxCalculatorService {
     grossAmount: number;
     tenantId: string;
   }): Promise<{ certificateNo: string; pdfStoragePathR2: string; taxAmount: number }> {
-    const { tax } = withholdingSplit(args.grossAmount);
+    const calc = TaxCalculatorDomainService.calculate3PercentWithholding(args.grossAmount);
+    const tax = calc.taxWithheld;
     const certificateNo = taxCertificateNo();
     const pdfStoragePathR2 = `tenants/${args.tenantId}/tax/${certificateNo}.pdf`;
     const issuedAt = new Date().toISOString();

@@ -1,0 +1,74 @@
+# SSOT Phase 082 §3.2 — Tax GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/tax.graphql
+# Runtime is code-first (modules/tax/presentation/graphql/tax.resolver.ts).
+
+type TaxCalculationPayload {
+  payoutRequestId: ID!
+  grossAmount: Float!
+  taxRate: Float!
+  taxWithheld: Float!
+  netAmount: Float!
+  isExempt: Boolean!
+  anomalies: [String!]!
+}
+
+type TaxCertificatePayload {
+  certificateId: ID!
+  certificateNo: String!
+  downloadUrl: String!
+  downloadExpiresInSec: Int!
+  pdfBytes: Int!
+  tookMs: Int!
+}
+
+type TaxProfilePayload {
+  id: ID!
+  payerType: String!
+  taxId: String!
+  fullNameOrCompanyName: String!
+  address: String!
+  isTaxExempt: Boolean!
+}
+
+type TaxSummaryPayload {
+  year: Int!
+  gross: Float!
+  tax: Float!
+  count: Int!
+}
+
+type Query {
+  myTaxCertificates(limit: Int = 20): [TaxCertificateRow!]!
+  myTaxSummary(year: Int): TaxSummaryPayload!
+}
+
+type TaxCertificateRow {
+  id: ID!
+  certificateNo: String!
+  grossAmount: Float!
+  taxWithheld: Float!
+  netAmount: Float!
+  paymentDate: String!
+}
+
+type Mutation {
+  calculateTax(input: TaxCalculateInput!): TaxCalculationPayload!
+  generateTaxCertificate(grossAmount: Float!, incomeType: String): TaxCertificatePayload!
+  upsertTaxProfile(input: TaxProfileInput!): TaxProfilePayload!
+}
+
+input TaxCalculateInput {
+  payoutRequestId: ID!
+  grossAmount: Float!
+  incomeType: String!
+  taxRate: Float
+}
+
+input TaxProfileInput {
+  payerType: String!
+  taxId: String!
+  fullNameOrCompanyName: String!
+  branchCode: String
+  address: String!
+  isTaxExempt: Boolean
+}

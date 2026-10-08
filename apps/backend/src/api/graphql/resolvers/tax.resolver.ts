@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 082 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class TaxResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 082 §3.2 — legacy alias (canonical lives in modules/tax)
+// Canonical: apps/backend/src/api/graphql/resolvers/tax.resolver.ts
+// Re-export only (078–081 precedent); registered once via TaxModule.
+export { TaxResolver } from '../../../modules/tax/presentation/graphql/tax.resolver';

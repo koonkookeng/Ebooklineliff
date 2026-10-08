@@ -1699,3 +1699,32 @@ export type {
   FinancePayoutRequest,
   PayoutResponse,
 } from './schemas/finance-contract';
+export {
+  TaxPayerTypeEnum,
+  IncomeTypeEnum,
+  TaxFormTypeEnum,
+  TaxProfileSchema,
+  CalculateTaxRequestSchema,
+  WithholdingTaxCertificateSchema,
+  TAX_STANDARD_RATE,
+  TAX_DOWNLOAD_TTL_SEC,
+  TAX_WITHHELD_STREAM,
+  TAX_PDF_BUDGET_MS,
+  calculate3PercentWithholding,
+  verifyThaiTaxId,
+  completeThaiTaxId,
+  tawiCertificateNo,
+  sha256Hex,
+  signDownloadTicket,
+  verifyDownloadTicket,
+  eTaxLine,
+  taxSummaryKey,
+} from './schemas/tax-contract';
+export type {
+  TaxPayerType,
+  IncomeType,
+  TaxFormType,
+  TaxProfile,
+  CalculateTaxRequest,
+  WithholdingTaxCertificate,
+} from './schemas/tax-contract';
