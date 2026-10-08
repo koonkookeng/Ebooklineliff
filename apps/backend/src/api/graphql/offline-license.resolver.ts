@@ -1,11 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 068 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class OfflineLicenseResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 068 §5.1 — api-layer offline-license resolver alias
+// Canonical: apps/backend/src/api/graphql/offline-license.resolver.ts
+// (legacy src/backend/api/graphql/offline-license.resolver.ts)
+// - Runtime lives in modules/offline-license/offline-license.resolver.ts
+//   (code-first); this file re-exports it so the Phase 068 tree path
+//   resolves without a duplicate field registration.
+export * from '../../modules/offline-license/offline-license.resolver';

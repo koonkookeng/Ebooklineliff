@@ -137,6 +137,9 @@ model User {
   videoWatchAnalytics VideoWatchAnalytics[]
   // Atomic Phase 067: ABR quality telemetry ledger
   streamTelemetry     VideoStreamTelemetry[]
+  // Atomic Phase 068: offline download licenses + device storage profiles
+  offlineLicenses     OfflineLicense[]
+  storageProfiles     DeviceStorageProfile[]
 
   @@index([lineUserId])
   @@index([email])
@@ -298,6 +301,8 @@ model Product {
   soldCount      Int                         @default(0)
   // Atomic Phase 051: free-preview engagement log (conversion funnel analytics)
   previewLogs    PreviewUsageLog[]
+  // Atomic Phase 068: offline download licenses per product
+  offlineLicenses OfflineLicense[]
   createdAt      DateTime                    @default(now())
   updatedAt      DateTime                    @updatedAt
 
@@ -2321,4 +2326,39 @@ model LowBandwidthAssetCache {
 
   @@unique([productId, pageNumber])
   @@index([productId])
+}
+
+// Atomic Phase 068: encrypted offline download licenses + device quotas.
+model OfflineLicense {
+  id                  String   @id @default(uuid())
+  userId              String
+  productId           String
+  deviceIdHash        String
+  licenseToken        String   @db.Text
+  encryptionKeyCipher String   @db.Text
+  signature           String
+  issuedAt            DateTime @default(now())
+  validUntil          DateTime
+  isRevoked           Boolean  @default(false)
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, deviceIdHash])
+  @@index([userId])
+  @@index([deviceIdHash])
+}
+
+model DeviceStorageProfile {
+  id                  String   @id @default(uuid())
+  userId              String
+  deviceIdHash        String   @unique
+  deviceModel         String?
+  allocatedQuotaBytes BigInt   @default(5368709120)
+  usedStorageBytes    BigInt   @default(0)
+  lastSyncAt          DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

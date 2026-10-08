@@ -1,0 +1,32 @@
+# SSOT Phase 068 §3.2 — Offline license GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/offline-license.graphql
+# Runtime is code-first via OfflineLicenseResolver (modules/offline-license).
+
+type OfflineLicensePayload {
+  licenseToken: String!
+  signature: String!
+  encryptionKeyCipher: String!
+  validUntil: String!
+}
+
+type LicenseStatusPayload {
+  status: String!
+  validUntil: String
+  productId: ID!
+}
+
+type StorageQuotaPayload {
+  usedBytes: Float!
+  availableBytes: Float!
+  itemCount: Int!
+}
+
+extend type Query {
+  getOfflineLicense(productId: ID!, deviceIdHash: String!): LicenseStatusPayload!
+  getStorageQuotaUsage: StorageQuotaPayload!
+}
+
+extend type Mutation {
+  issueOfflineLicense(productId: ID!, deviceIdHash: String!): OfflineLicensePayload!
+  revokeOfflineLicense(licenseId: ID!): Boolean!
+}

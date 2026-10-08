@@ -1333,3 +1333,29 @@ export type {
   StreamTelemetryPayload,
   QualityLadderRung,
 } from './schemas/video-quality-schema';
+export {
+  DownloadStatusEnum,
+  StorageCategoryEnum,
+  DownloadTaskSchema,
+  StorageQuotaSchema,
+  OfflineLicenseTokenSchema,
+  DOWNLOAD_CHUNK_BYTES,
+  DOWNLOAD_MAX_RAM_MB,
+  DOWNLOAD_DEFAULT_QUOTA_BYTES,
+  DOWNLOAD_WARN_FREE_RATIO,
+  OFFLINE_LICENSE_DEFAULT_DAYS,
+  OFFLINE_LICENSE_MAX_DAYS,
+  OFFLINE_LICENSE_STREAM,
+  downloadTaskKey,
+  licenseChannel,
+  licenseCanonical,
+  isStorageLow,
+  downloadProgress,
+} from './schemas/offline-license.schema';
+export type {
+  DownloadStatus,
+  StorageCategory,
+  DownloadTask,
+  StorageQuota,
+  OfflineLicenseToken,
+} from './schemas/offline-license.schema';
