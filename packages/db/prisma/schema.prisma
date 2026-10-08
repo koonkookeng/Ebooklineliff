@@ -117,6 +117,9 @@ model User {
   // Atomic Phase 042: watermark seeds + tamper audit trail
   watermarkSeeds      WatermarkSeedLog[]
   securityViolations  SecurityViolationLog[]
+  // Atomic Phase 050: HLS stream sessions + scraper blacklist (anti-rip guard)
+  videoStreamSessions VideoStreamSession[]
+  scraperBlacklists   ScraperBlacklist[]
 
   @@index([lineUserId])
   @@index([email])
@@ -456,6 +459,8 @@ model CourseLesson {
   r2HlsPrefix   String?
   r2VaultAsset  StorageVaultAsset? @relation("LessonVideoR2Source")
   hlsSegments   HlsSegmentMeta[]
+  // Atomic Phase 050: active playback sessions guarding segment fetches
+  streamSessions VideoStreamSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1870,4 +1875,50 @@ model EbookPageText {
 
   @@unique([ebookDetailId, pageNumber])
   @@index([ebookDetailId])
+}
+
+// Atomic Phase 050 Task 1: video DRM + rate-limiting persistence (verbatim canonical).
+// Canonical: packages/db/prisma/schema.prisma (legacy src/database/prisma/schema.prisma).
+// Additive expand-contract: new tables + User/CourseLesson back-relations only (Gate 7).
+
+enum SecurityActionType {
+  WARNING_THROTTLE
+  TEMPORARY_BLOCK
+  PERMANENT_BAN
+}
+
+model VideoStreamSession {
+  id                String   @id @default(uuid())
+  userId            String
+  lessonId          String
+  sessionToken      String   @unique
+  deviceFingerprint String
+  ipAddress         String
+  isActive          Boolean  @default(true)
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseLesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonId])
+  @@index([sessionToken])
+}
+
+model ScraperBlacklist {
+  id                 String             @id @default(uuid())
+  userId             String
+  ipAddress          String
+  reason             String
+  violationCount     Int                @default(1)
+  actionTaken        SecurityActionType @default(TEMPORARY_BLOCK)
+  blockedUntil       DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ipAddress])
+  @@index([userId])
 }

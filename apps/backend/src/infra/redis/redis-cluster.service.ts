@@ -1,6 +1,12 @@
 // SSOT Phase 002 §6.1 — Redis Cluster client + sliding-window chunk protocol
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import Redis, { Cluster } from 'ioredis';
+import {
+  VIDEO_SCRAPE_RISK_WINDOW_SEC,
+  videoHeartbeatKey,
+  videoRequestStreamKey,
+  videoRiskScoreKey,
+} from '@repo/shared';
 
 @Injectable()
 export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
@@ -158,6 +164,57 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
   // Phase 046 §8.1 — fixed-window rate-limit counter (additive)
   async incr(key: string): Promise<number> {
     return await this.client.incr(key);
+  }
+
+  // Phase 050 §5.2 — HLS sliding-window segment guard (additive; <5ms per request).
+  // Atomic ZREMRANGEBYSCORE + ZADD + ZCARD + EXPIRE via pipeline: returns live count.
+  async trackVideoSegment(key: string, windowSec: number): Promise<number> {
+    const now = Date.now();
+    const windowStart = now - windowSec * 1000;
+    const member = `${now}:${Math.random().toString(36).slice(2)}`;
+    const results = await (this.client as unknown as {
+      pipeline(cmds: Array<[string, ...unknown[]]>): { exec(): Promise<Array<[Error | null, unknown]>> };
+    })
+      .pipeline([
+        ['zremrangebyscore', key, 0, windowStart],
+        ['zadd', key, now, member],
+        ['zcard', key],
+        ['expire', key, windowSec + 1],
+      ])
+      .exec();
+    return Number(results[2]?.[1] ?? 0);
+  }
+
+  // Phase 050 §7.1 — scraping risk score (5-min window; AI ban threshold = 100).
+  async incrementScrapingViolationScore(userId: string, clientIp: string, weight = 10): Promise<number> {
+    const key = videoRiskScoreKey(userId);
+    const score = await this.client.incrby(key, weight);
+    if (score === weight) await this.client.expire(key, VIDEO_SCRAPE_RISK_WINDOW_SEC);
+    await this.client
+      .xadd(
+        videoRequestStreamKey(),
+        '*',
+        'userId',
+        userId,
+        'ip',
+        clientIp,
+        'score',
+        String(score),
+        'ts',
+        String(Date.now()),
+      )
+      .catch(() => undefined);
+    return score;
+  }
+
+  // Phase 050 §3 BDD — playback heartbeat so SUCCESS resumes cross-device.
+  async setPlaybackHeartbeat(userId: string, lessonId: string): Promise<void> {
+    await this.client.setex(videoHeartbeatKey(userId, lessonId), 3600, String(Date.now()));
+  }
+
+  async getPlaybackHeartbeat(userId: string, lessonId: string): Promise<number | null> {
+    const raw = await this.client.get(videoHeartbeatKey(userId, lessonId));
+    return raw ? Number(raw) : null;
   }
 
   onModuleDestroy() {

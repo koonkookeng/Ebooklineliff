@@ -842,3 +842,39 @@ export type {
   ForensicPayload,
   DecryptChunkPayload,
 } from './schemas/drm-contract';
+export {
+  StreamTokenTypeEnum,
+  HlsStreamTokenRequestSchema,
+  // Phase 028 already owns `HlsStreamTokenPayloadSchema` (CSP token gate) and
+  // Phase 044 owns `VIDEO_TOKEN_TTL_SEC` (=300s transcode token): alias the
+  // Phase 050 short-lived (10s) variants to avoid barrel collisions.
+  HlsStreamTokenPayloadSchema as VideoSecurityTokenPayloadSchema,
+  VideoSegmentRequestSchema,
+  AntiScrapingViolationLogSchema,
+  VIDEO_RATE_WINDOW_SEC,
+  VIDEO_RATE_MAX_BURST_SEGMENTS,
+  VIDEO_SCRAPE_BURST_PER_SEC,
+  VIDEO_SCRAPE_RISK_BAN_THRESHOLD,
+  VIDEO_SCRAPE_RISK_WINDOW_SEC,
+  VIDEO_SCRAPE_TEMP_BLOCK_SEC,
+  VIDEO_TOKEN_TTL_SEC as VIDEO_SEGMENT_TOKEN_TTL_SEC,
+  VIDEO_KEY_ROTATION_SEC,
+  VIDEO_TOKEN_RENEW_SEC,
+  VIDEO_PLAYER_MAX_BUFFER_SEC,
+  VIDEO_PLAYER_MAX_MAX_BUFFER_SEC,
+  VIDEO_429_RETRY_BASE_MS,
+  videoRateLimitKey,
+  videoHeartbeatKey,
+  videoRiskScoreKey,
+  videoRequestStreamKey,
+  videoSessionKey,
+  videoBackoffMs,
+  isNonSequentialFetch,
+} from './schemas/video-security.schema';
+export type {
+  StreamTokenType,
+  HlsStreamTokenRequest,
+  HlsStreamTokenPayload as VideoSecurityTokenPayload,
+  VideoSegmentRequest,
+  AntiScrapingViolationLog,
+} from './schemas/video-security.schema';
