@@ -1,0 +1,73 @@
+# SSOT Phase 065 §3.2 — Lesson note GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/note.graphql
+# Runtime is code-first via NoteResolver (modules/note/resolvers).
+
+enum NoteVisibility {
+  PRIVATE
+  STUDY_GROUP
+  PUBLIC
+}
+
+type LessonNote {
+  id: ID!
+  userId: ID!
+  lessonId: ID!
+  courseId: ID!
+  timestampSec: Int!
+  timestampFormatted: String!
+  content: String!
+  tags: [String!]!
+  visibility: NoteVisibility!
+  aiSummary: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type LessonNoteConnection {
+  notes: [LessonNote!]!
+  totalCount: Int!
+  hasNextPage: Boolean!
+}
+
+type AiNoteSummaryPayload {
+  summaryText: String!
+  keyTakeaways: [String!]!
+  suggestedActionItems: [String!]!
+}
+
+input CreateLessonNoteInput {
+  lessonId: ID!
+  timestampSec: Int!
+  content: String!
+  tags: [String!]
+  visibility: NoteVisibility
+}
+
+input UpdateLessonNoteInput {
+  noteId: ID!
+  content: String!
+  tags: [String!]
+  visibility: NoteVisibility
+}
+
+input NoteSearchInput {
+  courseId: ID
+  lessonId: ID
+  keyword: String
+  tag: String
+  page: Int
+  limit: Int
+}
+
+extend type Query {
+  getLessonNotes(lessonId: ID!): [LessonNote!]!
+  searchMyNotes(filter: NoteSearchInput!): LessonNoteConnection!
+  generateAiLessonNoteSummary(lessonId: ID!): AiNoteSummaryPayload!
+}
+
+extend type Mutation {
+  createLessonNote(input: CreateLessonNoteInput!): LessonNote!
+  updateLessonNote(input: UpdateLessonNoteInput!): LessonNote!
+  deleteLessonNote(noteId: ID!): Boolean!
+  exportNotesToPdf(lessonId: ID!): String!
+}

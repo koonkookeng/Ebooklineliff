@@ -185,6 +185,17 @@ self.addEventListener('sync', (event) => {
       })(),
     );
   }
+  // Atomic Phase 065: offline lesson-note outbox drain (BDD-3). The page owns
+  // the IndexedDB outbox; the SW fans out and the open LIFF client flushes
+  // via POST /api/v1/notes/sync (LWW). No client → browser retries the tag.
+  if (event.tag === 'sync-lesson-note') {
+    event.waitUntil(
+      (async () => {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        for (const client of clients) client.postMessage({ type: 'ZENE_FLUSH_NOTE_QUEUE' });
+      })(),
+    );
+  }
 });
 
 self.addEventListener('message', (event) => {

@@ -96,6 +96,8 @@ model User {
   // Atomic Phase 063: offline sync audit + DRM lease grants
   offlineSyncAudits     OfflineSyncLog[]
   drmOfflineLeases      DrmOfflineLease[]
+  // Atomic Phase 065: in-video timestamped lesson notes
+  notes             LessonNote[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -611,11 +613,42 @@ model CourseLesson {
   tileHeight         Int     @default(90)
   columnsCount       Int     @default(10)
   spriteSheets       VideoSpriteSheet[]
+  // Atomic Phase 065: in-video timestamped lesson notes
+  notes              LessonNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([sectionId, lessonOrder])
+}
+
+// Atomic Phase 065: in-video lesson note engine (timestamp-linked notes).
+enum NoteVisibility {
+  PRIVATE
+  STUDY_GROUP
+  PUBLIC
+}
+
+model LessonNote {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  courseId     String
+  timestampSec Int
+  content      String         @db.Text
+  tags         String[]       @default([])
+  visibility   NoteVisibility @default(PRIVATE)
+  aiSummary    String?        @db.Text
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([userId, lessonId])
+  @@index([userId, courseId])
+  @@index([lessonId, timestampSec])
+  @@index([visibility])
 }
 
 model BundleItem {

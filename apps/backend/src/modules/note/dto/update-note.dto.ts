@@ -1,8 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 065 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 065 §5.1 — Update-note DTO (Zod-gated transport surface)
+// Canonical: apps/backend/src/modules/note/dto/update-note.dto.ts
+// (legacy src/backend/modules/note/dto/update-note.dto.ts)
+// - Re-exports the Zod SSOT; boundary safeParse in service/resolver.
+// - Zero new deps.
+import { UpdateLessonNoteSchema, NoteSearchFilterSchema } from '@repo/shared';
+
+export { UpdateLessonNoteSchema, NoteSearchFilterSchema };
+export type { UpdateLessonNote, NoteSearchFilter } from '@repo/shared';

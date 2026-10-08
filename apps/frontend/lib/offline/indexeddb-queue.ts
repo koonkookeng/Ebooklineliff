@@ -71,7 +71,12 @@ export async function getPendingSyncCount(): Promise<number> {
       try {
         const t = db.transaction(OFFLINE_STORES.pendingSyncRecords, 'readonly');
         const req = t.objectStore(OFFLINE_STORES.pendingSyncRecords).getAll();
-        req.onsuccess = () => resolve((req.result as Array<{ id: string }>) ?? []);
+        // Phase 065: progress badge counts progress rows only (note rows
+        // surface in the note UI pending state instead).
+        req.onsuccess = () =>
+          resolve(
+            ((req.result as Array<{ id: string }>) ?? []).filter((r) => !String(r.id ?? '').startsWith('note:')),
+          );
         req.onerror = () => resolve([]);
       } catch {
         resolve([]);
@@ -96,7 +101,11 @@ export async function getQueuedItems(): Promise<QueuedProgressItem[]> {
         resolve([]);
       }
     });
-    return rows.map((r) => ({
+    return rows
+      // Phase 065: LESSON_NOTE rows (id `note:*`) drain via flushOfflineNotes
+      // (LWW note sync), never via the progress batch endpoint.
+      .filter((r) => !String(r['id'] ?? '').startsWith('note:') && r['type'] !== 'LESSON_NOTE')
+      .map((r) => ({
       id: String(r['id'] ?? newId()),
       type: r['type'] === 'COURSE_PROGRESS' ? 'COURSE_LESSON' : 'EBOOK_PAGE',
       entityId: String(r['targetId'] ?? ''),

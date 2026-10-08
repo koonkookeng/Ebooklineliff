@@ -1260,3 +1260,30 @@ export type {
   BatchProgressSyncPayload,
   SyncResponse,
 } from './schemas/progress-sync.schema';
+export {
+  NoteVisibilityEnum,
+  CreateLessonNoteSchema,
+  UpdateLessonNoteSchema,
+  NoteSearchFilterSchema,
+  LessonNoteSchema,
+  LessonNoteConnectionSchema,
+  AiNoteSummarySchema,
+  NOTE_WRITE_BUDGET_MS,
+  NOTE_CACHE_TTL_SEC,
+  NOTE_AUTOSAVE_DEBOUNCE_MS,
+  NOTE_MAX_CONTENT,
+  NOTE_MAX_TAGS,
+  NOTE_STREAM_KEY,
+  noteCacheKey,
+  formatNoteTimestamp,
+  sanitizeNoteContent,
+} from './schemas/lesson-note.schema';
+export type {
+  NoteVisibility,
+  CreateLessonNote,
+  UpdateLessonNote,
+  NoteSearchFilter,
+  LessonNote,
+  LessonNoteConnection,
+  AiNoteSummary,
+} from './schemas/lesson-note.schema';

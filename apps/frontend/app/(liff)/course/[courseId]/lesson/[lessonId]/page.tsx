@@ -12,6 +12,7 @@
 import { Suspense, use, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { HlsVideoPlayer } from '../../../../../../components/stream/HlsVideoPlayer';
+import { InVideoNoteEngine } from '../../../../../../components/video/InVideoNoteEngine';
 import { HlsQuizPlayer, type QuizCheckpointProp } from '../../../../../../components/player/HlsQuizPlayer';
 import { VideoScrubbingBar } from '../../../../../../components/player/video-scrubbing-bar';
 import { fetchLessonState, reportLessonHeartbeat } from '../../../../../../lib/stream/lesson-stream-client';
@@ -121,6 +122,21 @@ function LessonInner({ lessonId }: { lessonId: string }) {
     }
   }, [payload.durationSec]);
 
+  // Atomic Phase 065: in-video note engine reuses the DOM video element
+  // (seek/currentTime precedent above — no player fork, no reload).
+  const getNoteTime = useCallback(() => {
+    const video = document.querySelector('video');
+    return video ? Math.floor(video.currentTime) : 0;
+  }, []);
+  const pauseNoteVideo = useCallback(() => {
+    const video = document.querySelector('video');
+    try {
+      video?.pause();
+    } catch {
+      // pause best-effort
+    }
+  }, []);
+
   return (
     <div className="flex w-full flex-col gap-1">
       <HlsVideoPlayer
@@ -139,6 +155,12 @@ function LessonInner({ lessonId }: { lessonId: string }) {
         watermarkText={scrubWatermark || `${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
         lessonId={payload.lessonId}
         onSeek={handleScrubSeek}
+      />
+      <InVideoNoteEngine
+        lessonId={payload.lessonId}
+        getCurrentTimeSec={getNoteTime}
+        seekToSeconds={handleScrubSeek}
+        pauseVideo={pauseNoteVideo}
       />
     </div>
   );
