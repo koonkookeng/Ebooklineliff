@@ -135,6 +135,8 @@ model User {
   // Atomic Phase 052: read/watch telemetry rows (async batch writer owns writes)
   ebookPageAnalytics  EbookPageAnalytics[]
   videoWatchAnalytics VideoWatchAnalytics[]
+  // Atomic Phase 067: ABR quality telemetry ledger
+  streamTelemetry     VideoStreamTelemetry[]
 
   @@index([lineUserId])
   @@index([email])
@@ -1197,6 +1199,34 @@ enum VideoQuality {
   RES_720P
   RES_480P
   RES_360P
+}
+
+// Atomic Phase 067: ABR telemetry ledger (spec §4.1 verbatim values).
+// NOTE: named VideoStreamQuality (not VideoQuality) — the Phase 044
+// transcode enum owns that name; values match the §3.1 wire contract.
+enum VideoStreamQuality {
+  AUTO
+  QUALITY_1080P
+  QUALITY_720P
+  QUALITY_480P
+  QUALITY_360P
+}
+
+model VideoStreamTelemetry {
+  id               String             @id @default(uuid())
+  userId           String
+  lessonId         String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedQuality  VideoStreamQuality @default(AUTO)
+  activeQuality    VideoStreamQuality
+  measuredMbps     Decimal            @db.Decimal(8, 2)
+  bufferStallCount Int                @default(0)
+  ramUsageMb       Decimal            @db.Decimal(6, 2)
+  createdAt        DateTime           @default(now())
+
+  @@index([userId])
+  @@index([lessonId])
+  @@index([createdAt])
 }
 
 // Atomic Phase 044: lesson transcode job ledger (§4.1 verbatim)

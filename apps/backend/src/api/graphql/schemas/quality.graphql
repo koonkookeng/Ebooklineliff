@@ -1,0 +1,40 @@
+# SSOT Phase 067 §3.2 — ABR quality GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/quality.graphql
+# Runtime is code-first via QualityResolver (modules/stream/quality).
+
+type StreamVariant {
+  quality: String!
+  resolution: String!
+  bandwidthBps: Int!
+  playlistUrl: String!
+}
+
+type WatermarkData {
+  text: String!
+  timestamp: String!
+}
+
+type StreamManifestPayload {
+  lessonId: ID!
+  masterPlaylistUrl: String!
+  defaultQuality: String!
+  variants: [StreamVariant!]!
+  watermarkPayload: WatermarkData!
+}
+
+input StreamTelemetryInput {
+  lessonId: ID!
+  selectedQuality: String!
+  activeQuality: String!
+  measuredMbps: Float!
+  bufferStallCount: Int!
+  ramUsageMb: Float!
+}
+
+extend type Query {
+  getCourseLessonManifest(lessonId: ID!): StreamManifestPayload!
+}
+
+extend type Mutation {
+  reportStreamTelemetry(input: StreamTelemetryInput!): Boolean!
+}
