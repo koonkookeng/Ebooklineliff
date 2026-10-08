@@ -68,6 +68,8 @@ function applyTenantBranding(res: NextResponse, tenant: string): void {
   // Phase 071 §6.1 step 3: canonical identifier for the internal pipeline
   // (backend TenantGuard + TenantHeaderInterceptor consume X-Tenant-ID).
   res.headers.set('x-tenant-identifier', tenant);
+  // Phase 072 §6.1 compat: slug header for company-theme resolution.
+  res.headers.set('x-tenant-slug', tenant);
   res.headers.set('x-primary-color', theme.primary);
   res.headers.set('x-brand-name', theme.brand);
   res.headers.set('x-liff-id', theme.liffId);

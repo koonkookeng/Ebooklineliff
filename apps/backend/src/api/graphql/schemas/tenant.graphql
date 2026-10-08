@@ -1,6 +1,7 @@
-# SSOT Phase 071 §3.2 — GraphQL Intent Schema Extension (SDL supplement)
+# SSOT Phase 071 §3.2 + Phase 072 §3.2 — GraphQL Intent Schema Extensions
 # Canonical: apps/backend/src/api/graphql/schemas/tenant.graphql
-# Intent: Resolve Tenant Branding Configuration for Client Hydration.
+# - 071 intent: Resolve Tenant Branding Configuration for Client Hydration.
+# - 072 intent: Company Theme Switching (full logo set + typography).
 # Runtime is code-first (apps/backend/src/api/graphql/tenant.resolver.ts);
 # this SDL is the contract record (Gate 1 SSOT sync).
 
@@ -15,6 +16,52 @@ type TenantBrandingConfig {
   customDomain: String
 }
 
+type CompanyLogoConfig {
+  primaryLogoUrl: String!
+  squareLogoUrl: String
+  faviconUrl: String
+  watermarkLogoUrl: String
+  widthPx: Int!
+  heightPx: Int!
+}
+
+type TypographyConfig {
+  fontFamily: String!
+  fontUrl: String
+  baseFontSizePx: Int!
+  headingWeight: String!
+}
+
+type CompanyThemeConfig {
+  tenantId: ID!
+  companyName: String!
+  primaryColor: String!
+  secondaryColor: String!
+  accentColor: String!
+  backgroundColor: String!
+  textColor: String!
+  borderRadiusRem: Float!
+  logoConfig: CompanyLogoConfig!
+  typography: TypographyConfig!
+  isAccessibilityCompliant: Boolean!
+  updatedAt: String!
+}
+
+input UpdateCompanyThemeInput {
+  tenantId: ID!
+  primaryColor: String
+  secondaryColor: String
+  accentColor: String
+  logoUrl: String
+  fontFamily: String
+  fontUrl: String
+}
+
 type Query {
   getTenantBranding(tenantSlug: String, customDomain: String): TenantBrandingConfig!
+  getTenantTheme(tenantSlug: String!): CompanyThemeConfig!
+}
+
+type Mutation {
+  updateTenantTheme(input: UpdateCompanyThemeInput!): CompanyThemeConfig!
 }

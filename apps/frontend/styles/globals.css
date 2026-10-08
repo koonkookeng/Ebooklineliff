@@ -1,6 +1,87 @@
-/**
- * AUTO-SCAFFOLD Phase 072 — Frontend file
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
+/* SSOT Phase 072 §2.1/§6.2 — Company theme tokens (plain CSS, no Tailwind dep)
+ * Canonical: apps/frontend/styles/globals.css
+ * - :root carries the Ahong Emerald system defaults (§2.2 THEME_ERROR
+ *   fallback); DynamicCompanyThemeProvider overwrites them per tenant at
+ *   runtime (zero-FOUC). Token names follow the Tailwind v4 / Shadcn
+ *   mapping from §6.2 so a future Tailwind upgrade binds automatically.
+ * - Only semantic color utilities + theme skeleton/overlay are defined here
+ *   (layout utilities stay with the design system owner).
  */
-// placeholder
+
+:root {
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --secondary: #10b981;
+  --accent: #f59e0b;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted-foreground: #64748b;
+  --radius: 0.5rem;
+  --font-tenant: 'Prompt', sans-serif;
+  --primary-color: #059669;
+  --secondary-color: #10b981;
+  --accent-color: #f59e0b;
+  --brand-logo-url: url(https://cdn.omnichannel.com/logo.svg);
+}
+
+html {
+  font-family: var(--font-tenant);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-tenant);
+}
+
+.bg-background { background-color: var(--background); }
+.text-foreground { color: var(--foreground); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.bg-primary { background-color: var(--primary); }
+.text-primary { color: var(--primary); }
+.border-primary { border-color: var(--primary); }
+
+/* THEME_LOADING: brand-neutral skeleton (asset-free shimmer, RAM-flat). */
+.theme-skeleton {
+  min-height: 100dvh;
+  padding: 16px;
+  background: var(--background);
+}
+.theme-skeleton-bar {
+  height: 56px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: theme-shimmer 1.2s infinite;
+}
+.theme-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+.theme-skeleton-card {
+  height: 120px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: theme-shimmer 1.2s infinite;
+}
+@keyframes theme-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* In-switch fade overlay (150ms CSS transition). */
+.theme-fade-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: var(--background);
+  opacity: 0.65;
+  transition: opacity 150ms ease;
+}

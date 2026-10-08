@@ -1436,3 +1436,27 @@ export type {
   TenantResolveInput,
   TenantIdentifier,
 } from './schemas/tenant-contract';
+export {
+  HexColorSchema,
+  TypographyConfigSchema,
+  CompanyLogoConfigSchema,
+  CompanyThemeConfigSchema,
+  UpdateCompanyThemeInputSchema,
+  COMPANY_THEME_AA_MIN_RATIO,
+  COMPANY_THEME_EDGE_MS,
+  COMPANY_THEME_SWITCH_BUDGET_MS,
+  COMPANY_THEME_FONT_TIMEOUT_MS,
+  COMPANY_THEME_TTL_SEC,
+  AHONG_EMERALD_FALLBACK,
+  companyThemeKey,
+  withCompliantText,
+  buildCompanyThemeCssVars,
+  companyThemeInlineStyle,
+  watermarkLogoFor,
+} from './schemas/theme-contract';
+export type {
+  TypographyConfig,
+  CompanyLogoConfig,
+  CompanyThemeConfig,
+  UpdateCompanyThemeInput,
+} from './schemas/theme-contract';

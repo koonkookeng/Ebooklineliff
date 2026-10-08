@@ -1,6 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 001 — Frontend file
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-// placeholder
+// SSOT Phase 072 §2.1 — App global stylesheet (single-source import)
+// Canonical: apps/frontend/app/globals.css
+// Tokens live in apps/frontend/styles/globals.css (plain CSS, no Tailwind dep).
+@import '../styles/globals.css';

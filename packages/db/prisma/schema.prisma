@@ -187,6 +187,7 @@ model Tenant {
   brandingConfig TenantBrandingConfig?
   customDomains TenantDomain[]
   memberships   UserTenantMapping[]
+  themeConfig   CompanyTheme?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   User          User[]
@@ -234,6 +235,31 @@ model UserTenantMapping {
 
   @@unique([userId, tenantId])
   @@index([userId])
+  @@index([tenantId])
+}
+
+// Atomic Phase 072: full company theme (logo set + typography + surfaces).
+// 1:1 with Tenant; served via Redis `tenant:company-theme:{slug}` (24h).
+model CompanyTheme {
+  id                   String   @id @default(uuid())
+  tenantId             String   @unique
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  primaryColor         String   @default("#059669")
+  secondaryColor       String   @default("#10B981")
+  accentColor          String   @default("#F59E0B")
+  backgroundColor      String   @default("#FFFFFF")
+  textColor            String   @default("#0F172A")
+  borderRadiusRem      Float    @default(0.5)
+  primaryLogoUrl       String
+  squareLogoUrl        String?
+  faviconUrl           String?
+  watermarkLogoUrl     String?
+  fontFamily           String   @default("Inter")
+  fontUrl              String?
+  isAccessibilityValid Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
   @@index([tenantId])
 }
 
