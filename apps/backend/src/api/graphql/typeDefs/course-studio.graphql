@@ -1,0 +1,84 @@
+# SSOT Phase 078 §3.2 — Course studio GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/typeDefs/course-studio.graphql
+# Runtime is code-first (course-studio/presentation/course-studio.resolver.ts).
+
+type StudioQuizOptionRow {
+  id: ID!
+  optionText: String!
+  isCorrect: Boolean!
+}
+
+type StudioLessonQuizRow {
+  id: ID!
+  lessonId: ID!
+  question: String!
+  explanation: String
+  points: Int!
+  options: [StudioQuizOptionRow!]!
+}
+
+type StudioLessonRow {
+  id: ID!
+  sectionId: ID!
+  lessonOrder: Int!
+  title: String!
+  videoHlsUrl: String
+  durationSec: Int!
+  isPreview: Boolean!
+}
+
+type StudioSectionRow {
+  id: ID!
+  courseId: ID!
+  sectionOrder: Int!
+  title: String!
+  lessons: [StudioLessonRow!]!
+}
+
+type PresignedHlsUploadPayload {
+  uploadUrl: String!
+  videoKey: String!
+  expiresInSec: Int!
+}
+
+input StudioReorderLessonInput {
+  lessonId: ID!
+  lessonOrder: Int!
+}
+
+input StudioReorderSectionInput {
+  sectionId: ID!
+  sectionOrder: Int!
+  lessons: [StudioReorderLessonInput!]!
+}
+
+input StudioCurriculumReorderInput {
+  courseId: ID!
+  sections: [StudioReorderSectionInput!]!
+}
+
+input StudioQuizOptionInput {
+  id: ID
+  optionText: String!
+  isCorrect: Boolean!
+}
+
+input StudioSaveQuizInput {
+  id: ID
+  lessonId: ID!
+  question: String!
+  explanation: String
+  points: Int
+  options: [StudioQuizOptionInput!]!
+}
+
+type Query {
+  getStudioCurriculum(courseId: ID!): [StudioSectionRow!]!
+}
+
+type Mutation {
+  reorderCurriculum(input: StudioCurriculumReorderInput!): Boolean!
+  generateHlsUploadUrl(lessonId: ID!, fileName: String!, fileSizeBytes: Float!): PresignedHlsUploadPayload!
+  saveLessonQuiz(input: StudioSaveQuizInput!): StudioLessonQuizRow!
+  deleteLessonQuiz(quizId: ID!): Boolean!
+}

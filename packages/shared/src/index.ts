@@ -1584,3 +1584,28 @@ export type {
   BookParcelInput,
   LineTrackingMessage,
 } from './schemas/logistics-contract';
+export {
+  StudioQuizOptionSchema,
+  StudioLessonQuizSchema,
+  StudioReorderLessonItemSchema,
+  StudioReorderSectionSchema,
+  StudioCurriculumReorderPayloadSchema,
+  StudioHlsUploadPresignSchema,
+  StudioHlsWebhookSchema,
+  studioStructureKey,
+  studioRawVideoKey,
+  STUDIO_PRESIGN_TTL_SEC,
+  REORDER_BUDGET_MS,
+  STUDIO_EVENT_STREAM,
+  normalizeReorder,
+  gradeStudioQuiz,
+} from './schemas/course-studio-contract';
+export type {
+  StudioQuizOption,
+  StudioLessonQuiz,
+  StudioReorderLessonItem,
+  StudioReorderSection,
+  StudioCurriculumReorderPayload,
+  StudioHlsUploadPresign,
+  StudioHlsWebhook,
+} from './schemas/course-studio-contract';

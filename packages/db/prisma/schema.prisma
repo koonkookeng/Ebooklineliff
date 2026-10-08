@@ -1008,6 +1008,14 @@ model DrmSecurityKey {
   @@index([sessionNonce])
 }
 
+// Atomic Phase 078: studio HLS transcode lifecycle (schema.md canonical).
+enum HlsTranscodeStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 model CourseSection {
   id           String         @id @default(uuid())
   courseId     String
@@ -1031,6 +1039,9 @@ model CourseLesson {
   videoHlsUrl String
   durationSec Int           @default(0)
   isPreview   Boolean       @default(false)
+  // Atomic Phase 078: studio HLS pipeline (additive; existing cols untouched)
+  rawStorageKey   String?
+  transcodeStatus HlsTranscodeStatus @default(PENDING)
   // Atomic Phase 037: in-lesson quizzes (simple spec shape; quiz engine expands)
   quizzes     LessonQuiz[]
   // Atomic Phase 036: R2 HLS prefix + segment manifests + vault mapping
@@ -2480,6 +2491,8 @@ model LessonQuiz {
   answerKey   String
   // Atomic Phase 047: in-video checkpoint expansion (all defaulted; legacy rows stay valid)
   timestampSec    Int       @default(0)
+  // Atomic Phase 078: studio quiz builder points (additive)
+  points          Int       @default(10)
   quizType        QuizType  @default(SINGLE_CHOICE)
   passScore       Float     @default(100.0)
   maxRetries      Int       @default(0)

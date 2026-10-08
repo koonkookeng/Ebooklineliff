@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 078 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class CourseStudioResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 078 §3.2 — legacy alias (canonical lives in modules/course-studio)
+// Canonical: apps/backend/src/api/graphql/resolvers/course-studio.resolver.ts
+// Re-export only (077 precedent); registered once via CourseStudioModule.
+export { CourseStudioResolver } from '../../../modules/course-studio/presentation/course-studio.resolver';
