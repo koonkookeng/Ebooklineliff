@@ -1,0 +1,55 @@
+# SSOT Phase 070 §3.2 — Cross-device handoff GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/cross-device.graphql
+# Runtime is code-first via CrossDeviceResolver (modules/sync).
+# Realtime subscription rides the Phase 057 SSE room stream.
+
+type CrossDeviceSyncPayload {
+  productId: ID!
+  contentType: String!
+  contentId: String!
+  pageNumber: Int
+  watchedSec: Int
+  sourceDevice: String!
+  vectorClock: Int!
+  timestamp: String!
+}
+
+type HandshakeQrPayload {
+  handshakeToken: String!
+  expiresAt: String!
+  targetRedirectUrl: String!
+}
+
+type SyncResponsePayload {
+  success: Boolean!
+  resolvedPosition: Int!
+  conflictResolved: Boolean!
+}
+
+type AuthTokenPayload {
+  sessionFingerprint: String!
+}
+
+input CrossDeviceSyncInput {
+  productId: ID!
+  contentType: String!
+  contentId: String!
+  pageNumber: Int
+  watchedSec: Int
+  vectorClock: Int!
+  sourceDevice: String!
+}
+
+extend type Query {
+  getLatestCrossDeviceState(productId: ID!, contentType: String!): CrossDeviceSyncPayload!
+  generateDesktopHandshakeQr(targetRedirectUrl: String!): HandshakeQrPayload!
+}
+
+extend type Mutation {
+  syncCrossDevicePosition(input: CrossDeviceSyncInput!): SyncResponsePayload!
+  authorizeDesktopSession(handshakeToken: String!): AuthTokenPayload!
+}
+
+extend type Subscription {
+  onCrossDeviceStateChanged(userId: ID!, productId: ID!): CrossDeviceSyncPayload!
+}

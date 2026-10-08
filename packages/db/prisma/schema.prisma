@@ -142,6 +142,10 @@ model User {
   storageProfiles     DeviceStorageProfile[]
   // Atomic Phase 069: network telemetry segments
   networkTelemetry    NetworkTelemetryLog[]
+  // Atomic Phase 070: cross-device vector-clock state
+  // (ActiveDeviceSession stays relation-free per Phase 057 — the viewport
+  // guard counts by userId field, no schema touch).
+  crossDeviceStates   CrossDeviceSyncState[]
 
   @@index([lineUserId])
   @@index([email])
@@ -305,6 +309,8 @@ model Product {
   previewLogs    PreviewUsageLog[]
   // Atomic Phase 068: offline download licenses per product
   offlineLicenses OfflineLicense[]
+  // Atomic Phase 070: cross-device vector-clock rows per product
+  crossDeviceStates CrossDeviceSyncState[]
   createdAt      DateTime                    @default(now())
   updatedAt      DateTime                    @updatedAt
 
@@ -2381,4 +2387,40 @@ model NetworkTelemetryLog {
   @@index([userId])
   @@index([lineUserId])
   @@index([createdAt])
+}
+
+// Atomic Phase 070: vector-clock SSOT row + one-time handshake tokens.
+// - CrossDeviceSyncState persists the Redis edge winner (write-behind).
+// - HandshakeToken is consumed via Redis GETDEL (single-use, 120s TTL);
+//   the row is an audit trail (BDD-4 session guard evidence).
+model CrossDeviceSyncState {
+  id             String   @id @default(uuid())
+  userId         String
+  productId      String
+  contentType    String
+  lastPage       Int?     @default(1)
+  lastWatchedSec Int?     @default(0)
+  vectorClock    Int      @default(1)
+  lastDevice     String
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, productId, contentType])
+  @@index([userId, productId])
+}
+
+model HandshakeToken {
+  id             String   @id @default(uuid())
+  handshakeToken String   @unique
+  lineUserId     String
+  webSessionId   String?
+  isConsumed     Boolean  @default(false)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([handshakeToken])
 }

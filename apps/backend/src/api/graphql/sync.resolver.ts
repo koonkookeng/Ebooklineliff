@@ -1,11 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 070 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class SyncResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 070 §3.2 — api-layer sync resolver alias (canonical mapping)
+// Canonical: apps/backend/src/api/graphql/sync.resolver.ts
+// (legacy src/backend/api/graphql/sync.resolver.ts)
+// - Runtime lives in modules/sync/cross-device.resolver.ts (code-first);
+//   this file re-exports it so the Phase 070 tree path resolves without a
+//   duplicate field registration.
+export * from '../../modules/sync/cross-device.resolver';

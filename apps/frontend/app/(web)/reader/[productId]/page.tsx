@@ -8,13 +8,16 @@
 'use client';
 
 import { Suspense, use } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { UniversalViewportRouter } from '../../../../components/viewport/UniversalViewportRouter';
 import { ReaderKeyboardHandler } from '../../../../components/reader/ReaderKeyboardHandler';
 import { useReaderStore } from '../../../../stores/useReaderStore';
+import { CrossDeviceHandoff } from '../../../../components/sync/CrossDeviceHandoff';
+import { HandshakeQrButton } from '../../../../components/sync/HandshakeQrButton';
 
 function WebReaderInner({ productId }: { productId: string }) {
   const params = useSearchParams();
+  const router = useRouter();
   const type = params.get('type') === 'video' ? 'COURSE_VIDEO' : 'EBOOK';
   const page = Number.parseInt(params.get('page') ?? '1', 10) || 1;
   const lessonId = params.get('lessonId') ?? undefined;
@@ -22,10 +25,29 @@ function WebReaderInner({ productId }: { productId: string }) {
   // Atomic Phase 059: store-driven keyboard engine for EBOOK (video keeps
   // its player shortcuts; AdaptiveCanvasReader adopts store turns).
   const totalPages = useReaderStore((s) => s.totalPages);
+  // Atomic Phase 070: cross-device handoff (SSE toast + QR issuer).
+  const storePage = useReaderStore((s) => s.currentPage);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {type === 'EBOOK' && <ReaderKeyboardHandler productId={productId} totalPages={totalPages} />}
+      <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 px-4 pt-4">
+        <CrossDeviceHandoff
+          productId={productId}
+          contentType={type === 'EBOOK' ? 'EBOOK_PAGE' : 'COURSE_LESSON_VIDEO'}
+          contentId={lessonId ?? productId}
+          deviceType="WEB_DESKTOP"
+          position={type === 'EBOOK' ? { pageNumber: storePage } : {}}
+          onJump={(pos) => {
+            if (pos.pageNumber !== undefined) {
+              router.replace(`/reader/${productId}?type=ebook&page=${pos.pageNumber}`);
+            } else if (type !== 'EBOOK' && lessonId) {
+              router.replace(`/reader/${productId}?type=video&lessonId=${lessonId}`);
+            }
+          }}
+        />
+        <HandshakeQrButton productId={productId} />
+      </div>
       <UniversalViewportRouter
         productId={productId}
         contentType={type}

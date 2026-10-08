@@ -1383,3 +1383,27 @@ export type {
   OfflineQueueItem,
   HealthPingResponse,
 } from './schemas/network-status.schema';
+export {
+  DeviceTypeEnum,
+  ContentTypeEnum,
+  DeviceSessionSchema,
+  CrossDeviceSyncPayloadSchema,
+  SessionHandshakeQrPayloadSchema,
+  CROSS_DEVICE_LATENCY_MS,
+  HANDSHAKE_TTL_SEC,
+  SYNC_STATE_TTL_SEC,
+  MAX_ACTIVE_VIEWPORTS,
+  CROSS_DEVICE_EVENT,
+  DEVICE_SWITCH_STREAM,
+  crossDeviceStateKey,
+  crossDeviceChannel,
+  handshakeRedisKey,
+  resolveCrossDeviceConflict,
+} from './schemas/cross-device-sync.schema';
+export type {
+  DeviceType,
+  CrossDeviceContentType,
+  DeviceSession,
+  CrossDeviceSyncPayload,
+  SessionHandshakeQrPayload,
+} from './schemas/cross-device-sync.schema';

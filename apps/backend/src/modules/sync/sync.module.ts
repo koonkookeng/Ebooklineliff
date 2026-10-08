@@ -16,6 +16,10 @@ import { drainProgressQueues } from './application/workers/progress-persistence.
 import { RedisIoAdapter } from './infrastructure/adapters/redis-io.adapter';
 import { ProgressSyncGateway } from './infrastructure/gateways/progress-sync.gateway';
 import { SyncResolver } from './sync.resolver';
+import { CrossDeviceStateService } from './cross-device-state.service';
+import { SessionHandshakeService } from '../auth/session-handshake.service';
+import { CrossDeviceResolver } from './cross-device.resolver';
+import { HandshakeController } from './handshake.controller';
 
 type QueueName = 'ebook_progress' | 'video_progress';
 
@@ -36,6 +40,7 @@ export class SyncWriteBackQueue {
 }
 
 @Module({
+  controllers: [HandshakeController],
   providers: [
     ConflictResolverService,
     SyncWriteBackQueue,
@@ -83,8 +88,24 @@ export class SyncWriteBackQueue {
       inject: [RedisPubSubAdapter, RedisIoAdapter, RedisClusterService, PrismaService, SyncWriteBackQueue],
     },
     SyncResolver,
+    // Atomic Phase 070: vector-clock SSOT + QR handshake (rooms/bus reuse).
+    {
+      provide: CrossDeviceStateService,
+      useFactory: (prisma: PrismaService, edge: RedisClusterService, rooms: RedisPubSubAdapter): CrossDeviceStateService =>
+        new CrossDeviceStateService(prisma as never, edge as never, rooms as never, edge as never),
+      inject: [PrismaService, RedisClusterService, RedisPubSubAdapter],
+    },
+    {
+      // NOTE: SessionHandshakeService lives in modules/auth (spec tree) but
+      // is provided here to keep AuthModule's login surface untouched.
+      provide: SessionHandshakeService,
+      useFactory: (prisma: PrismaService, edge: RedisClusterService): SessionHandshakeService =>
+        new SessionHandshakeService(prisma as never, edge as never),
+      inject: [PrismaService, RedisClusterService],
+    },
+    CrossDeviceResolver,
   ],
-  exports: [ProgressSyncGateway, ConflictResolverService, SyncWriteBackQueue],
+  exports: [ProgressSyncGateway, ConflictResolverService, SyncWriteBackQueue, CrossDeviceStateService, SessionHandshakeService],
 })
 export class SyncModule implements OnModuleInit, OnModuleDestroy {
   private timer: ReturnType<typeof setInterval> | null = null;

@@ -17,6 +17,7 @@ import { OfflineCanvasReader } from '../../../../components/reader/OfflineCanvas
 import { BookmarkManager } from '../../../../components/reader/BookmarkManager';
 import { useReaderStore } from '../../../../stores/useReaderStore';
 import { useReadWatchTracker } from '../../../../hooks/useReadWatchTracker';
+import { CrossDeviceHandoff } from '../../../../components/sync/CrossDeviceHandoff';
 import {
   fetchAnnotations,
   toggleBookmarkRemote,
@@ -40,6 +41,7 @@ function ReaderInner({ productId }: { productId: string }) {
   const offlineMode = params.get('offline') === '1';
   const theme = useReaderStore((s) => s.theme);
   const totalPages = useReaderStore((s) => s.totalPages);
+  const currentPage = useReaderStore((s) => s.currentPage);
   const annotationsLoading = useReaderStore((s) => s.uiState === 'LOADING');
   // Atomic Phase 052: dwell telemetry (server stamps identity from JWT cookie).
   const { trackPageDwell } = useReadWatchTracker({ userId: null, productId, contentId: productId, contentType: 'READ' });
@@ -128,6 +130,18 @@ function ReaderInner({ productId }: { productId: string }) {
           </>
         )}
         <div className="mx-auto mt-6 max-w-xl">
+          {/* Atomic Phase 070: cross-device handoff (SSE toast + scan). */}
+          <CrossDeviceHandoff
+            productId={productId}
+            contentType="EBOOK_PAGE"
+            contentId={productId}
+            deviceType="LINE_LIFF_MOBILE"
+            position={{ pageNumber: currentPage }}
+            onJump={(pos) => {
+              if (pos.pageNumber !== undefined) handleJump(pos.pageNumber);
+            }}
+            enableScan
+          />
           <BookmarkManager
             productId={productId}
             isLoading={annotationsLoading}
