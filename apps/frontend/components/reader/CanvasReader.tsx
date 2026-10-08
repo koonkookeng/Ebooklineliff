@@ -130,7 +130,10 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
         </div>
       )}
       <div className="relative">
-        <canvas ref={canvasRef} width={390} height={844} aria-label={`ebook page ${page}`} />
+        {/* Atomic Phase 066 Task 7: theme filter rides the --canvas-filter
+            CSS var (ThemeProvider-owned) — GPU-composited, no canvas
+            re-render loop, RAM-neutral (<30MB). */}
+        <canvas ref={canvasRef} width={390} height={844} aria-label={`ebook page ${page}`} style={{ filter: 'var(--canvas-filter, none)' }} />
         {watermark && (
           <ForensicWatermark watermarkText={watermark.watermarkText} userIdHash={watermark.userIdHash} />
         )}

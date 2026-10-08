@@ -1,8 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 066 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 065 §5.1 — Update-preference DTO (Zod-gated transport surface)
+// Canonical: apps/backend/src/modules/user-preference/dto/update-preference.dto.ts
+// (legacy src/backend/modules/user-preference/dto/update-preference.dto.ts)
+// - Re-exports the Zod SSOT; boundary safeParse in service/resolver.
+// - Zero new deps.
+import { UpdatePreferenceInputSchema, UserReadingPreferenceSchema } from '@repo/shared';
+
+export { UpdatePreferenceInputSchema, UserReadingPreferenceSchema };
+export type { UpdatePreferenceInput, UserReadingPreference } from '@repo/shared';

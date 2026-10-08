@@ -124,6 +124,8 @@ model User {
   bookmarks         EbookBookmark[]
   highlights        EbookHighlight[]
   readerPreference  UserReaderPreference?
+  // Atomic Phase 066: cross-platform synced reading preferences
+  readingPreference UserReadingPreference?
   // Atomic Phase 042: watermark seeds + tamper audit trail
   watermarkSeeds      WatermarkSeedLog[]
   securityViolations  SecurityViolationLog[]
@@ -1044,6 +1046,38 @@ model UserReaderPreference {
   hapticFeedbackEnabled   Boolean  @default(true)
   customKeybindingsJson   Json?
   updatedAt               DateTime @updatedAt
+}
+
+// Atomic Phase 066: cross-platform theme + reading preference sync.
+enum ThemeMode {
+  LIGHT
+  DARK
+  SEPIA
+  OLED_BLACK
+  SYSTEM
+}
+
+enum ReadingFontFamily {
+  PROMPT
+  SARABUN
+  INTER
+  MERRIWEATHER
+}
+
+model UserReadingPreference {
+  id                 String            @id @default(uuid())
+  userId             String            @unique
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themeMode          ThemeMode         @default(SYSTEM)
+  fontSizePx         Int               @default(16)
+  fontFamily         ReadingFontFamily @default(PROMPT)
+  lineHeightRatio    Float             @default(1.5)
+  brightnessLevel    Int               @default(100)
+  autoSyncWithSystem Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([userId])
 }
 
 // Atomic Phase 042: watermark seed issuance log (§4.1 verbatim)

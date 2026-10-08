@@ -1,0 +1,51 @@
+# SSOT Phase 066 §3.2 — Reading preference GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/preference.graphql
+# Runtime is code-first via UserPreferenceResolver (modules/user-preference).
+# Realtime subscription rides SSE (PreferenceSyncController.stream).
+
+enum ThemeMode {
+  LIGHT
+  DARK
+  SEPIA
+  OLED_BLACK
+  SYSTEM
+}
+
+enum ReadingFontFamily {
+  PROMPT
+  SARABUN
+  INTER
+  MERRIWEATHER
+}
+
+type UserReadingPreference {
+  userId: ID!
+  themeMode: ThemeMode!
+  fontSizePx: Int!
+  fontFamily: ReadingFontFamily!
+  lineHeightRatio: Float!
+  brightnessLevel: Int!
+  autoSyncWithSystem: Boolean!
+  updatedAt: String!
+}
+
+input UpdateReadingPreferenceInput {
+  themeMode: ThemeMode
+  fontSizePx: Int
+  fontFamily: ReadingFontFamily
+  lineHeightRatio: Float
+  brightnessLevel: Int
+  autoSyncWithSystem: Boolean
+}
+
+extend type Query {
+  getUserReadingPreference: UserReadingPreference!
+}
+
+extend type Mutation {
+  updateUserReadingPreference(input: UpdateReadingPreferenceInput!): UserReadingPreference!
+}
+
+extend type Subscription {
+  onReadingPreferenceUpdated(userId: ID!): UserReadingPreference!
+}

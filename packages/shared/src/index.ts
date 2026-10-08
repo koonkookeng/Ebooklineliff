@@ -1287,3 +1287,25 @@ export type {
   LessonNoteConnection,
   AiNoteSummary,
 } from './schemas/lesson-note.schema';
+export {
+  ThemeModeEnum as ReadingThemeModeEnum,
+  ReadingFontFamilyEnum,
+  UserReadingPreferenceSchema,
+  UpdatePreferenceInputSchema,
+  PREF_CACHE_TTL_SEC,
+  PREF_FANOUT_BUDGET_MS,
+  PREF_PERSIST_DEBOUNCE_MS,
+  PREF_ANALYTICS_STREAM,
+  PREFERENCE_UPDATED_EVENT,
+  THEME_TOKENS,
+  preferenceCacheKey,
+  preferenceChannel,
+  resolveThemeMode,
+  canvasFilterFor,
+} from './schemas/theme-preference.schema';
+export type {
+  ThemeMode as ReadingThemeMode,
+  ReadingFontFamily,
+  UserReadingPreference,
+  UpdatePreferenceInput,
+} from './schemas/theme-preference.schema';

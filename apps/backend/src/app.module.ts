@@ -73,8 +73,9 @@ import { OfflineSyncModule } from './modules/offline-sync/offline-sync.module';
 import { OfflineModule } from './modules/offline/offline.module';
 import { OfflineProgressModule } from './modules/progress/progress.module';
 import { NoteModule } from './modules/note/note.module';
+import { UserPreferenceModule } from './modules/user-preference/user-preference.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

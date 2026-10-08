@@ -16,6 +16,8 @@ import { PrefetchObserver } from '../../components/performance/PrefetchObserver'
 import { RumReporter } from '../../components/performance/RumReporter';
 // Phase 030 Task 5: segment theme sync (CSS vars + native navbar, null-render).
 import { TenantThemeProvider } from '../../providers/TenantThemeProvider';
+// Phase 066 Task 6: cross-platform reading theme (tokens + tab/device sync).
+import { ThemeProvider } from '../../providers/theme-provider';
 // Phase 031 Task 4: viewport keep-alive (chat-switch state preservation).
 import { KeepAliveProvider } from '../../components/keep-alive/KeepAliveProvider';
 // Phase 033 Task 3: instant auto-update checker (null-render when current).
@@ -43,6 +45,7 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
     <LiffProvider liffId={liffId} tenantId={tenantId}>
       <LiffRouterProvider>
         <TenantThemeProvider>
+          <ThemeProvider>
           <KeepAliveProvider>
             <DynamicHeaderIntegrator />
             <PrefetchObserver />
@@ -50,6 +53,7 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
             <AutoUpdateChecker currentVersion={CLIENT_VERSION} currentBuildHash={CLIENT_BUILD_HASH} />
             {children}
           </KeepAliveProvider>
+          </ThemeProvider>
         </TenantThemeProvider>
       </LiffRouterProvider>
     </LiffProvider>
