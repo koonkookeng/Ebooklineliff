@@ -966,3 +966,30 @@ export {
   formatResumeMMSS,
 } from './schemas/zod-stream';
 export type { SyncLessonProgressInput } from './schemas/zod-stream';
+export {
+  NetworkQualityTierEnum,
+  ClientNetworkTelemetrySchema,
+  LowBandwidthChunkRequestSchema,
+  LowBandwidthChunkResponseSchema,
+  LOW_NET_FIRST_FRAME_MS,
+  LOW_NET_NEXT_PAGE_MS,
+  LOW_NET_RAM_CAP_MB,
+  LOW_NET_BROTLI_Q_SLOW,
+  LOW_NET_BROTLI_Q_FAST,
+  LOW_NET_CHUNK_CACHE_TTL_SEC,
+  LOW_NET_RTT_SLOW_MS,
+  LOW_NET_DOWNLINK_SLOW_MBPS,
+  prefetchWindow,
+  tierFromEffectiveType,
+  brotliQualityFor,
+  isLowBandwidthTier,
+  TIER_BITRATE_BUDGET_KBPS,
+  filterVariantsByBudget,
+} from './schemas/low-bandwidth-contract';
+export type {
+  NetworkQualityTier,
+  ClientNetworkTelemetry,
+  LowBandwidthChunkRequest,
+  LowBandwidthChunkResponse,
+  HlsLadderVariant,
+} from './schemas/low-bandwidth-contract';

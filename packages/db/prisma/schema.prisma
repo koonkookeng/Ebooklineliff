@@ -2008,3 +2008,38 @@ model ContentHeatmapAggregate {
   @@unique([productId, contentType, segmentIndex])
   @@index([productId])
 }
+
+// Atomic Phase 055 Task 1/§4.1: low-bandwidth delivery telemetry + asset cache
+// (additive; no core tables touched — OUT_OF_SCOPE_STRICT respected).
+
+model NetworkPerformanceLog {
+  id               String   @id @default(uuid())
+  userId           String?
+  productId        String?
+  effectiveType    String
+  rttMs            Int
+  downlinkMbps     Float
+  pageLoadTimeMs   Int
+  chunkByteSize    Int
+  ramUsageMb       Float
+  isBufferUnderrun Boolean  @default(false)
+  deviceModel      String?
+  userAgent        String
+  createdAt        DateTime @default(now())
+
+  @@index([effectiveType])
+  @@index([createdAt])
+}
+
+model LowBandwidthAssetCache {
+  id              String   @id @default(uuid())
+  productId       String
+  pageNumber      Int
+  brotliChunkPath String
+  byteSize        Int
+  sha256Hash      String
+  updatedAt       DateTime @updatedAt
+
+  @@unique([productId, pageNumber])
+  @@index([productId])
+}

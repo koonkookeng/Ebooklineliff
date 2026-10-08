@@ -19,6 +19,11 @@ import { ReaderController } from './reader.controller';
 import { ReaderResolver } from './reader.resolver';
 import { ReaderService, type ReaderPrisma } from './reader.service';
 import { SlidingWindowCacheService } from './services/sliding-window-cache.service';
+import {
+  LowBandwidthReaderService,
+  type LowBandwidthChunkCache,
+  type LowBandwidthChunkSource,
+} from './services/low-bandwidth-reader.service';
 import { WatermarkGeneratorService } from './services/watermark-generator.service';
 
 @Module({
@@ -49,6 +54,23 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
     },
     ReaderResolver,
     {
+      // Phase 055: Brotli chunk gateway (entitled SVG via ReaderService +
+      // Redis 24h brotli cells; zero new infra).
+      provide: LowBandwidthReaderService,
+      useFactory: (reader: ReaderService, edge: RedisClusterService): LowBandwidthReaderService => {
+        const source: LowBandwidthChunkSource = {
+          fetchSvg: (productId, pageNumber, userId, tenantId) =>
+            reader.getEbookPageChunk(userId, tenantId, productId, pageNumber).then((p) => p.vectorSvgContent),
+        };
+        const cache: LowBandwidthChunkCache = {
+          getBuffer: (key) => edge.getBuffer(key),
+          setBuffer: (key, value, ttl) => edge.set(key, value, 'EX', ttl).then(() => undefined),
+        };
+        return new LowBandwidthReaderService(source, cache);
+      },
+      inject: [ReaderService, RedisClusterService],
+    },
+    {
       provide: ReaderControlService,
       useFactory: (prisma: PrismaService, edge: RedisClusterService): ReaderControlService =>
         new ReaderControlService(
@@ -59,6 +81,6 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
     },
     ReaderControlResolver,
   ],
-  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService],
+  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService],
 })
 export class ReaderModule {}

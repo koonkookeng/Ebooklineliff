@@ -27,6 +27,16 @@ type ProgressSyncPayload {
 
 extend type Query {
   getEbookPageChunk(productId: ID!, pageNumber: Int!): EbookChunkPayload!
+  getOptimizedEbookPageChunk(productId: ID!, pageNumber: Int!, networkQuality: String!): LowBandwidthChunkPayload!
+}
+
+type LowBandwidthChunkPayload {
+  pageNumber: Int!
+  compressedPayloadBase64: String!
+  byteLength: Int!
+  isLowBandwidthMode: Boolean!
+  forensicWatermarkHash: String!
+  checksumSha256: String!
 }
 
 extend type Mutation {

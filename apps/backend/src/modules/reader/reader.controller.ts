@@ -9,8 +9,9 @@
 // - Zero new deps.
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { ReaderProgressPayloadSchema } from '@repo/shared';
+import { NetworkQualityTierEnum, ReaderProgressPayloadSchema } from '@repo/shared';
 import { ReaderService } from './reader.service';
+import { LowBandwidthReaderService } from './services/low-bandwidth-reader.service';
 
 interface ReaderReq {
   user?: { id?: string; tenantId?: string };
@@ -24,7 +25,10 @@ function reqIdentity(req: ReaderReq, queryTenantId?: string): { userId: string; 
 
 @Controller('api/v1/reader')
 export class ReaderController {
-  constructor(private readonly reader: ReaderService) {}
+  constructor(
+    private readonly reader: ReaderService,
+    private readonly lowband: LowBandwidthReaderService,
+  ) {}
 
   @Get('chunk')
   @UseGuards(JwtAuthGuard)
@@ -40,6 +44,30 @@ export class ReaderController {
     }
     const { userId, tenantId } = reqIdentity(req, queryTenantId);
     return this.reader.getEbookPageChunk(userId, tenantId, productId, pageNumber);
+  }
+
+  // Phase 055 §6.1: Brotli-compressed chunk for low-bandwidth LIFF clients.
+  @Get('chunk-compressed')
+  @UseGuards(JwtAuthGuard)
+  async getCompressedChunk(
+    @Query('productId') productId: string | undefined,
+    @Query('page') page: string | undefined,
+    @Query('network') network: string | undefined,
+    @Query('format') format: string | undefined,
+    @Query('tenantId') queryTenantId: string | undefined,
+    @Req() req: ReaderReq,
+  ) {
+    const pageNumber = Number(page);
+    const tier = NetworkQualityTierEnum.safeParse(network);
+    const fmt = format === undefined ? 'BROTLI' : format;
+    if (!productId || !Number.isInteger(pageNumber) || pageNumber <= 0 || !tier.success) {
+      throw new BadRequestException('Invalid compressed chunk request');
+    }
+    if (fmt !== 'BROTLI' && fmt !== 'GZIP' && fmt !== 'RAW_SVG') {
+      throw new BadRequestException('Invalid compress format');
+    }
+    const { userId, tenantId } = reqIdentity(req, queryTenantId);
+    return this.lowband.getCompressedVectorChunk(productId, pageNumber, tier.data, userId, tenantId, fmt);
   }
 
   @Post('progress')

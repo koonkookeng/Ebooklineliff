@@ -11,7 +11,9 @@
 import { Args, Context, Field, ID, Int, Mutation, ObjectType, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { NetworkQualityTierEnum } from '@repo/shared';
 import { ReaderService } from './reader.service';
+import { LowBandwidthReaderService } from './services/low-bandwidth-reader.service';
 import { resolveReaderIdentity, type ReaderGqlContext } from './reader-identity';
 
 @ObjectType('ForensicWatermarkPayload')
@@ -39,9 +41,22 @@ class ProgressSyncPayloadGql {
   @Field() updatedAt!: string;
 }
 
+@ObjectType('LowBandwidthChunkPayload')
+class LowBandwidthChunkPayloadGql {
+  @Field(() => Int) pageNumber!: number;
+  @Field() compressedPayloadBase64!: string;
+  @Field(() => Int) byteLength!: number;
+  @Field() isLowBandwidthMode!: boolean;
+  @Field() forensicWatermarkHash!: string;
+  @Field() checksumSha256!: string;
+}
+
 @Resolver('Reader')
 export class ReaderResolver {
-  constructor(private readonly reader: ReaderService) {}
+  constructor(
+    private readonly reader: ReaderService,
+    private readonly lowband: LowBandwidthReaderService,
+  ) {}
 
   @Query('getEbookPageChunk')
   @UseGuards(JwtAuthGuard)
@@ -64,5 +79,19 @@ export class ReaderResolver {
   ) {
     const { userId } = resolveReaderIdentity(gqlCtx);
     return this.reader.syncEbookProgress(userId, productId, pageNumber, readDurationSec);
+  }
+
+  // Phase 055 §3.2: low-bandwidth optimized chunk (Brotli + watermark hash).
+  @Query('getOptimizedEbookPageChunk')
+  @UseGuards(JwtAuthGuard)
+  async getOptimizedEbookPageChunk(
+    @Args('productId') productId: string,
+    @Args('pageNumber', { type: () => Int }) pageNumber: number,
+    @Args('networkQuality') networkQuality: string,
+    @Context() gqlCtx?: ReaderGqlContext,
+  ) {
+    const { userId, tenantId } = resolveReaderIdentity(gqlCtx);
+    const tier = NetworkQualityTierEnum.parse(networkQuality);
+    return this.lowband.getCompressedVectorChunk(productId, pageNumber, tier, userId, tenantId);
   }
 }

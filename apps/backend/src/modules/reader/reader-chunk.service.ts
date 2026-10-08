@@ -2,7 +2,7 @@
  * Phase 000 — Reader chunk service: entitlement gate + R2 -> Redis edge [N-1,N,N+1].
  */
 import { Injectable } from '@nestjs/common';
-import { EbookChunkPayloadSchema } from '@shared/schemas/sdid-contract';
+import { EbookChunkPayloadSchema } from '@repo/shared';
 import { createHash } from 'node:crypto';
 
 @Injectable()

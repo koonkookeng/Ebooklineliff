@@ -10,7 +10,7 @@
 
 import { Suspense, use, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import CanvasReader from '../../../../components/reader/CanvasReader';
+import CanvasReaderEngine from '../../../../components/reader/CanvasReaderEngine';
 import { ReaderControlBar } from '../../../../components/reader/ReaderControlBar';
 import { BookmarkManager } from '../../../../components/reader/BookmarkManager';
 import { useReaderStore } from '../../../../stores/useReaderStore';
@@ -112,7 +112,7 @@ function ReaderInner({ productId }: { productId: string }) {
     >
       <ReaderControlBar productId={productId} bookTitle="E-Book Reader" onBack={() => window.history.back()} onToggleBookmark={() => void handleToggleBookmark()} />
       <main className="px-4 pb-24 pt-20">
-        <CanvasReader productId={productId} userIdHash="" />
+        <CanvasReaderEngine productId={productId} userIdHash="" />
         <div className="mx-auto mt-6 max-w-xl">
           <BookmarkManager
             productId={productId}
