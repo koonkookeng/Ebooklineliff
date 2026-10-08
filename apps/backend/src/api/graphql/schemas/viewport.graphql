@@ -1,0 +1,40 @@
+# SSOT Phase 056 §3.2 — Viewport GraphQL SDL (config + state sync intents)
+# Canonical: apps/backend/src/api/graphql/schemas/viewport.graphql
+
+extend type Query {
+  # Intent: Get Viewport Routing Config & Entitlement Check
+  getUniversalViewportConfig(productId: ID!, clientEnv: String!): ViewportConfigPayload!
+}
+
+extend type Mutation {
+  # Intent: Sync Viewport Progress & Mode Switch Across Devices
+  syncUniversalViewportState(input: ViewportStateSyncInput!): SyncResponsePayload!
+}
+
+type ViewportConfigPayload {
+  productId: ID!
+  recommendedMode: String!
+  maxMemoryLimitMB: Int!
+  hlsStreamUrl: String
+  ebookChunkBaseUrl: String
+  watermarkConfig: WatermarkConfig!
+}
+
+type WatermarkConfig {
+  watermarkText: String!
+  hashSignature: String!
+  refreshIntervalSec: Int!
+}
+
+input ViewportStateSyncInput {
+  productId: ID!
+  contentType: String!
+  lastPageNumber: Int
+  lastWatchedSec: Int
+  viewportMode: String!
+}
+
+type SyncResponsePayload {
+  ok: Boolean!
+  syncedAt: String!
+}

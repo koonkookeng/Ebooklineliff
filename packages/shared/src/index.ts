@@ -993,3 +993,32 @@ export type {
   LowBandwidthChunkResponse,
   HlsLadderVariant,
 } from './schemas/low-bandwidth-contract';
+export {
+  RuntimeEnvironmentEnum,
+  ViewportCapabilitiesSchema,
+  ViewportStateSyncSchema,
+  ViewportStateSyncInputSchema,
+  WatermarkConfigSchema,
+  ViewportConfigPayloadSchema,
+  VIEWPORT_LIFF_RAM_MB,
+  VIEWPORT_WEB_RAM_MB,
+  VIEWPORT_DESKTOP_BREAKPOINT_PX,
+  VIEWPORT_WATERMARK_REFRESH_SEC,
+  VIEWPORT_SESSION_TTL_SEC,
+  VIEWPORT_LIFF_FALLBACK_MS,
+  VIEWPORT_PROGRESS_SYNC_BUDGET_MS,
+  detectRuntimeEnvironment,
+  ramBudgetFor,
+  viewportSlidingWindowPages,
+  viewportSessionKey,
+  watermarkTextFor,
+  isLiffEnvironment,
+} from './schemas/viewport-contract';
+export type {
+  RuntimeEnvironment,
+  ViewportCapabilities,
+  ViewportStateSync,
+  ViewportStateSyncInput,
+  WatermarkConfig,
+  ViewportConfigPayload,
+} from './schemas/viewport-contract';

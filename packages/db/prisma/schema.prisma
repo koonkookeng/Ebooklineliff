@@ -201,6 +201,14 @@ model QrSessionNonce {
   @@index([expiresAt])
 }
 
+// Atomic Phase 056: viewport runtime environment (adaptive LIFF/Web engine).
+enum RuntimeEnvironment {
+  LINE_LIFF_MOBILE
+  LINE_LIFF_DESKTOP
+  WEB_MOBILE_PWA
+  WEB_DESKTOP_WORKSPACE
+}
+
 model UserDeviceSession {
   id                String   @id @default(uuid())
   userId            String
@@ -212,6 +220,12 @@ model UserDeviceSession {
   lastActiveAt      DateTime @default(now())
   isRevoked         Boolean  @default(false)
   createdAt         DateTime @default(now())
+  // Phase 056 expand-contract (all optional/defaulted; zero-downtime safe):
+  lastViewportMode  RuntimeEnvironment @default(WEB_DESKTOP_WORKSPACE)
+  deviceUserAgent   String?
+  lastIpAddress     String?
+  activeSession     Boolean            @default(true)
+  updatedAt         DateTime           @updatedAt
 
   @@index([userId])
   @@index([deviceFingerprint])
