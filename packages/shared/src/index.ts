@@ -1639,3 +1639,30 @@ export type {
   AffiliatePayoutRequest,
   LINEFlexSharePayload,
 } from './schemas/affiliate-contract';
+export {
+  FlexTargetTypeEnum,
+  FlexShareInputSchema,
+  FlexSharePayloadSchema,
+  TrackClickPayloadSchema,
+  AffiliateShareMetricsSchema,
+  FLEX_REF_TOKEN_TTL_SEC,
+  FLEX_GENERATE_RATE_LIMIT,
+  FLEX_GENERATE_RATE_WINDOW_SEC,
+  FLEX_CLICK_STREAM,
+  FLEX_SHARE_STREAM,
+  FLEX_FRAUD_STREAM,
+  FLEX_DEFAULT_ORIGIN,
+  signRefToken,
+  verifyRefToken,
+  flexReferralUrl,
+  ctrOf,
+  flexSessionKey,
+  flexGenerateRateKey,
+} from './schemas/flex-share.schema';
+export type {
+  FlexTargetType,
+  FlexShareInput,
+  FlexSharePayload,
+  TrackClickPayload,
+  AffiliateShareMetrics,
+} from './schemas/flex-share.schema';

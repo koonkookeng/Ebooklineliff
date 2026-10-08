@@ -1,0 +1,27 @@
+# SSOT Phase 080 §3.2 — Share click-attribution intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/share-click.graphql
+# Runtime is code-first (modules/share/presentation/share.resolver.ts).
+# NOTE: generateProductFlexShare is intentionally absent — the SocialShare
+# (026) and Affiliate (079) resolvers already own that field name.
+
+type TrackClickPayload {
+  success: Boolean!
+  affiliateCode: String!
+  isNewSession: Boolean!
+}
+
+type AffiliateMetricsPayload {
+  totalShares: Int!
+  totalClicks: Int!
+  conversions: Int!
+  estimatedEarnings: Float!
+  ctrPercentage: Float!
+}
+
+type Query {
+  getAffiliateShareMetrics(productId: ID): AffiliateMetricsPayload!
+}
+
+type Mutation {
+  trackAffiliateClick(refToken: String!): TrackClickPayload!
+}

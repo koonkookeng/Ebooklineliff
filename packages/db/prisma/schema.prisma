@@ -591,6 +591,7 @@ model AffiliatePayout {
 }
 
 // Atomic Phase 079 (+080): viral share event with signed ref token.
+// Atomic Phase 080 §4.1: click attribution ledger (ShareEvent.clicks).
 model ShareEvent {
   id           String   @id @default(uuid())
   userId       String
@@ -601,11 +602,28 @@ model ShareEvent {
   refToken     String   @unique
   shareChannel String   @default("LINE_FLEX")
   clickCount   Int      @default(0)
+  clicks       AffiliateClick[]
   createdAt    DateTime @default(now())
 
   @@index([userId])
   @@index([productId])
   @@index([refToken])
+}
+
+// Atomic Phase 080 §4.1: per-click attribution row (schema.md canonical).
+model AffiliateClick {
+  id               String     @id @default(uuid())
+  shareEventId     String
+  shareEvent       ShareEvent @relation(fields: [shareEventId], references: [id], onDelete: Cascade)
+  visitorLineId    String?
+  ipAddress        String
+  userAgent        String
+  isConverted      Boolean    @default(false)
+  convertedOrderId String?    @unique
+  createdAt        DateTime   @default(now())
+
+  @@index([shareEventId])
+  @@index([visitorLineId])
 }
 
 model PayoutTransaction {
