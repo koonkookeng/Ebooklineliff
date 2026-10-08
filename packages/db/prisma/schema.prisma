@@ -91,6 +91,8 @@ model User {
   // Atomic Phase 061: dual-DRM ephemeral session keys (HMAC permutation grants)
   drmSecurityKeys   DrmSecurityKey[]
   drmViolationLogs  DrmViolationLog[]
+  // Atomic Phase 062: offline PWA device sessions (bulk-sync ledger)
+  offlineDeviceSessions OfflineDeviceSession[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -472,6 +474,32 @@ model DrmViolationLog {
   @@index([createdAt])
   @@index([userId])
   @@index([productId])
+}
+
+// Atomic Phase 062 Task 1: offline PWA sync ledger (additive; progress
+// tables EbookReadingProgress/CourseLearningProgress reused untouched).
+model OfflineDeviceSession {
+  id           String           @id @default(uuid())
+  userId       String
+  deviceId     String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastSyncedAt DateTime         @updatedAt
+  syncLogs     OfflineSyncLog[]
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+}
+
+model OfflineSyncLog {
+  id         String               @id @default(uuid())
+  sessionId  String
+  deviceSession OfflineDeviceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  targetType String
+  itemsCount Int                  @default(1)
+  status     String               @default("SUCCESS")
+  createdAt  DateTime             @default(now())
+
+  @@index([sessionId])
 }
 
 // Atomic Phase 061 Task 1: dual-DRM ephemeral session keys (additive;

@@ -1187,3 +1187,28 @@ export type {
   ShufflingMatrixSeed,
   EncryptedDrmChunkPayload,
 } from './schemas/drm-shuffling.schema';
+export {
+  SyncTargetTypeEnum,
+  OfflineSyncQueueItemSchema,
+  BulkOfflineSyncPayloadSchema,
+  BulkOfflineSyncResponseSchema,
+  PWA_DB_NAME,
+  PWA_CHUNK_STORE,
+  PWA_VIDEO_STORE,
+  PWA_SYNC_STORE,
+  PWA_CHUNK_MAX_ENTRIES,
+  PWA_CHUNK_MAX_AGE_SEC,
+  PWA_CACHE_MAX_MB_PER_TENANT,
+  PWA_BGSYNC_RETENTION_MIN,
+  PWA_LIFF_RAM_MB,
+  PWA_SYNC_STREAM_KEY,
+  tenantCacheName,
+  chunkCellId,
+  clampBatchSize,
+} from './schemas/offline-sync-schema';
+export type {
+  SyncTargetType,
+  OfflineSyncQueueItem,
+  BulkOfflineSyncPayload,
+  BulkOfflineSyncResponse,
+} from './schemas/offline-sync-schema';

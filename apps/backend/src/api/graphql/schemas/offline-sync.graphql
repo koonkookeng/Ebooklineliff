@@ -1,0 +1,29 @@
+# SSOT Phase 062 §3.2 — Offline sync GraphQL SDL (contract supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/offline-sync.graphql
+# Runtime is code-first via OfflineSyncResolver.syncOfflineDataQueue.
+
+input OfflineSyncItemInput {
+  id: ID!
+  userId: String!
+  tenantId: String!
+  targetType: String!
+  payloadJson: String!
+  timestamp: Float!
+}
+
+input BulkOfflineSyncInput {
+  deviceId: String!
+  syncItems: [OfflineSyncItemInput!]!
+}
+
+type BulkOfflineSyncResponse {
+  success: Boolean!
+  processedCount: Int!
+  failedIds: [ID!]!
+  serverTimestamp: Float!
+}
+
+extend type Mutation {
+  # Intent: bulk synchronization of offline progress from the SW engine
+  syncOfflineDataQueue(deviceId: String!, syncItems: [OfflineSyncItemInput!]!): BulkOfflineSyncResponse!
+}

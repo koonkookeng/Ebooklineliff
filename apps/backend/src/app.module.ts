@@ -69,8 +69,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { HlsStreamModule } from './modules/stream/hls-stream.module';
 import { ViewportModule } from './modules/viewport/viewport.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { OfflineSyncModule } from './modules/offline-sync/offline-sync.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

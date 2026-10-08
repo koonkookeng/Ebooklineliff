@@ -2,6 +2,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { TenantProvider } from '@/components/providers/tenant-provider';
+// Phase 062: single PWA offline host (SW registration + offline banner).
+import { PwaOfflineHost } from '@/components/pwa/PwaOfflineHost';
 
 export const metadata: Metadata = {
   title: 'Omni-Channel E-Book & Social Commerce Platform',
@@ -16,7 +18,10 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning>
       <body className="antialiased min-h-screen bg-background text-foreground">
-        <TenantProvider>{children}</TenantProvider>
+        <TenantProvider>
+          <PwaOfflineHost />
+          {children}
+        </TenantProvider>
       </body>
     </html>
   );
