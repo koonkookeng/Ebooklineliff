@@ -1506,3 +1506,26 @@ export type {
   BundleItemSpec,
   UniversalProductBuilderInput,
 } from './schemas/product-builder.schema';
+export {
+  StockAdjustmentTypeEnum,
+  SingleStockUpdateSchema,
+  BatchStockUpdatePayloadSchema,
+  ThermalLabelPrintRequestSchema,
+  CsvStockRowSchema,
+  INVENTORY_LOCK_TTL_SEC,
+  BATCH_UPDATE_BUDGET_MS,
+  BATCH_MAX_LINES,
+  LABEL_MAX_ORDERS,
+  INVENTORY_EVENT_STREAM,
+  skuLockKey,
+  batchLineLockKey,
+  reorderPoint,
+  stockStatusOf,
+} from './schemas/inventory-contract';
+export type {
+  StockAdjustmentType,
+  SingleStockUpdate,
+  BatchStockUpdatePayload,
+  ThermalLabelPrintRequest,
+  CsvStockRow,
+} from './schemas/inventory-contract';

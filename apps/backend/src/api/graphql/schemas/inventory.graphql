@@ -1,0 +1,74 @@
+# SSOT Phase 075 §3.2 — Inventory GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/inventory.graphql
+# Runtime is code-first (inventory/presentation/inventory.resolver.ts).
+
+type WarehouseStockRow {
+  sku: String!
+  title: String!
+  stockQty: Int!
+  safetyStock: Int!
+  rackLocation: String
+}
+
+type InventoryPagedResult {
+  rows: [WarehouseStockRow!]!
+  total: Int!
+}
+
+type StockMovementLog {
+  id: ID!
+  sku: String!
+  warehouseId: ID!
+  previousQty: Int!
+  newQty: Int!
+  quantityDelta: Int!
+  adjustmentType: String!
+  remark: String
+  createdAt: String!
+}
+
+type FailedStockItem {
+  sku: String!
+  reason: String!
+}
+
+type BatchStockUpdateResult {
+  success: Boolean!
+  totalUpdated: Int!
+  failedItems: [FailedStockItem!]
+  updatedAt: String!
+}
+
+type ThermalLabelPayload {
+  objectKey: String!
+  downloadUrl: String!
+  count: Int!
+}
+
+input StockAdjustmentInput {
+  sku: String!
+  warehouseId: ID!
+  quantityDelta: Int!
+  adjustmentType: String!
+  remark: String
+}
+
+input BatchStockUpdateInput {
+  adjustments: [StockAdjustmentInput!]!
+}
+
+input ThermalLabelPrintInput {
+  orderIds: [ID!]!
+  labelFormat: String!
+  includePackingList: Boolean
+}
+
+type Query {
+  getWarehouseInventory(warehouseId: ID, searchSKU: String, page: Int, limit: Int): InventoryPagedResult!
+  getStockMovementLogs(sku: String!, limit: Int): [StockMovementLog!]!
+}
+
+type Mutation {
+  updateBatchStock(input: BatchStockUpdateInput!): BatchStockUpdateResult!
+  generateBatchThermalLabels(input: ThermalLabelPrintInput!): ThermalLabelPayload!
+}

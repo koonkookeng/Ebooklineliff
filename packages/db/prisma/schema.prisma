@@ -150,6 +150,8 @@ model User {
   tenantMappings      UserTenantMapping[]
   // Atomic Phase 073: merchant storefront profile (1:1 seller account)
   merchantProfile     MerchantProfile?
+  // Atomic Phase 075: stock audit authorship
+  stockMovementLogs   StockMovementLog[]
 
   @@index([lineUserId])
   @@index([email])
@@ -313,7 +315,21 @@ model Warehouse {
   postalCode        String
   isPrimary         Boolean            @default(true)
   fulfillments      OrderFulfillment[]
+  // Atomic Phase 075: stock ledger extensions (additive; 073 cols untouched).
+  // `code` is the operator-facing key (GQL §3.2); `name` falls back to
+  // warehouseName at the service layer when unset.
+  tenantId          String?
+  code              String?            @unique
+  name              String?
+  isMainWarehouse   Boolean            @default(false)
+  isActive          Boolean            @default(true)
+  stocks            WarehouseStock[]
+  movementLogs      StockMovementLog[]
   createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([tenantId])
+  @@index([code])
 }
 
 model OrderFulfillment {
@@ -365,6 +381,44 @@ model MerchantAnalyticsDaily {
 
   @@unique([tenantId, recordDate])
   @@index([tenantId])
+}
+
+// Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
+model WarehouseStock {
+  id               String         @id @default(uuid())
+  warehouseId      String
+  warehouse        Warehouse      @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  physicalDetailId String
+  physicalDetail   PhysicalDetail @relation(fields: [physicalDetailId], references: [id], onDelete: Cascade)
+  stockQty         Int            @default(0)
+  reservedQty      Int            @default(0)
+  safetyStock      Int            @default(10)
+  rackLocation     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([warehouseId, physicalDetailId])
+  @@index([warehouseId])
+  @@index([physicalDetailId])
+}
+
+model StockMovementLog {
+  id             String    @id @default(uuid())
+  warehouseId    String
+  warehouse      Warehouse @relation(fields: [warehouseId], references: [id])
+  sku            String
+  previousQty    Int
+  newQty         Int
+  quantityDelta  Int
+  adjustmentType String
+  remark         String?
+  updatedBy      String
+  user           User      @relation(fields: [updatedBy], references: [id])
+  createdAt      DateTime  @default(now())
+
+  @@index([sku])
+  @@index([warehouseId])
+  @@index([createdAt])
 }
 
 // Atomic Phase 074: builder draft cache (Redis owns hot state, PG persists).
@@ -559,6 +613,8 @@ model PhysicalDetail {
   stockQty    Int      @default(0)
   reservedQty Int      @default(0)
   sku         String   @unique
+  // Atomic Phase 075: per-warehouse ledger rows (aggregate sync target)
+  warehouseStocks WarehouseStock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
