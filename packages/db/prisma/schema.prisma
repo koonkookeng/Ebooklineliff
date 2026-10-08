@@ -430,6 +430,88 @@ model FulfillmentItem {
   @@index([trackingNumber])
 }
 
+// Atomic Phase 077: API-integrated carrier vocabulary (schema.md canonical).
+enum LogisticsCarrier {
+  FLASH_EXPRESS
+  KERRY_EXPRESS
+  THAILAND_POST
+}
+
+enum ShipmentStatus {
+  PENDING_BOOKING
+  BOOKED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_ATTEMPT
+  RETURNED
+}
+
+// Atomic Phase 077: tenant carrier API credentials (multi-tenant scope;
+// schema.md canonical is global-@unique — tenant scope documented deviation).
+model CarrierApiConfig {
+  id        String           @id @default(uuid())
+  tenantId  String           @default("default")
+  carrier   LogisticsCarrier
+  mchId     String
+  apiKey    String           @db.Text
+  apiSecret String           @db.Text
+  isSandbox Boolean          @default(false)
+  isActive  Boolean          @default(true)
+  updatedAt DateTime         @updatedAt
+
+  @@unique([tenantId, carrier])
+}
+
+// Atomic Phase 077: shipment tracking ledger (webhook-driven status).
+model Shipment {
+  id              String           @id @default(uuid())
+  orderId         String           @unique
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier         LogisticsCarrier
+  trackingNumber  String           @unique
+  courierOrderId  String?
+  labelUrl        String?          @db.Text
+  status          ShipmentStatus   @default(PENDING_BOOKING)
+  weightGrams     Int
+  shippingFee     Decimal          @db.Decimal(10, 2)
+  senderName      String
+  senderPhone     String
+  recipientName   String
+  recipientPhone  String
+  destinationAddr String           @db.Text
+  trackingLogs    TrackingHistory[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([trackingNumber])
+  @@index([carrier, status])
+}
+
+model TrackingHistory {
+  id             String   @id @default(uuid())
+  shipmentId     String
+  shipment       Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  statusCode     String
+  statusText     String
+  location       String?
+  rawPayload     Json?
+  eventTimestamp DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([shipmentId])
+}
+
+model LogisticsWebhookLog {
+  id           String   @id @default(uuid())
+  carrier      String
+  payload      Json
+  isProcessed  Boolean  @default(false)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+}
+
 model PayoutTransaction {
   id                String          @id @default(uuid())
   merchantProfileId String
@@ -1132,6 +1214,8 @@ model Order {
   fulfillment          OrderFulfillment?
   // Atomic Phase 076: batch fulfillment ledger (queue -> booked -> label)
   fulfillmentItems     FulfillmentItem[]
+  // Atomic Phase 077: shipment tracking ledger (webhook-driven status)
+  shipments            Shipment[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 

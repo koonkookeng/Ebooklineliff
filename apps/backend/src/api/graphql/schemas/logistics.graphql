@@ -1,0 +1,39 @@
+# SSOT Phase 077 §3.2 — Logistics GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/logistics.graphql
+# Runtime is code-first (logistics/resolvers/logistics.resolver.ts).
+
+type BookParcelPayload {
+  shipmentId: ID!
+  trackingNumber: String!
+  labelUrl: String
+}
+
+type TrackingHistoryRow {
+  statusCode: String!
+  statusText: String!
+  location: String
+  eventTimestamp: String!
+}
+
+type ShipmentTracking {
+  orderNumber: String!
+  carrier: String!
+  trackingNumber: String!
+  status: String!
+  history: [TrackingHistoryRow!]!
+}
+
+input BookParcelInput {
+  orderId: ID!
+  carrier: String!
+  weightGrams: Int!
+  remark: String
+}
+
+type Query {
+  getShipmentTracking(orderId: ID!): ShipmentTracking!
+}
+
+type Mutation {
+  bookParcel(input: BookParcelInput!): BookParcelPayload!
+}

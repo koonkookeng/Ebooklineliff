@@ -1558,3 +1558,29 @@ export type {
   BatchPrintRequest,
   BatchPrintResponse,
 } from './schemas/fulfillment-contract';
+export {
+  LogisticsCarrierEnum,
+  ShipmentStatusEnum,
+  CarrierWebhookPayloadSchema,
+  BookParcelInputSchema,
+  LineTrackingMessageSchema,
+  PARCEL_BOOKING_BUDGET_MS,
+  TRACKING_NOTIFY_BUDGET_MS,
+  WEBHOOK_REPLAY_TTL_SEC,
+  WEBHOOK_SIGNATURE_HEADER,
+  LOGISTICS_EVENT_STREAM,
+  LINE_RETRY_STREAM,
+  carrierToLogistics,
+  mapCarrierStatus,
+  flashSignature,
+  webhookSignPayload,
+  carrierBrand,
+  trackingStages,
+} from './schemas/logistics-contract';
+export type {
+  LogisticsCarrier,
+  ShipmentStatus,
+  CarrierWebhookPayload,
+  BookParcelInput,
+  LineTrackingMessage,
+} from './schemas/logistics-contract';

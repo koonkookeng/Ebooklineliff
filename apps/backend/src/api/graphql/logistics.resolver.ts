@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 077 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class LogisticsResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 077 §3.2 — legacy alias (canonical lives in modules/logistics)
+// Canonical: apps/backend/src/api/graphql/logistics.resolver.ts
+// Re-export only (076 precedent); registered once via LogisticsModule.
+export { LogisticsResolver } from '../../modules/logistics/resolvers/logistics.resolver';
