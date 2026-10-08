@@ -1,0 +1,18 @@
+# SSOT Phase 059 §5.1 — Reader preference GraphQL SDL
+# Canonical: apps/backend/src/api/graphql/schemas/reader-preference.graphql
+
+extend type Query {
+  getReaderPreference(userId: ID!): ReaderNavigationPreference!
+}
+
+extend type Mutation {
+  updateReaderPreference(userId: ID!, invertTap: Boolean!, enableKeybindings: Boolean!): Boolean!
+}
+
+type ReaderNavigationPreference {
+  userId: ID!
+  invertTapZones: Boolean!
+  swipeSensitivity: Float!
+  enableKeyboardShortcuts: Boolean!
+  hapticFeedbackEnabled: Boolean!
+}

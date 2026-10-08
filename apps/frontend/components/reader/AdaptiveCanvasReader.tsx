@@ -5,12 +5,13 @@
 //   Web N-2..N+2 (spread workspace). GC N-2: evicted pages drop out of the
 //   Map and canvas.width resets force-clear the buffer on unmount.
 // - Forensic watermark overlay (user-verified line + LIFF flag) per §8.1.
-// - Keyboard (ArrowLeft/Right/Space) on Web; swipe-friendly touch bar on LIFF.
+// - Keyboard via useReaderNavigation central engine (store bus); swipe bar on LIFF.
 // - Zero new deps.
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { isLiffEnvironment, viewportSlidingWindowPages, type ViewportCapabilities } from '@repo/shared';
+import { useReaderStore } from '../../stores/useReaderStore';
 
 interface AdaptiveCanvasReaderProps {
   productId: string;
@@ -114,16 +115,28 @@ export const AdaptiveCanvasReader: React.FC<AdaptiveCanvasReaderProps> = ({
     [],
   );
 
-  // Web keyboard shortcuts (§2.1).
+  // Atomic Phase 059: store is the single paging bus (gesture mapper /
+  // ReaderKeyboardHandler). Adopt external turns; the legacy inline keydown
+  // moved to useReaderNavigation (focus-guard + throttle + full keymap) so
+  // Web never double-fires a page turn.
+  const storePage = useReaderStore((s) => s.currentPage);
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (isLiffMode) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') setCurrentPage((p) => Math.max(1, p - 1));
-      if (e.key === 'ArrowRight' || e.key === ' ') setCurrentPage((p) => p + 1);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isLiffMode]);
+    // First run: seed the bus from the route (?page=); later runs adopt
+    // external turns (ReaderKeyboardHandler) into local state.
+    if (!seededRef.current) {
+      seededRef.current = true;
+      if (storePage !== initialPage) {
+        try {
+          useReaderStore.setCurrentPageExact(initialPage);
+        } catch {
+          // store sync best-effort
+        }
+      }
+      return;
+    }
+    setCurrentPage((p) => (p === storePage ? p : storePage));
+  }, [storePage, initialPage]);
 
   return (
     <div className={`relative flex h-full w-full flex-col ${isLiffMode ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'}`}>

@@ -876,16 +876,22 @@ model EbookHighlight {
 }
 
 // Atomic Phase 041: per-user reader preferences (§4.1 verbatim)
+// Atomic Phase 059: keyboard & gesture mapper prefs (additive expand-contract).
 model UserReaderPreference {
-  id               String   @id @default(uuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme            String   @default("LIGHT")
-  fontSizePx       Int      @default(18)
-  fontFamily       String   @default("Prompt")
-  lineSpacing      Decimal  @default(1.5) @db.Decimal(3, 2)
-  autoHideControls Boolean  @default(true)
-  updatedAt        DateTime @updatedAt
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme                   String   @default("LIGHT")
+  fontSizePx              Int      @default(18)
+  fontFamily              String   @default("Prompt")
+  lineSpacing             Decimal  @default(1.5) @db.Decimal(3, 2)
+  autoHideControls        Boolean  @default(true)
+  invertTapZones          Boolean  @default(false)
+  swipeSensitivity        Float    @default(1.0)
+  enableKeyboardShortcuts Boolean  @default(true)
+  hapticFeedbackEnabled   Boolean  @default(true)
+  customKeybindingsJson   Json?
+  updatedAt               DateTime @updatedAt
 }
 
 // Atomic Phase 042: watermark seed issuance log (§4.1 verbatim)

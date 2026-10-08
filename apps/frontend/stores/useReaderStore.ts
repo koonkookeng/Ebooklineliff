@@ -146,6 +146,14 @@ function setCurrentPage(page: number): void {
   patch({ currentPage: Math.max(1, Math.min(page, Math.max(snapshot.totalPages, 1))) });
 }
 
+// Atomic Phase 059: exact page write for gesture/keyboard turns when the
+// catalogue total is still the 1-page placeholder. Lower bound pinned at 1;
+// the upper end is guarded by the canvas 404 → ERROR retry path.
+function setCurrentPageExact(page: number): void {
+  if (!Number.isInteger(page) || page < 1) return;
+  patch({ currentPage: page });
+}
+
 function setTotalPages(total: number): void {
   if (!Number.isInteger(total) || total < 1) return;
   patch({ totalPages: total, currentPage: Math.min(snapshot.currentPage, total) });
@@ -153,6 +161,12 @@ function setTotalPages(total: number): void {
 
 function toggleControls(): void {
   patch({ showControls: !snapshot.showControls });
+}
+
+// Atomic Phase 059: HUD alias for the gesture/keyboard mapper (§6.1 hook
+// uses toggleHud/isHudOpen vocabulary; same bit as showControls).
+function toggleHud(): void {
+  toggleControls();
 }
 
 function setShowControls(show: boolean): void {
@@ -221,8 +235,10 @@ export function resetReaderStore(): void {
 
 const api = {
   setCurrentPage,
+  setCurrentPageExact,
   setTotalPages,
   toggleControls,
+  toggleHud,
   setShowControls,
   setTheme,
   setFontSizePx,
@@ -254,8 +270,10 @@ export function useReaderStore<T>(selector?: (s: ReaderState) => T): ReaderState
 
 useReaderStore.getState = api.getState;
 useReaderStore.setCurrentPage = setCurrentPage;
+useReaderStore.setCurrentPageExact = setCurrentPageExact;
 useReaderStore.setTotalPages = setTotalPages;
 useReaderStore.toggleControls = toggleControls;
+useReaderStore.toggleHud = toggleHud;
 useReaderStore.setShowControls = setShowControls;
 useReaderStore.setTheme = setTheme;
 useReaderStore.setFontSizePx = setFontSizePx;

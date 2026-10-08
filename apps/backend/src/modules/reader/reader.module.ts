@@ -14,6 +14,9 @@ import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
 import { ReaderControlController } from './reader-control.controller';
 import { ReaderControlResolver } from '../../api/graphql/reader-control.resolver';
+import { ReaderPreferenceService } from './application/reader-preference.service';
+import { ReaderPreferenceResolver } from './infrastructure/api/reader-preference.resolver';
+import { ReaderNavigationController } from './reader-navigation.controller';
 import { ReaderControlService, type ReaderControlCache, type ReaderControlPrisma } from './reader-control.service';
 import { ReaderController } from './reader.controller';
 import { ReaderResolver } from './reader.resolver';
@@ -28,7 +31,7 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
 
 @Module({
   imports: [ChunkCacheModule],
-  controllers: [ReaderController, ReaderControlController],
+  controllers: [ReaderController, ReaderControlController, ReaderNavigationController],
   providers: [
     WatermarkGeneratorService,
     {
@@ -80,7 +83,14 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [PrismaService, RedisClusterService],
     },
     ReaderControlResolver,
+    ReaderPreferenceResolver,
+    {
+      provide: ReaderPreferenceService,
+      useFactory: (prisma: PrismaService): ReaderPreferenceService =>
+        new ReaderPreferenceService(prisma as never),
+      inject: [PrismaService],
+    },
   ],
-  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService],
+  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService, ReaderPreferenceService],
 })
 export class ReaderModule {}

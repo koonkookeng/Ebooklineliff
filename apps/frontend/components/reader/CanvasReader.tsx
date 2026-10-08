@@ -4,6 +4,7 @@
  * States: LIFF_INIT -> IDLE -> LOADING -> SUCCESS / ERROR (retry).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useReaderStore } from '../../stores/useReaderStore';
 import { useViewportKeepAlive } from '../keep-alive/useKeepAlive';
 import { releaseBlobUrls } from '../../lib/keep-alive/keep-alive-client';
 import { ForensicWatermark } from './watermark/ForensicWatermark';
@@ -17,6 +18,20 @@ interface ChunkWire {
 
 export default function CanvasReader({ productId, userIdHash }: { productId: string; userIdHash: string }) {
   const [page, setPage] = useState(1);
+  // Atomic Phase 059: adopt store-driven navigation (gesture mapper /
+  // slider / keyboard) as the single paging bus; local buttons write back.
+  const storePage = useReaderStore((s) => s.currentPage);
+  useEffect(() => {
+    if (storePage !== pageRef.current) setPage(storePage);
+  }, [storePage]);
+  const turnTo = useCallback((next: number) => {
+    setPage(next);
+    try {
+      useReaderStore.setCurrentPageExact(next);
+    } catch {
+      // store sync is best-effort; canvas already turned
+    }
+  }, []);
   const [ui, setUi] = useState<UiState>('IDLE');
   const [error, setError] = useState<string | null>(null);
   const [watermark, setWatermark] = useState<{ watermarkText: string; userIdHash: string } | null>(null);
@@ -38,7 +53,14 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
       zoomScale: 1,
     }),
     rehydrate: (s) => {
-      if (s.currentPage !== pageRef.current) setPage(s.currentPage);
+      if (s.currentPage !== pageRef.current) {
+        setPage(s.currentPage);
+        try {
+          useReaderStore.setCurrentPageExact(s.currentPage);
+        } catch {
+          // store sync best-effort
+        }
+      }
       if (s.scrollOffsetTop > 0 && typeof window !== 'undefined') window.scrollTo(0, s.scrollOffsetTop);
     },
     release: () => {
@@ -119,9 +141,9 @@ export default function CanvasReader({ productId, userIdHash }: { productId: str
         data-watermark={`${userIdHash}-${Date.now()}`}
       />
       <nav>
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</button>
+        <button disabled={page <= 1} onClick={() => turnTo(Math.max(1, page - 1))}>Prev</button>
         <span>{page}</span>
-        <button onClick={() => setPage((p) => p + 1)}>Next</button>
+        <button onClick={() => turnTo(page + 1)}>Next</button>
       </nav>
     </div>
   );

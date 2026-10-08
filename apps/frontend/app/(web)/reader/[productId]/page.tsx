@@ -10,6 +10,8 @@
 import { Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { UniversalViewportRouter } from '../../../../components/viewport/UniversalViewportRouter';
+import { ReaderKeyboardHandler } from '../../../../components/reader/ReaderKeyboardHandler';
+import { useReaderStore } from '../../../../stores/useReaderStore';
 
 function WebReaderInner({ productId }: { productId: string }) {
   const params = useSearchParams();
@@ -17,9 +19,13 @@ function WebReaderInner({ productId }: { productId: string }) {
   const page = Number.parseInt(params.get('page') ?? '1', 10) || 1;
   const lessonId = params.get('lessonId') ?? undefined;
   const color = params.get('color') ?? '#059669';
+  // Atomic Phase 059: store-driven keyboard engine for EBOOK (video keeps
+  // its player shortcuts; AdaptiveCanvasReader adopts store turns).
+  const totalPages = useReaderStore((s) => s.totalPages);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {type === 'EBOOK' && <ReaderKeyboardHandler productId={productId} totalPages={totalPages} />}
       <UniversalViewportRouter
         productId={productId}
         contentType={type}
