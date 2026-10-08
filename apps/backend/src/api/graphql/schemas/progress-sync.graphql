@@ -1,0 +1,31 @@
+# SSOT Phase 057 §3.2 — Progress sync GraphQL SDL (subscription intent + fallback)
+# Canonical: apps/backend/src/api/graphql/schemas/progress-sync.graphql
+# NOTE: onProgressSynced rides the SSE room stream (graphql-subscriptions is
+# not installed; zero-new-dep policy). The SDL records the intent; delivery
+# is via GET /api/v1/sync/stream?tenantId=&userId=&deviceId=.
+
+extend type Subscription {
+  # Intent: Subscribe to real-time progress updates across user devices
+  onProgressSynced(productId: ID!): SyncProgressPayload!
+}
+
+extend type Mutation {
+  # Intent: Fallback REST/GraphQL endpoint when realtime is unreachable
+  forceSyncProgress(input: ForceSyncInput!): Boolean!
+}
+
+type SyncProgressPayload {
+  contentType: String!
+  lastPage: Int
+  watchedSec: Int
+  isCompleted: Boolean
+  updatedAt: String!
+  deviceId: String!
+}
+
+input ForceSyncInput {
+  productId: ID!
+  contentType: String!
+  lastPage: Int
+  watchedSec: Int
+}

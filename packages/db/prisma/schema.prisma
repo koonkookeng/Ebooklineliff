@@ -811,10 +811,26 @@ model EbookReadingProgress {
   lastPage   Int      @default(1)
   // Atomic Phase 018: total pages snapshot for library progress % (no join needed)
   totalPages Int      @default(1)
+  // Atomic Phase 057: originating device fingerprint for cross-device sync
+  deviceId   String?
   updatedAt  DateTime @updatedAt
 
   @@unique([userId, ebookId])
   @@index([userId, updatedAt])
+}
+
+// Atomic Phase 057: live socket session registry (traceability + device binding).
+model ActiveDeviceSession {
+  id           String   @id @default(uuid())
+  userId       String
+  deviceId     String
+  tenantId     String
+  socketId     String   @unique
+  clientIp     String
+  userAgent    String
+  lastActiveAt DateTime @default(now())
+
+  @@index([userId, tenantId])
 }
 
 // Atomic Phase 041: reader bookmarks (§4.1 verbatim)
@@ -1028,6 +1044,8 @@ model CourseLearningProgress {
   lessonId    String
   watchedSec  Int      @default(0)
   isCompleted Boolean  @default(false)
+  // Atomic Phase 057: originating device fingerprint for cross-device sync
+  deviceId    String?
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, lessonId])

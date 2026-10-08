@@ -967,6 +967,36 @@ export {
 } from './schemas/zod-stream';
 export type { SyncLessonProgressInput } from './schemas/zod-stream';
 export {
+  SyncContentTypeEnum,
+  EbookProgressSyncSchema,
+  VideoProgressSyncSchema,
+  SyncBroadcastPayloadSchema,
+  ForceSyncInputSchema,
+  SyncProgressPayloadGqlSchema,
+  SYNC_NAMESPACE,
+  SYNC_FANOUT_BUDGET_MS,
+  SYNC_CLIENT_THROTTLE_MS,
+  SYNC_WRITEBACK_SEC,
+  SYNC_WIRE_MAX_BYTES,
+  SYNC_TICKET_TTL_SEC,
+  SYNC_CHANNEL_PREFIX,
+  syncRoomKey,
+  syncRoomChannel,
+  ebookProgressCacheKey,
+  videoProgressCacheKey,
+  syncQueueName,
+  isSyncPayloadWithinBudget,
+  lastWriteWins,
+} from './schemas/progress-sync-contract';
+export type {
+  SyncContentType,
+  EbookProgressSync,
+  VideoProgressSync,
+  SyncBroadcastPayload,
+  ForceSyncInput,
+  SyncProgressPayloadGql,
+} from './schemas/progress-sync-contract';
+export {
   NetworkQualityTierEnum,
   ClientNetworkTelemetrySchema,
   LowBandwidthChunkRequestSchema,
