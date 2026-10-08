@@ -955,3 +955,14 @@ export type {
   HlsStreamResponse,
   ParsedHlsToken,
 } from './schemas/hls-stream-contract';
+export {
+  SyncLessonProgressInputSchema,
+  RESUME_MIN_SEC,
+  RESUME_MAX_COMPLETION_RATIO,
+  RESUME_TOAST_AUTO_DISMISS_SEC,
+  RESUME_TOAST_RENDER_BUDGET_MS,
+  RESUME_SYNC_EVERY_SEC,
+  shouldShowResumeToast,
+  formatResumeMMSS,
+} from './schemas/zod-stream';
+export type { SyncLessonProgressInput } from './schemas/zod-stream';

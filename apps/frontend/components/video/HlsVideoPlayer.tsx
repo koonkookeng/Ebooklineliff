@@ -13,6 +13,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { HlsVideoPlayer as StreamPlayer } from '../stream/HlsVideoPlayer';
 import { useVideoProgressSync } from './hooks/useVideoProgressSync';
+import { VideoResumeToast } from './VideoResumeToast';
+import { fetchLessonState } from '../../lib/stream/lesson-stream-client';
+import { shouldShowResumeToast } from '@repo/shared';
 import type { WatermarkSeedPayload } from '@repo/shared';
 
 interface VideoHlsPlayerProps {
@@ -27,6 +30,8 @@ interface VideoHlsPlayerProps {
   seed?: WatermarkSeedPayload;
   posterUrl?: string;
   autoPlay?: boolean;
+  /** Phase 054 opt-in: offer cross-device resume toast (default off — zero behavior change). */
+  enableResumeToast?: boolean;
 }
 
 export function HlsVideoPlayer({
@@ -41,10 +46,15 @@ export function HlsVideoPlayer({
   seed,
   posterUrl,
   autoPlay = false,
+  enableResumeToast = false,
 }: VideoHlsPlayerProps) {
   const [pulse, setPulse] = useState(false);
   const lastKnownRef = useRef({ time: initialTime, duration: durationSec });
   const { executeSync } = useVideoProgressSync({ lessonId, userId, token });
+  // Phase 054: cross-device resume offer (opt-in). The engine remounts with
+  // key={startAt} on explicit resume so no engine seeking API is needed.
+  const [resumeOffer, setResumeOffer] = useState<number | null>(null);
+  const [startAt, setStartAt] = useState(initialTime);
 
   const handleProgress = useCallback(
     (watchedSec: number, isCompleted: boolean = false) => {
@@ -57,6 +67,31 @@ export function HlsVideoPlayer({
     },
     [durationSec, executeSync],
   );
+
+  useEffect(() => {
+    if (!enableResumeToast) return;
+    let cancelled = false;
+    void fetchLessonState(lessonId)
+      .then((state) => {
+        if (cancelled) return;
+        if (shouldShowResumeToast(state.lastWatchedSec, state.durationSec)) {
+          setResumeOffer(state.lastWatchedSec);
+        }
+      })
+      .catch(() => undefined); // ERROR state: silent, play from 00:00 (§2.2).
+    return () => {
+      cancelled = true;
+    };
+  }, [enableResumeToast, lessonId]);
+
+  const handleResume = useCallback(() => {
+    if (resumeOffer !== null) setStartAt(resumeOffer);
+    setResumeOffer(null);
+  }, [resumeOffer]);
+
+  const handleRestart = useCallback(() => {
+    setResumeOffer(null);
+  }, []);
 
   useEffect(() => {
     const flush = (beacon: boolean): void => {
@@ -80,16 +115,20 @@ export function HlsVideoPlayer({
   return (
     <div className="relative">
       <StreamPlayer
+        key={startAt}
         masterManifestUrl={masterManifestUrl}
         securityToken={securityToken}
         watermarkText={watermarkText}
         onProgressSync={handleProgress}
-        initialTime={initialTime}
+        initialTime={startAt}
         durationSec={durationSec}
         seed={seed}
         posterUrl={posterUrl}
-        autoPlay={autoPlay}
+        autoPlay={startAt > 0 ? true : autoPlay}
       />
+      {resumeOffer !== null && (
+        <VideoResumeToast savedTimeSec={resumeOffer} onResume={handleResume} onRestart={handleRestart} />
+      )}
       <span
         aria-hidden
         title={pulse ? 'Progress synced' : 'Sync idle'}
