@@ -1,0 +1,53 @@
+# SSOT Phase 081 §3.2 — Finance GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/finance/finance.graphql
+# Runtime is code-first (modules/finance/presentation/finance.resolver.ts).
+# NOTE: payload names are Finance*-prefixed — PayoutResponsePayload is owned
+# by the affiliate module (079).
+
+type FinancialSummaryPayload {
+  withdrawableBalance: Float!
+  pendingEscrowBalance: Float!
+  totalEarnedLifetime: Float!
+  totalCommissionPaid: Float!
+  taxWithheldLifetime: Float!
+}
+
+type LedgerStatementItem {
+  id: ID!
+  createdAt: String!
+  description: String!
+  debitAmount: Float
+  creditAmount: Float
+  runningBalance: Float!
+  referenceOrderId: String
+}
+
+type LedgerStatementConnection {
+  items: [LedgerStatementItem!]!
+  totalCount: Int!
+  hasMore: Boolean!
+}
+
+type FinancePayoutResponsePayload {
+  success: Boolean!
+  payoutId: ID!
+  grossAmount: Float!
+  taxAmount: Float!
+  netAmount: Float!
+  estimatedTransferTime: String!
+}
+
+type FinancePayoutApprovalPayload {
+  payoutId: ID!
+  status: String!
+}
+
+type Query {
+  getFinancialOverview: FinancialSummaryPayload!
+  getLedgerStatements(limit: Int = 20, offset: Int = 0): LedgerStatementConnection!
+}
+
+type Mutation {
+  requestPayout(amount: Float!, bankAccountId: ID!): FinancePayoutResponsePayload!
+  approvePayout(payoutId: ID!): FinancePayoutApprovalPayload!
+}

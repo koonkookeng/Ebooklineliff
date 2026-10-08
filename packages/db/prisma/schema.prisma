@@ -156,6 +156,7 @@ model User {
   commissionsEarned    CommissionLog[] @relation("EarnedCommissions")
   commissionsGenerated CommissionLog[] @relation("GeneratedCommissions")
   affiliatePayouts     AffiliatePayout[]
+  financePayouts       PayoutTransaction[] @relation("FinancePayouts")
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -305,6 +306,25 @@ enum PayoutStatus {
   REJECTED
   // Atomic Phase 079: affiliate payout request lifecycle (schema.md canonical union)
   REQUESTED
+  // Atomic Phase 081: finance bank-settlement lifecycle (schema.md canonical union)
+  PROCESSING_BANK
+  SUCCESS
+  FAILED
+}
+
+// Atomic Phase 081: double-entry vocabulary (schema.md canonical).
+enum LedgerAccountType {
+  CASH_EQUIVALENT
+  SELLER_PAYABLE
+  AFFILIATE_PAYABLE
+  PLATFORM_REVENUE_FEE
+  WITHHOLDING_TAX_PAYABLE
+  ESCROW_HOLD
+}
+
+enum EntryType {
+  DEBIT
+  CREDIT
 }
 
 // Atomic Phase 079: multi-tier affiliate vocabulary (schema.md canonical).
@@ -628,19 +648,106 @@ model AffiliateClick {
 
 model PayoutTransaction {
   id                String          @id @default(uuid())
-  merchantProfileId String
-  merchantProfile   MerchantProfile @relation(fields: [merchantProfileId], references: [id])
+  // Atomic Phase 081: finance-owned columns are optional so all Phase 073
+  // merchant rows stay valid (expand-contract; RISK_CALL deviation from the
+  // 081 sketch where both sides are required — backfill lands separately).
+  merchantProfileId String?
+  merchantProfile   MerchantProfile? @relation(fields: [merchantProfileId], references: [id])
+  userId            String?
+  user              User?           @relation("FinancePayouts", fields: [userId], references: [id])
   grossAmount       Decimal         @db.Decimal(12, 2)
   withholdingTax    Decimal         @db.Decimal(10, 2)
   processingFee     Decimal         @db.Decimal(10, 2)
   netAmount         Decimal         @db.Decimal(12, 2)
   payoutStatus      PayoutStatus    @default(PENDING)
   taxCertPdfUrl     String?
+  // Atomic Phase 081: bank-settlement + e-withholding columns.
+  taxRatePercent       Decimal  @default(3.00) @db.Decimal(5, 2)
+  taxWithheldAmount    Decimal  @default(0.00) @db.Decimal(12, 2)
+  netTransferAmount    Decimal  @default(0.00) @db.Decimal(12, 2)
+  status               PayoutStatus @default(REQUESTED)
+  bankAccountDetail    Json?
+  withholdingTaxRecord WithholdingTaxRecord?
   processedAt       DateTime?
   createdAt         DateTime        @default(now())
 
   @@index([merchantProfileId])
   @@index([payoutStatus])
+  @@index([userId])
+  @@index([status])
+}
+
+// Atomic Phase 081 §4.1: double-entry ledger segment (schema.md canonical).
+model FinancialAccount {
+  id             String            @id @default(uuid())
+  userId         String?           @unique // Null if platform system account
+  accountType    LedgerAccountType
+  currentBalance Decimal           @default(0.00) @db.Decimal(18, 4)
+  currency       String            @default("THB")
+
+  debitEntries   LedgerEntry[]     @relation("DebitAccount")
+  creditEntries  LedgerEntry[]     @relation("CreditAccount")
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([accountType])
+}
+
+model LedgerJournal {
+  id               String        @id @default(uuid())
+  referenceOrderId String?       @unique
+  description      String
+  eventPayload     Json?
+  entries          LedgerEntry[]
+  createdAt        DateTime      @default(now())
+
+  @@index([referenceOrderId])
+  @@index([createdAt])
+}
+
+model LedgerEntry {
+  id               String            @id @default(uuid())
+  journalId        String
+  journal          LedgerJournal     @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  debitAccountId   String?
+  debitAccount     FinancialAccount? @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccountId  String?
+  creditAccount    FinancialAccount? @relation("CreditAccount", fields: [creditAccountId], references: [id])
+  amount           Decimal           @db.Decimal(18, 4)
+  entryType        EntryType
+  runningBalance   Decimal           @db.Decimal(18, 4)
+  createdAt        DateTime          @default(now())
+
+  @@index([journalId])
+  @@index([debitAccountId])
+  @@index([creditAccountId])
+}
+
+model CommissionRule {
+  id                 String   @id @default(uuid())
+  productId          String?  @unique // Null for global rule
+  platformFeePercent Decimal  @default(5.00) @db.Decimal(5, 2)
+  tier1Percent       Decimal  @default(10.00) @db.Decimal(5, 2)
+  tier2Percent       Decimal  @default(2.00) @db.Decimal(5, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model WithholdingTaxRecord {
+  id                  String            @id @default(uuid())
+  payoutTransactionId String            @unique
+  payoutTransaction   PayoutTransaction @relation(fields: [payoutTransactionId], references: [id], onDelete: Cascade)
+  taxCertificateNo    String            @unique
+  taxId               String
+  payeeName           String
+  payeeAddress        String
+  incomeType          String            @default("COMMISSION_AND_PROFESSIONAL_FEE")
+  grossAmount         Decimal           @db.Decimal(12, 2)
+  taxAmount           Decimal           @db.Decimal(12, 2)
+  issuedAt            DateTime          @default(now())
+  pdfStoragePathR2    String
 }
 
 model MerchantAnalyticsDaily {

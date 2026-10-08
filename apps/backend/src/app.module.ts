@@ -86,9 +86,12 @@ import { CourseStudioModule } from './modules/course-studio/course-studio.module
 import { AffiliateModule } from './modules/affiliate/affiliate.module';
 // Phase 080: ShareModule (one-click Flex share + HMAC click attribution + metrics).
 import { ShareModule } from './modules/share/share.module';
+// Phase 081: FinanceModule (double-entry ledger + payout + tax) + CommissionModule (rule-driven splits).
+import { FinanceModule } from './modules/finance/finance.module';
+import { CommissionModule } from './modules/commission/commission.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, TenantResolverModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, NetworkHealthModule, MerchantModule, ProductBuilderModule, InventoryModule, FulfillmentModule, LogisticsModule, CourseStudioModule, AffiliateModule, ShareModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, TenantResolverModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, NetworkHealthModule, MerchantModule, ProductBuilderModule, InventoryModule, FulfillmentModule, LogisticsModule, CourseStudioModule, AffiliateModule, ShareModule, FinanceModule, CommissionModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}
