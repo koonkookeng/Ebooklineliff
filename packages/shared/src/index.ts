@@ -930,3 +930,28 @@ export type {
   WatchTimeTrackingPayload,
   AnalyticsBatchIngestPayload,
 } from './schemas/analytics-contract';
+export {
+  HlsTokenPayloadSchema,
+  GenerateHlsTokenInputSchema,
+  HlsStreamResponseSchema,
+  HLS_SEGMENT_TOKEN_TTL_SEC,
+  HLS_TOKEN_ROTATE_SEC,
+  HLS_EDGE_VERIFY_BUDGET_MS,
+  HLS_MINT_BUDGET_MS,
+  HLS_MAX_BUFFER_SEGMENTS,
+  HLS_CLOCK_SKEW_SEC,
+  HLS_TOKEN_MISSING,
+  HLS_TOKEN_EXPIRED,
+  HLS_TOKEN_INVALID,
+  HLS_SECURITY_INCIDENT,
+  hlsTokenBody,
+  parseHlsTokenBody,
+  isHlsTokenExpired,
+  hlsSignedSegmentUrl,
+} from './schemas/hls-stream-contract';
+export type {
+  HlsTokenPayload,
+  GenerateHlsTokenInput,
+  HlsStreamResponse,
+  ParsedHlsToken,
+} from './schemas/hls-stream-contract';

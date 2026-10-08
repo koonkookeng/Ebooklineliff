@@ -1902,16 +1902,20 @@ model VideoStreamSession {
   sessionToken      String   @unique
   deviceFingerprint String
   ipAddress         String
-  isActive          Boolean  @default(true)
-  expiresAt         DateTime
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  // Atomic Phase 053: short-lived HLS token binding (additive expand-contract)
+  clientIpHash      String?
+  userAgent         String?
+  isActive     Boolean  @default(true)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseLesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([userId, lessonId])
   @@index([sessionToken])
+  @@index([expiresAt])
 }
 
 model ScraperBlacklist {
