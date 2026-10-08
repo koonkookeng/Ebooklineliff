@@ -1,0 +1,34 @@
+# SSOT Phase 058 §3.2 — Scrubbing GraphQL SDL (manifest intent)
+# Canonical: apps/backend/src/api/graphql/schemas/scrubbing.graphql
+
+extend type Query {
+  getScrubbingManifest(lessonId: ID!): VideoScrubbingPayload!
+}
+
+type VideoScrubbingPayload {
+  success: Boolean!
+  manifest: VideoSpriteManifest
+  watermarkText: String!
+  errorMessage: String
+}
+
+type VideoSpriteManifest {
+  lessonId: ID!
+  vttUrl: String!
+  spriteIntervalSec: Float!
+  tileWidth: Int!
+  tileHeight: Int!
+  columnsCount: Int!
+  totalTiles: Int!
+  cues: [ThumbnailCue!]!
+}
+
+type ThumbnailCue {
+  startTimeSec: Float!
+  endTimeSec: Float!
+  spriteUrl: String!
+  x: Int!
+  y: Int!
+  width: Int!
+  height: Int!
+}

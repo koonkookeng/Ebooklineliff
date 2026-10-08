@@ -13,7 +13,10 @@ import { Suspense, use, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { HlsVideoPlayer } from '../../../../../../components/stream/HlsVideoPlayer';
 import { HlsQuizPlayer, type QuizCheckpointProp } from '../../../../../../components/player/HlsQuizPlayer';
+import { VideoScrubbingBar } from '../../../../../../components/player/video-scrubbing-bar';
 import { fetchLessonState, reportLessonHeartbeat } from '../../../../../../lib/stream/lesson-stream-client';
+import { fetchScrubbingManifest } from '../../../../../../lib/stream/scrubbing-client';
+import type { VideoSpriteManifest } from '@repo/shared';
 import { useReadWatchTracker } from '../../../../../../hooks/useReadWatchTracker';
 import { fetchCheckpoints } from '../../../../../../lib/quiz/quiz-client';
 import type { LessonStreamPayload } from '@repo/shared';
@@ -28,6 +31,10 @@ function LessonInner({ lessonId }: { lessonId: string }) {
   const [quizzes, setQuizzes] = useState<QuizCheckpointProp[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // Atomic Phase 058: thumbnail scrubbing manifest (offline-cached <15KB VTT).
+  const [scrubManifest, setScrubManifest] = useState<VideoSpriteManifest | null>(null);
+  const [scrubWatermark, setScrubWatermark] = useState('');
+  const [scrubNow, setScrubNow] = useState(0);
   // Atomic Phase 052: watch telemetry (5s pulse cadence mirrors the heartbeat;
   // product omitted — hook falls back to lessonId and the batch writer resolves
   // the real product via lesson → section → course; server stamps identity).
@@ -37,6 +44,13 @@ function LessonInner({ lessonId }: { lessonId: string }) {
     let cancelled = false;
     setState('LOADING');
     setError(null);
+    fetchScrubbingManifest(lessonId)
+      .then((s) => {
+        if (cancelled) return;
+        setScrubManifest(s.manifest);
+        setScrubWatermark(s.watermarkText);
+      })
+      .catch(() => undefined);
     Promise.all([fetchLessonState(lessonId), fetchCheckpoints(lessonId).catch(() => [])])
       .then(([data, checkpoints]) => {
         if (cancelled) return;
@@ -95,16 +109,38 @@ function LessonInner({ lessonId }: { lessonId: string }) {
     return <HlsQuizPlayer hlsStreamUrl={authed} lessonId={payload.lessonId} quizzes={quizzes} />;
   }
 
+  const handleScrubSeek = useCallback((targetTimeSec: number) => {
+    setScrubNow(targetTimeSec);
+    const video = document.querySelector('video');
+    if (video) {
+      try {
+        video.currentTime = Math.max(0, Math.min(payload.durationSec, targetTimeSec));
+      } catch {
+        // seek is best-effort; tooltip preview already rendered
+      }
+    }
+  }, [payload.durationSec]);
+
   return (
-    <HlsVideoPlayer
-      masterManifestUrl={payload.hlsManifestUrl}
-      securityToken={payload.signedEdgeToken}
-      watermarkText={`${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
-      onProgressSync={handleProgress}
-      initialTime={payload.lastWatchedSec}
-      durationSec={payload.durationSec}
-      autoPlay={false}
-    />
+    <div className="flex w-full flex-col gap-1">
+      <HlsVideoPlayer
+        masterManifestUrl={payload.hlsManifestUrl}
+        securityToken={payload.signedEdgeToken}
+        watermarkText={`${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
+        onProgressSync={handleProgress}
+        initialTime={payload.lastWatchedSec}
+        durationSec={payload.durationSec}
+        autoPlay={false}
+      />
+      <VideoScrubbingBar
+        durationSec={payload.durationSec}
+        currentTimeSec={scrubNow}
+        manifest={scrubManifest}
+        watermarkText={scrubWatermark || `${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
+        lessonId={payload.lessonId}
+        onSeek={handleScrubSeek}
+      />
+    </div>
   );
 }
 

@@ -1,8 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 058 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class ThumbnailScrubbingServiceService {}
+// SSOT Phase 058 §5.1 — legacy-path alias (filefolder.md canonical mapping)
+// Canonical: apps/backend/src/modules/stream/thumbnail-scrubbing.service.ts
+// (legacy src/backend/modules/stream/thumbnail-scrubbing.service.ts)
+// - Re-export only; implementation lives in ./services/thumbnail-scrubbing.service.ts.
+export * from './services/thumbnail-scrubbing.service';

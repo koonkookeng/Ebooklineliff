@@ -20,6 +20,10 @@ import { FfmpegWorkerProcessor } from '../../jobs/transcoder/ffmpeg-worker.proce
 import { VideoTranscodeQueue } from '../../jobs/transcoder/video-transcode.queue';
 import { StreamController } from './controllers/stream.controller';
 import { UploadController } from './controllers/upload.controller';
+import { ScrubbingController } from './controllers/scrubbing.controller';
+import { ThumbnailScrubbingService } from './services/thumbnail-scrubbing.service';
+import { VttGeneratorProcessor } from './processors/vtt-generator.processor';
+import { ScrubbingResolver } from '../../api/graphql/resolvers/scrubbing.resolver';
 import { FFmpegTranscoderService } from './ffmpeg.service';
 import { HlsSegmenterService } from './hls-segmenter.service';
 import { StreamService } from './services/stream.service';
@@ -36,7 +40,7 @@ const execAsync = promisify(exec);
 
 @Module({
   imports: [R2StorageModule, ProgressModule],
-  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController],
+  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController, ScrubbingController],
   providers: [
     VideoTranscodeQueue,
     HlsSegmenterService,
@@ -121,8 +125,23 @@ const execAsync = promisify(exec);
     },
     StreamJobResolver,
     StreamPlaybackResolver,
+    ScrubbingResolver,
+    {
+      provide: ThumbnailScrubbingService,
+      useFactory: (prisma: PrismaService, edge: RedisClusterService): ThumbnailScrubbingService =>
+        new ThumbnailScrubbingService(prisma as never, edge as never),
+      inject: [PrismaService, RedisClusterService],
+    },
+    {
+      provide: VttGeneratorProcessor,
+      useFactory: (prisma: PrismaService, vault: R2StorageService): VttGeneratorProcessor =>
+        new VttGeneratorProcessor(prisma as never, vault as never, async (cmd: string) => {
+          await execAsync(cmd);
+        }),
+      inject: [PrismaService, R2StorageService],
+    },
   ],
-  exports: [VideoUploadService, StreamService, FfmpegWorkerProcessor, VideoTranscodeQueue, FFmpegTranscoderService, TranscodeWorkerHost, TranscodeJobReaderService],
+  exports: [VideoUploadService, StreamService, FfmpegWorkerProcessor, VideoTranscodeQueue, FFmpegTranscoderService, TranscodeWorkerHost, TranscodeJobReaderService, ThumbnailScrubbingService, VttGeneratorProcessor],
 })
 export class StreamModule {}
 

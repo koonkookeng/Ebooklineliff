@@ -483,6 +483,15 @@ model CourseLesson {
   // Atomic Phase 051: free preview gate (first 120s watchable without entitlement)
   isPreviewAllowed Boolean @default(true)
   previewLimitSec  Int     @default(120)
+  // Atomic Phase 058: high-performance thumbnail scrubbing metadata
+  // (additive expand-contract: nullable/defaulted cols + 1 new table only).
+  hasSpriteScrubbing Boolean @default(false)
+  spriteVttUrl       String?
+  spriteIntervalSec  Int     @default(2)
+  tileWidth          Int     @default(160)
+  tileHeight         Int     @default(90)
+  columnsCount       Int     @default(10)
+  spriteSheets       VideoSpriteSheet[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2061,6 +2070,22 @@ model NetworkPerformanceLog {
 
   @@index([effectiveType])
   @@index([createdAt])
+}
+
+// Atomic Phase 058 Task 1/§4.1: thumbnail scrubbing sprite metadata
+// (additive; zero core rewrites — OUT_OF_SCOPE_STRICT respected).
+model VideoSpriteSheet {
+  id            String       @id @default(uuid())
+  lessonId      String
+  lesson        CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  sheetIndex    Int
+  imageUrlR2    String
+  startFrameSec Int
+  endFrameSec   Int
+  createdAt     DateTime     @default(now())
+
+  @@unique([lessonId, sheetIndex])
+  @@index([lessonId])
 }
 
 model LowBandwidthAssetCache {
