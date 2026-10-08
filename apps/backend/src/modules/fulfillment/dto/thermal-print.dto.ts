@@ -1,8 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 076 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 076 §5.1 — Thermal print DTO (Zod-gated at the service)
+// Canonical: apps/backend/src/modules/fulfillment/dto/thermal-print.dto.ts
+// - Thin transport type; validation lives in fulfillment-contract.ts (SSOT).
+// - Zero new deps.
+export interface ThermalPrintDto {
+  orderIds: string[];
+  courierProvider: string;
+  labelDpi?: string;
+  autoUpdateStatusToPrinted?: boolean;
+}

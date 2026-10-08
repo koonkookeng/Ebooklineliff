@@ -1529,3 +1529,32 @@ export type {
   ThermalLabelPrintRequest,
   CsvStockRow,
 } from './schemas/inventory-contract';
+export {
+  CourierProviderEnum,
+  FulfillmentStatusEnum,
+  LabelDpiEnum,
+  FulfillmentQueueItemSchema,
+  BatchBookingRequestSchema,
+  BatchPrintRequestSchema,
+  BatchPrintResponseSchema,
+  FULFILLMENT_BATCH_MAX,
+  BOOKING_BUDGET_MS,
+  LABEL_RAM_BUDGET_MB,
+  LABEL_VAULT_TTL_SEC,
+  CARRIER_FAILOVER_THRESHOLD,
+  FULFILLMENT_QUEUE_STREAM,
+  FULFILLMENT_TELEMETRY_STREAM,
+  fulfillmentBatchNumber,
+  assertFulfillmentForward,
+  buildTsplLabel,
+  labelTokenPayload,
+} from './schemas/fulfillment-contract';
+export type {
+  CourierProvider,
+  FulfillmentStatus,
+  LabelDpi,
+  FulfillmentQueueItem,
+  BatchBookingRequest,
+  BatchPrintRequest,
+  BatchPrintResponse,
+} from './schemas/fulfillment-contract';

@@ -1,0 +1,65 @@
+# SSOT Phase 076 §3.2 — Fulfillment GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/fulfillment.graphql
+# Runtime is code-first (fulfillment/resolvers/fulfillment.resolver.ts).
+
+type FulfillmentQueueRow {
+  orderId: ID!
+  orderNumber: String!
+  courierProvider: String!
+  trackingNumber: String
+  status: String!
+  updatedAt: String!
+}
+
+type FulfillmentQueuePage {
+  rows: [FulfillmentQueueRow!]!
+  total: Int!
+}
+
+type FailedFulfillmentItem {
+  orderId: String!
+  reason: String!
+}
+
+type BatchBookingResult {
+  batchId: ID!
+  batchNumber: String!
+  queued: Int!
+  failed: [FailedFulfillmentItem!]
+}
+
+type DrainBatchResult {
+  booked: Int!
+  failed: [FailedFulfillmentItem!]
+}
+
+type BatchPrintPayload {
+  success: Boolean!
+  totalProcessed: Int!
+  failedOrders: [FailedFulfillmentItem!]
+  objectKey: String!
+  downloadUrl: String!
+}
+
+input BatchBookingInput {
+  orderIds: [ID!]!
+  courierProvider: String!
+  warehouseId: ID!
+}
+
+input BatchPrintInput {
+  orderIds: [ID!]!
+  courierProvider: String!
+  labelDpi: String
+  autoUpdateStatusToPrinted: Boolean
+}
+
+type Query {
+  getFulfillmentQueue(status: String, page: Int, limit: Int): FulfillmentQueuePage!
+}
+
+type Mutation {
+  queueBatchBooking(input: BatchBookingInput!): BatchBookingResult!
+  drainFulfillmentBatch(batchId: ID!, input: BatchBookingInput!): DrainBatchResult!
+  printBatchLabels(input: BatchPrintInput!): BatchPrintPayload!
+}

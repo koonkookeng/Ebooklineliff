@@ -268,12 +268,29 @@ model CompanyTheme {
 }
 
 // Atomic Phase 073: merchant & studio segment (dashboard SSOT).
+// Atomic Phase 076: union with 076 lifecycle (schema.md canonical).
 enum FulfillmentStatus {
   UNFULFILLED
   PACKED
   SHIPPED
   DELIVERED
   RETURNED
+  QUEUED_FOR_BOOKING
+  BOOKED
+  LABEL_GENERATED
+  PRINTED
+  IN_TRANSIT
+  DELIVERY_FAILED
+  CANCELLED
+}
+
+// Atomic Phase 076: multi-carrier vocabulary (schema.md canonical).
+enum CourierProvider {
+  FLASH_EXPRESS
+  KEX_EXPRESS
+  JT_EXPRESS
+  THAILAND_POST
+  CUSTOM_FLEET
 }
 
 enum PayoutStatus {
@@ -325,6 +342,8 @@ model Warehouse {
   isActive          Boolean            @default(true)
   stocks            WarehouseStock[]
   movementLogs      StockMovementLog[]
+  // Atomic Phase 076: batch fulfillment ledger rows
+  fulfillmentItems  FulfillmentItem[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -349,6 +368,66 @@ model OrderFulfillment {
 
   @@index([warehouseId])
   @@index([status])
+}
+
+// Atomic Phase 076: tenant carrier credentials (1:1 per provider).
+model LogisticsCarrierConfig {
+  id            String          @id @default(uuid())
+  tenantId      String
+  provider      CourierProvider
+  accountNo     String
+  apiKey        String
+  apiSecret     String?
+  sortingCode   String?
+  isAutoBooking Boolean         @default(true)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([tenantId, provider])
+}
+
+// Atomic Phase 076: batch booking header (BDD-1: 100 items < 2s).
+model FulfillmentBatch {
+  id              String            @id @default(uuid())
+  batchNumber     String            @unique
+  tenantId        String
+  courierProvider CourierProvider
+  totalOrders     Int
+  successCount    Int               @default(0)
+  failureCount    Int               @default(0)
+  status          String            @default("PROCESSING")
+  items           FulfillmentItem[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([tenantId])
+}
+
+// Atomic Phase 076: per-order fulfillment ledger (queue -> booked -> label -> printed).
+model FulfillmentItem {
+  id              String            @id @default(uuid())
+  batchId         String?
+  batch           FulfillmentBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  orderId         String            @unique
+  order           Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  warehouseId     String
+  warehouse       Warehouse         @relation(fields: [warehouseId], references: [id])
+  courierProvider CourierProvider
+  trackingNumber  String?           @unique
+  sortingCode     String?
+  labelUrl        String?
+  status          FulfillmentStatus @default(UNFULFILLED)
+  printedAt       DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  errorMessage    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([courierProvider])
+  @@index([status])
+  @@index([trackingNumber])
 }
 
 model PayoutTransaction {
@@ -1051,6 +1130,8 @@ model Order {
   receiptLogs          ReceiptNotificationLog[]
   // Atomic Phase 073: merchant fulfillment (1:1 shipping/warehouse leg)
   fulfillment          OrderFulfillment?
+  // Atomic Phase 076: batch fulfillment ledger (queue -> booked -> label)
+  fulfillmentItems     FulfillmentItem[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
