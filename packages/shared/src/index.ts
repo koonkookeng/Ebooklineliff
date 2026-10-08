@@ -1212,3 +1212,27 @@ export type {
   BulkOfflineSyncPayload,
   BulkOfflineSyncResponse,
 } from './schemas/offline-sync-schema';
+export {
+  OfflineStorageTypeEnum,
+  SyncStatusEnum,
+  DrmLeaseTokenSchema,
+  OfflineEbookChunkSchema,
+  OfflineVideoSegmentSchema,
+  OfflineProgressSyncPayloadSchema,
+  OFFLINE_LEASE_DAYS,
+  OFFLINE_LEASE_RENEW_WITHIN_MS,
+  OFFLINE_QUOTA_WARN_MB,
+  OFFLINE_PREFETCH_CONCURRENCY,
+  OFFLINE_DB_NAME,
+  leaseExpiringSoon,
+  leaseIsUsable,
+  quotaWarnNeeded,
+} from './schemas/offline-sync.schema';
+export type {
+  OfflineStorageType,
+  SyncStatus,
+  DrmLeaseToken,
+  OfflineEbookChunk,
+  OfflineVideoSegment,
+  OfflineProgressSyncPayload,
+} from './schemas/offline-sync.schema';

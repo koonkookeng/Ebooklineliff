@@ -1,10 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 063 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class DrmLeaseControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 063 §5.1 — root-path alias (duplicate scaffold consolidation)
+// Canonical: apps/backend/src/modules/offline/drm-lease.controller.ts
+// - Re-export only; implementation lives in ./controllers/drm-lease.controller.ts.
+export * from './controllers/drm-lease.controller';

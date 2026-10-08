@@ -13,6 +13,7 @@ import { useSearchParams } from 'next/navigation';
 import CanvasReaderEngine from '../../../../components/reader/CanvasReaderEngine';
 import { ReaderControlBar } from '../../../../components/reader/ReaderControlBar';
 import { ReaderGestureMapper } from '../../../../components/reader/ReaderGestureMapper';
+import { OfflineCanvasReader } from '../../../../components/reader/OfflineCanvasReader';
 import { BookmarkManager } from '../../../../components/reader/BookmarkManager';
 import { useReaderStore } from '../../../../stores/useReaderStore';
 import { useReadWatchTracker } from '../../../../hooks/useReadWatchTracker';
@@ -35,6 +36,8 @@ function ReaderInner({ productId }: { productId: string }) {
   const accent = params.get('color') ?? '#059669';
   const [state, setState] = useState<PageState>('LIFF_INIT');
   const [error, setError] = useState<string | null>(null);
+  // Atomic Phase 063: explicit offline shelf (?offline=1 renders IDB cells).
+  const offlineMode = params.get('offline') === '1';
   const theme = useReaderStore((s) => s.theme);
   const totalPages = useReaderStore((s) => s.totalPages);
   const annotationsLoading = useReaderStore((s) => s.uiState === 'LOADING');
@@ -114,10 +117,16 @@ function ReaderInner({ productId }: { productId: string }) {
     >
       <ReaderControlBar productId={productId} bookTitle="E-Book Reader" onBack={() => window.history.back()} onToggleBookmark={() => void handleToggleBookmark()} />
       <main className="px-4 pb-24 pt-20">
-        {/* Atomic Phase 059: LIFF tap-zone + swipe navigation (RAM <30MB intact). */}
-        <ReaderGestureMapper productId={productId} totalPages={Math.max(1, totalPages)}>
-          <CanvasReaderEngine productId={productId} userIdHash="" />
-        </ReaderGestureMapper>
+        {offlineMode ? (
+          <OfflineCanvasReader productId={productId} initialPage={1} watermarkText={accent} />
+        ) : (
+          <>
+            {/* Atomic Phase 059: LIFF tap-zone + swipe navigation (RAM <30MB intact). */}
+            <ReaderGestureMapper productId={productId} totalPages={Math.max(1, totalPages)}>
+              <CanvasReaderEngine productId={productId} userIdHash="" />
+            </ReaderGestureMapper>
+          </>
+        )}
         <div className="mx-auto mt-6 max-w-xl">
           <BookmarkManager
             productId={productId}

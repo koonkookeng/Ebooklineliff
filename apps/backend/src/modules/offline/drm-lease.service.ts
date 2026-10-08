@@ -1,8 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 063 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class DrmLeaseServiceService {}
+// SSOT Phase 063 §5.1 — root-path alias (duplicate scaffold consolidation)
+// Canonical: apps/backend/src/modules/offline/drm-lease.service.ts
+// - Re-export only; implementation lives in ./services/drm-lease.service.ts.
+export * from './services/drm-lease.service';
