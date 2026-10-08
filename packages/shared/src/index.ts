@@ -878,3 +878,30 @@ export type {
   VideoSegmentRequest,
   AntiScrapingViolationLog,
 } from './schemas/video-security.schema';
+export {
+  PreviewContentTypeEnum,
+  PreviewAccessCheckSchema,
+  EbookPreviewChunkPayloadSchema,
+  VideoPreviewStreamPayloadSchema,
+  PaywallTriggerPayloadSchema,
+  PreviewEventInputSchema,
+  PREVIEW_EBOOK_DEFAULT_PAGES,
+  PREVIEW_VIDEO_DEFAULT_SEC,
+  PREVIEW_HLS_TOKEN_TTL_SEC,
+  PREVIEW_ANALYTICS_TICK_SEC,
+  PREVIEW_LIFF_RAM_BUDGET_MB,
+  previewChunkKey,
+  previewUsageId,
+  isEbookPageAllowed,
+  isVideoSecondAllowed,
+  previewLimitMessage,
+  remainingQuotaLabel,
+} from './schemas/preview-contract';
+export type {
+  PreviewContentType,
+  PreviewAccessCheck,
+  EbookPreviewChunkPayload,
+  VideoPreviewStreamPayload,
+  PaywallTriggerPayload,
+  PreviewEventInput,
+} from './schemas/preview-contract';

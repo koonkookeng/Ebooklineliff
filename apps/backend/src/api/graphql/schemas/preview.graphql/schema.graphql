@@ -1,0 +1,48 @@
+# SSOT Phase 051 §3.2 — Preview intent layer (10-page / 120s gatekeeper)
+# Canonical: apps/backend/src/api/graphql/schemas/preview.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via PreviewResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod preview-contract.ts <-> Prisma EbookDetail/CourseLesson/PreviewUsageLog <-> here).
+# Gate 4: chunk payloads NEVER leak full-book URLs or full-playlist segments.
+
+type Query {
+  # E-Book preview chunk (strict gatekeeper: page <= previewPages else 403)
+  getEbookPreviewChunk(productId: ID!, pageNumber: Int!): EbookPreviewChunkPayload!
+  # Lesson video preview (trimmed 120s playlist + 60s segment tokens)
+  getVideoPreviewStream(lessonId: ID!): VideoPreviewStreamPayload!
+}
+
+type Mutation {
+  # Log preview engagement (PAGE_VIEW | VIDEO_TICK | PAYWALL_TRIGGER)
+  recordPreviewEvent(input: PreviewEventInput!): Boolean!
+}
+
+type EbookPreviewChunkPayload {
+  productId: ID!
+  pageNumber: Int!
+  totalPreviewPages: Int!
+  isLastPreviewPage: Boolean!
+  vectorSvgContent: String!
+  forensicWatermarkData: PreviewWatermarkData!
+  hasEntitlement: Boolean!
+}
+
+type VideoPreviewStreamPayload {
+  lessonId: ID!
+  hlsPreviewPlaylistUrl: String!
+  maxAllowedSeconds: Int!
+  previewToken: String!
+  hasEntitlement: Boolean!
+}
+
+type PreviewWatermarkData {
+  watermarkText: String!
+  userIdHash: String!
+  timestamp: String!
+}
+
+input PreviewEventInput {
+  productId: ID!
+  contentType: String!
+  reachedValue: Int!
+  action: String!
+}

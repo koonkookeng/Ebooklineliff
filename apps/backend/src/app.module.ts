@@ -25,6 +25,7 @@
 // Phase 048: CertificateModule (auto-certificate PDF + QR + HMAC verification).
 // Phase 049: DrmModule (canvas tile-shuffle sessions + LSB forensic audit).
 // Phase 050: VideoSecurityModule (HLS rate-limit guard + short-lived token DRM).
+// Phase 051: PreviewModule (10-page / 120s preview gatekeeper + REST + GQL).
 import { Module } from '@nestjs/common';
 import { HealthModule } from './modules/health/health.module';
 import { IdentityModule } from './modules/identity/identity.module';
@@ -63,8 +64,9 @@ import { QuizModule } from './modules/quiz/quiz.module';
 import { CertificateModule } from './modules/certificate/certificate.module';
 import { DrmModule } from './modules/drm/drm.module';
 import { VideoSecurityModule } from './modules/stream/video-security.module';
+import { PreviewModule } from './modules/preview/preview.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

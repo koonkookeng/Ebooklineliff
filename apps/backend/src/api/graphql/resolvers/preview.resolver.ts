@@ -1,11 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 051 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class PreviewResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 051 §1.2 — api-layer alias (no logic duplication).
+// Canonical: apps/backend/src/api/graphql/resolvers/preview.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/preview.resolver.ts)
+// - Single implementation lives in modules/preview/resolvers; this file only
+//   re-exports so both boundary paths resolve (Gate 9).
+export { PreviewResolver } from '../../../modules/preview/resolvers/preview.resolver';

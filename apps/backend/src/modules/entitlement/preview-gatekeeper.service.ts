@@ -1,8 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 051 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class PreviewGatekeeperServiceService {}
+// SSOT Phase 051 §1.2 — entitlement-side alias (no logic duplication).
+// Canonical: apps/backend/src/modules/entitlement/preview-gatekeeper.service.ts
+// (legacy src/backend/modules/entitlement/preview-gatekeeper.service.ts)
+// - Single implementation lives in modules/preview/services; this file only
+//   re-exports the class + ports so both boundary paths resolve (Gate 9).
+export {
+  PreviewGatekeeperService,
+  type PreviewDbPort,
+  type PreviewEventSink,
+  type PreviewIdentity,
+} from '../preview/services/preview-gatekeeper.service';

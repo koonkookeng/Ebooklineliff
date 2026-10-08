@@ -260,6 +260,8 @@ model Product {
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
   isFeatured     Boolean                     @default(false)
   soldCount      Int                         @default(0)
+  // Atomic Phase 051: free-preview engagement log (conversion funnel analytics)
+  previewLogs    PreviewUsageLog[]
   createdAt      DateTime                    @default(now())
   updatedAt      DateTime                    @updatedAt
 
@@ -461,6 +463,9 @@ model CourseLesson {
   hlsSegments   HlsSegmentMeta[]
   // Atomic Phase 050: active playback sessions guarding segment fetches
   streamSessions VideoStreamSession[]
+  // Atomic Phase 051: free preview gate (first 120s watchable without entitlement)
+  isPreviewAllowed Boolean @default(true)
+  previewLimitSec  Int     @default(120)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1921,4 +1926,24 @@ model ScraperBlacklist {
 
   @@index([ipAddress])
   @@index([userId])
+}
+
+// Atomic Phase 051 Task 1: preview-limit persistence (verbatim canonical).
+// Additive expand-contract: CourseLesson preview cols + Product.previewLogs +
+// new PreviewUsageLog only (Gate 7 — deterministic id ⇒ idempotent replays).
+
+model PreviewUsageLog {
+  id             String   @id @default(uuid())
+  userId         String?
+  lineUserId     String?
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  contentType    String
+  maxPageReached Int      @default(0)
+  maxSecWatched  Int      @default(0)
+  convertedToBuy Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, productId])
+  @@index([lineUserId])
 }
