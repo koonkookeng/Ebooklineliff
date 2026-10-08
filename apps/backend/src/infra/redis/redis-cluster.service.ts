@@ -166,6 +166,18 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     return await this.client.incr(key);
   }
 
+  // Phase 052 §5.2 — analytics fan-in: batched XADD via single pipeline round-trip.
+  async xaddPipeline(streamKey: string, batch: Array<Record<string, string | number>>): Promise<void> {
+    if (batch.length === 0) return;
+    const pipeline = this.client.pipeline();
+    for (const fields of batch) {
+      const args: string[] = [];
+      for (const [k, v] of Object.entries(fields)) args.push(k, String(v));
+      pipeline.xadd(streamKey, '*', ...args);
+    }
+    await pipeline.exec();
+  }
+
   // Phase 050 §5.2 — HLS sliding-window segment guard (additive; <5ms per request).
   // Atomic ZREMRANGEBYSCORE + ZADD + ZCARD + EXPIRE via pipeline: returns live count.
   async trackVideoSegment(key: string, windowSec: number): Promise<number> {

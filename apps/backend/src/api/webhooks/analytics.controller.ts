@@ -1,10 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 052 — REST webhook
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class AnalyticsControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 052 §1.2 — webhooks-layer ingestion alias (no logic duplication).
+// Canonical: apps/backend/src/api/webhooks/analytics.controller.ts
+// (legacy src/backend/api/webhooks/analytics.controller.ts)
+// - Single implementation lives in modules/analytics/controllers. This alias is
+//   NOT registered in any module (route owned by AnalyticsModule) — it only
+//   satisfies the boundary path (Gate 9).
+export { AnalyticsIngestionController } from '../../modules/analytics/controllers/analytics-ingestion.controller';

@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { HlsVideoPlayer } from '../../../../../../components/stream/HlsVideoPlayer';
 import { HlsQuizPlayer, type QuizCheckpointProp } from '../../../../../../components/player/HlsQuizPlayer';
 import { fetchLessonState, reportLessonHeartbeat } from '../../../../../../lib/stream/lesson-stream-client';
+import { useReadWatchTracker } from '../../../../../../hooks/useReadWatchTracker';
 import { fetchCheckpoints } from '../../../../../../lib/quiz/quiz-client';
 import type { LessonStreamPayload } from '@repo/shared';
 
@@ -27,6 +28,10 @@ function LessonInner({ lessonId }: { lessonId: string }) {
   const [quizzes, setQuizzes] = useState<QuizCheckpointProp[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // Atomic Phase 052: watch telemetry (5s pulse cadence mirrors the heartbeat;
+  // product omitted — hook falls back to lessonId and the batch writer resolves
+  // the real product via lesson → section → course; server stamps identity).
+  const { trackVideoPulse } = useReadWatchTracker({ userId: null, contentId: lessonId, contentType: 'WATCH' });
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +65,10 @@ function LessonInner({ lessonId }: { lessonId: string }) {
   const handleProgress = useCallback(
     (watchedSec: number, isCompleted: boolean = false) => {
       if (!payload) return;
+      trackVideoPulse(watchedSec, payload.durationSec);
       reportLessonHeartbeat({ lessonId: payload.lessonId, watchedSec, durationSec: payload.durationSec, isCompleted }).catch(() => undefined);
     },
-    [payload],
+    [payload, trackVideoPulse],
   );
 
   if (state === 'LIFF_INIT' || state === 'LOADING') {

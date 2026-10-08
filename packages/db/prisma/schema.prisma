@@ -120,6 +120,9 @@ model User {
   // Atomic Phase 050: HLS stream sessions + scraper blacklist (anti-rip guard)
   videoStreamSessions VideoStreamSession[]
   scraperBlacklists   ScraperBlacklist[]
+  // Atomic Phase 052: read/watch telemetry rows (async batch writer owns writes)
+  ebookPageAnalytics  EbookPageAnalytics[]
+  videoWatchAnalytics VideoWatchAnalytics[]
 
   @@index([lineUserId])
   @@index([email])
@@ -1946,4 +1949,58 @@ model PreviewUsageLog {
 
   @@index([userId, productId])
   @@index([lineUserId])
+}
+
+// Atomic Phase 052 Task 2: analytics & telemetry persistence (verbatim canonical).
+// Additive expand-contract: 3 new tables + User back-relations only (Gate 7 —
+ // batch writer upserts by @@unique; raw page rows are append-only).
+
+model EbookPageAnalytics {
+  id               String   @id @default(uuid())
+  userId           String
+  ebookId          String
+  pageNumber       Int
+  dwellTimeSec     Int      @default(0)
+  scrollDepth      Float    @default(100.0)
+  interactionCount Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, ebookId])
+  @@index([ebookId, pageNumber])
+  @@index([createdAt])
+}
+
+model VideoWatchAnalytics {
+  id              String   @id @default(uuid())
+  userId          String
+  lessonId        String
+  watchedSec      Int      @default(0)
+  maxWatchedSec   Int      @default(0)
+  lastPositionSec Int      @default(0)
+  completionRate  Float    @default(0.0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+  @@index([userId])
+}
+
+model ContentHeatmapAggregate {
+  id                String      @id @default(uuid())
+  productId         String
+  contentType       ProductType
+  segmentIndex      Int
+  viewCount         Int         @default(0)
+  totalDwellTimeSec BigInt      @default(0)
+  dropoffCount      Int         @default(0)
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([productId, contentType, segmentIndex])
+  @@index([productId])
 }

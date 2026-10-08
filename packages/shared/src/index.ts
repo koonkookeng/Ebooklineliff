@@ -905,3 +905,28 @@ export type {
   PaywallTriggerPayload,
   PreviewEventInput,
 } from './schemas/preview-contract';
+export {
+  AnalyticsEventTypeEnum,
+  ReadTimeTrackingPayloadSchema,
+  WatchTimeTrackingPayloadSchema,
+  AnalyticsBatchIngestSchema,
+  ANALYTICS_STREAM_KEY,
+  ANALYTICS_HEARTBEAT_SEC,
+  ANALYTICS_FLUSH_SEC,
+  ANALYTICS_HEATMAP_SEGMENT_SEC,
+  ANALYTICS_RING_CAP,
+  ANALYTICS_PULSE_PER_MIN,
+  ANALYTICS_DRAIN_BATCH_SEC,
+  ANALYTICS_NIL_USER,
+  analyticsPulseKey,
+  heatmapSegmentIndex,
+  completionRate,
+  dropoffRate,
+  averageDwell,
+} from './schemas/analytics-contract';
+export type {
+  AnalyticsEventType,
+  ReadTimeTrackingPayload,
+  WatchTimeTrackingPayload,
+  AnalyticsBatchIngestPayload,
+} from './schemas/analytics-contract';

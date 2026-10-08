@@ -14,6 +14,7 @@ import CanvasReader from '../../../../components/reader/CanvasReader';
 import { ReaderControlBar } from '../../../../components/reader/ReaderControlBar';
 import { BookmarkManager } from '../../../../components/reader/BookmarkManager';
 import { useReaderStore } from '../../../../stores/useReaderStore';
+import { useReadWatchTracker } from '../../../../hooks/useReadWatchTracker';
 import {
   fetchAnnotations,
   toggleBookmarkRemote,
@@ -35,6 +36,12 @@ function ReaderInner({ productId }: { productId: string }) {
   const [error, setError] = useState<string | null>(null);
   const theme = useReaderStore((s) => s.theme);
   const annotationsLoading = useReaderStore((s) => s.uiState === 'LOADING');
+  // Atomic Phase 052: dwell telemetry (server stamps identity from JWT cookie).
+  const { trackPageDwell } = useReadWatchTracker({ userId: null, productId, contentId: productId, contentType: 'READ' });
+  useEffect(() => {
+    const t = setInterval(() => trackPageDwell(useReaderStore.getState().currentPage), 1000);
+    return () => clearInterval(t);
+  }, [trackPageDwell]);
   const vars = THEME_VARS[theme] ?? THEME_VARS.LIGHT;
 
   useEffect(() => {

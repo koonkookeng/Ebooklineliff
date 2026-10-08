@@ -1,0 +1,61 @@
+# SSOT Phase 052 §3.2 — Analytics intent layer (read/watch pulses + heatmaps)
+# Canonical: apps/backend/src/api/graphql/schemas/analytics.graphql/schema.graphql
+# Runtime is code-first (autoSchemaFile) via AnalyticsResolver; this SDL is the contract supplement
+# (SSOT sync gate: Zod analytics-contract.ts <-> Prisma EbookPageAnalytics/VideoWatchAnalytics/ContentHeatmapAggregate <-> here).
+
+type Mutation {
+  recordReadTimePulse(input: ReadTimeInput!): AnalyticsSyncResponse!
+  recordWatchTimePulse(input: WatchTimeInput!): AnalyticsSyncResponse!
+}
+
+type Query {
+  getLessonWatchHeatmap(lessonId: ID!, productId: ID!): LessonHeatmapPayload!
+  getEbookPageDwellAnalytics(ebookId: ID!): EbookAnalyticsPayload!
+}
+
+input ReadTimeInput {
+  productId: ID!
+  ebookId: ID!
+  pageNumber: Int!
+  dwellTimeSec: Int!
+  scrollDepthPercentage: Float
+}
+
+input WatchTimeInput {
+  productId: ID!
+  lessonId: ID!
+  watchedSec: Int!
+  currentTimestampSec: Int!
+  durationSec: Int!
+}
+
+type AnalyticsSyncResponse {
+  success: Boolean!
+  acknowledgedEvents: Int!
+  nextHeartbeatIntervalSec: Int!
+}
+
+type LessonHeatmapPayload {
+  lessonId: ID!
+  totalViews: Int!
+  averageCompletionRate: Float!
+  heatmapSegments: [HeatmapSegment!]!
+}
+
+type HeatmapSegment {
+  secondOffset: Int!
+  viewerCount: Int!
+  dropoffRate: Float!
+}
+
+type EbookAnalyticsPayload {
+  ebookId: ID!
+  totalPages: Int!
+  averageReadTimePerPages: [PageDwellMetric!]!
+}
+
+type PageDwellMetric {
+  pageNumber: Int!
+  averageDwellSec: Float!
+  totalReads: Int!
+}
