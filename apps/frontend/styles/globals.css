@@ -85,3 +85,161 @@ body {
   opacity: 0.65;
   transition: opacity 150ms ease;
 }
+
+/* Phase 073 — Merchant dashboard shell (tenant brand via CSS vars). */
+.merchant-shell {
+  display: flex;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-tenant);
+}
+.merchant-sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.merchant-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.merchant-brand button {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.merchant-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.merchant-link {
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+}
+.merchant-view-switch {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+}
+.merchant-view-switch button {
+  flex: 1;
+  font-size: 11px;
+  padding: 6px 2px;
+  border-radius: var(--radius);
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.merchant-view-switch button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.merchant-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px;
+}
+.merchant-main main {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+.merchant-progress {
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary) 40%, transparent 60%);
+  background-size: 200% 100%;
+  animation: theme-shimmer 1s infinite;
+  border-radius: 2px;
+}
+.merchant-error {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: #fef2f2;
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+.merchant-toast {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  margin-bottom: 12px;
+}
+.merchant-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+.merchant-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.merchant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 28rem;
+}
+.merchant-form input,
+.merchant-form select,
+.merchant-form button {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid #cbd5e1;
+  font: inherit;
+}
+.merchant-form button {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+}
+.merchant-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.merchant-table th,
+.merchant-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px;
+  text-align: left;
+}
+.merchant-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+  margin-top: 12px;
+}
+.merchant-bar {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+.merchant-bar > div {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+}

@@ -1,0 +1,38 @@
+# SSOT Phase 073 §3 — Merchant studio GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/merchant-studio.graphql
+# Runtime is code-first (merchant-studio.resolver.ts); SDL is Gate 1 record.
+
+type MerchantAnalyticsRow {
+  recordDate: String!
+  totalGmv: String!
+  totalOrders: Int!
+  ebookSalesCount: Int!
+  courseSalesCount: Int!
+  physicalSalesCount: Int!
+  newStudentsCount: Int!
+}
+
+input MerchantProductUpsertInput {
+  id: ID
+  title: String!
+  slug: String!
+  description: String!
+  coverImageUrl: String!
+  productType: String!
+  price: Float!
+  isPublished: Boolean
+}
+
+type MerchantProductResult {
+  id: ID!
+  slug: String!
+  updated: Boolean!
+}
+
+type Query {
+  getMerchantAnalytics(tenantId: String!, from: String, to: String): [MerchantAnalyticsRow!]!
+}
+
+type Mutation {
+  upsertMerchantProduct(tenantId: String!, input: MerchantProductUpsertInput!): MerchantProductResult!
+}
