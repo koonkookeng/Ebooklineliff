@@ -76,8 +76,9 @@ import { NoteModule } from './modules/note/note.module';
 import { UserPreferenceModule } from './modules/user-preference/user-preference.module';
 import { QualityModule } from './modules/stream/quality/quality.module';
 import { OfflineLicenseModule } from './modules/offline-license/offline-license.module';
+import { NetworkHealthModule } from './modules/network/network-health.module';
 
 @Module({
-  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, ApolloServerGatewayModule, WebhooksModule],
+  imports: [InfraModule, HealthModule, IdentityModule, AuthModule, CatalogModule, CartModule, OrderModule, PromptPayModule, WalletModule, LibraryModule, LineMessagingModule, HeaderModule, LineServiceMessageModule, ResolverModule, SocialShareModule, NavigationModule, SecurityModule, PerformanceModule, TenantThemeModule, KeepAliveModule, PermissionModule, VersionModule, LineOAModule, LineWebhooksModule,     LineSandboxModule, R2StorageModule, PipelineModule, ChunkCacheModule, ReaderModule, WatermarkModule, StreamModule, QuizModule, CertificateModule, DrmModule, VideoSecurityModule, PreviewModule, AnalyticsModule, HlsStreamModule, ViewportModule, SyncModule, OfflineSyncModule, OfflineModule, OfflineProgressModule, NoteModule, UserPreferenceModule, QualityModule, OfflineLicenseModule, NetworkHealthModule, ApolloServerGatewayModule, WebhooksModule],
 })
 export class AppModule {}

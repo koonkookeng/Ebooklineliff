@@ -140,6 +140,8 @@ model User {
   // Atomic Phase 068: offline download licenses + device storage profiles
   offlineLicenses     OfflineLicense[]
   storageProfiles     DeviceStorageProfile[]
+  // Atomic Phase 069: network telemetry segments
+  networkTelemetry    NetworkTelemetryLog[]
 
   @@index([lineUserId])
   @@index([email])
@@ -2361,4 +2363,22 @@ model DeviceStorageProfile {
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Atomic Phase 069: network disconnection telemetry segments (§4.1 verbatim).
+model NetworkTelemetryLog {
+  id               String   @id @default(uuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  lineUserId       String?
+  deviceType       String
+  disconnectionSec Int
+  actionsQueued    Int      @default(0)
+  effectiveType    String?
+  tenantId         String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([lineUserId])
+  @@index([createdAt])
 }

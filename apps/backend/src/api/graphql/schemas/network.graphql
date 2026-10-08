@@ -1,0 +1,30 @@
+# SSOT Phase 069 §3.2 — Network health GraphQL SDL (supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/network.graphql
+# Runtime is code-first via NetworkHealthResolver (modules/network).
+
+type NetworkPingPayload {
+  status: String!
+  serverTimestamp: Float!
+  roundTripLatencyMs: Float!
+}
+
+type SyncQueueResultPayload {
+  success: Boolean!
+  processedCount: Int!
+  failedItemIds: [ID!]!
+}
+
+input OfflineQueueItemInput {
+  id: ID!
+  actionType: String!
+  payloadJson: String!
+  createdAt: String!
+}
+
+extend type Query {
+  networkPingCheck(clientTimestamp: Float!): NetworkPingPayload!
+}
+
+extend type Mutation {
+  flushOfflineQueue(items: [OfflineQueueItemInput!]!): SyncQueueResultPayload!
+}

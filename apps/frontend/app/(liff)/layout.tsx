@@ -22,6 +22,8 @@ import { ThemeProvider } from '../../providers/theme-provider';
 import { KeepAliveProvider } from '../../components/keep-alive/KeepAliveProvider';
 // Phase 033 Task 3: instant auto-update checker (null-render when current).
 import { AutoUpdateChecker } from '../../components/updater/AutoUpdateChecker';
+// Phase 069 Task 7: network monitor banner (null-render when stable).
+import { NetworkMonitorProvider } from '../../providers/NetworkMonitorProvider';
 
 const CLIENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0-dev';
 const CLIENT_BUILD_HASH = process.env.NEXT_PUBLIC_BUILD_HASH ?? 'dev-local';
@@ -42,8 +44,9 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
   const tenantId = params.get('tenant') ?? 'default';
   const liffId = resolveLiffId(tenantId);
   return (
-    <LiffProvider liffId={liffId} tenantId={tenantId}>
-      <LiffRouterProvider>
+      <LiffProvider liffId={liffId} tenantId={tenantId}>
+        <NetworkMonitorProvider>
+        <LiffRouterProvider>
         <TenantThemeProvider>
           <ThemeProvider>
           <KeepAliveProvider>
@@ -55,8 +58,9 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
           </KeepAliveProvider>
           </ThemeProvider>
         </TenantThemeProvider>
-      </LiffRouterProvider>
-    </LiffProvider>
+        </LiffRouterProvider>
+        </NetworkMonitorProvider>
+      </LiffProvider>
   );
 }
 
