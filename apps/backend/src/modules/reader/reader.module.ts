@@ -8,6 +8,8 @@
 // - Phase 041: reader controls (bookmarks/highlights/preferences) share the
 //   global Prisma pool + RedisClusterService edge (1h annotation cache).
 import { Module } from '@nestjs/common';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
+import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
 import { ChunkCacheModule } from './cache/chunk-cache.module';
 import { ChunkWarmerService } from './cache/services/chunk-warmer.service';
 import { PrismaService } from '../../infra/database/prisma.service';
@@ -17,6 +19,9 @@ import { ReaderControlResolver } from '../../api/graphql/reader-control.resolver
 import { ReaderPreferenceService } from './application/reader-preference.service';
 import { ReaderPreferenceResolver } from './infrastructure/api/reader-preference.resolver';
 import { ReaderNavigationController } from './reader-navigation.controller';
+import { RetinaReaderController } from './controllers/retina-reader.controller';
+import { VectorChunkService } from './services/vector-chunk.service';
+import { RetinaScalerService } from './services/retina-scaler.service';
 import { ReaderControlService, type ReaderControlCache, type ReaderControlPrisma } from './reader-control.service';
 import { ReaderController } from './reader.controller';
 import { ReaderResolver } from './reader.resolver';
@@ -30,8 +35,8 @@ import {
 import { WatermarkGeneratorService } from './services/watermark-generator.service';
 
 @Module({
-  imports: [ChunkCacheModule],
-  controllers: [ReaderController, ReaderControlController, ReaderNavigationController],
+  imports: [ChunkCacheModule, R2StorageModule],
+  controllers: [ReaderController, ReaderControlController, ReaderNavigationController, RetinaReaderController],
   providers: [
     WatermarkGeneratorService,
     {
@@ -83,6 +88,22 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [PrismaService, RedisClusterService],
     },
     ReaderControlResolver,
+    RetinaScalerService,
+    {
+      provide: VectorChunkService,
+      useFactory: (prisma: PrismaService, edge: RedisClusterService, vault: R2StorageService): VectorChunkService =>
+        new VectorChunkService(
+          prisma as never,
+          {
+            get: (key: string) => edge.get(key),
+            set: (key: string, value: string, ...args: Array<string | number>) => edge.set(key, value, ...args),
+          },
+          {
+            getFileAsString: async (objectKey: string) => vault.getObjectText(objectKey).catch(() => null),
+          },
+        ),
+      inject: [PrismaService, RedisClusterService, R2StorageService],
+    },
     ReaderPreferenceResolver,
     {
       provide: ReaderPreferenceService,
@@ -91,6 +112,6 @@ import { WatermarkGeneratorService } from './services/watermark-generator.servic
       inject: [PrismaService],
     },
   ],
-  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService, ReaderPreferenceService],
+  exports: [ReaderService, SlidingWindowCacheService, ReaderControlService, LowBandwidthReaderService, ReaderPreferenceService, VectorChunkService, RetinaScalerService],
 })
 export class ReaderModule {}

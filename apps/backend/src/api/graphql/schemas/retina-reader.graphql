@@ -1,0 +1,32 @@
+# SSOT Phase 060 §3.2 — Retina reader GraphQL SDL (contract supplement)
+# Canonical: apps/backend/src/api/graphql/schemas/retina-reader.graphql
+# Runtime is code-first via ReaderResolver.getEbookRetinaPageChunk.
+
+type ViewportMatrix {
+  cssWidth: Float!
+  devicePixelRatio: Float!
+  targetDpr: Float!
+  scaledWidthPx: Int!
+  scaledHeightPx: Int!
+  canvasMemoryMb: Float!
+}
+
+type EbookMultiResChunkPayload {
+  pageNumber: Int!
+  vectorSvgContent: String!
+  dprVariant: String!
+  forensicWatermarkData: ForensicWatermarkPayload!
+  memoryFootprintMb: Float!
+  hasPrevious: Boolean!
+  hasNext: Boolean!
+}
+
+extend type Query {
+  getEbookRetinaPageChunk(
+    productId: ID!
+    pageNumber: Int!
+    deviceDpr: Float!
+    cssWidth: Float!
+    cssHeight: Float!
+  ): EbookMultiResChunkPayload!
+}

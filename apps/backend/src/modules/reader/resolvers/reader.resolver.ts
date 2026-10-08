@@ -1,11 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 060 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class ReaderResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 060 §5.1 — legacy-path alias (filefolder.md canonical mapping)
+// Canonical: apps/backend/src/modules/reader/resolvers/reader.resolver.ts
+// (legacy src/backend/modules/reader/resolvers/reader.resolver.ts)
+// - Re-export only; the retina query lives on the module-root ReaderResolver
+//   (single code-first intent layer, Phase 040 precedent).
+export * from '../reader.resolver';

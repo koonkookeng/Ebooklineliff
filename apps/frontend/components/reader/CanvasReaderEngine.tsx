@@ -7,10 +7,13 @@
 //   scalar watermark, with strict revoke discipline (RAM <28MB, §1.3).
 // - OFFLINE renders the retry fallback (ERROR_RETRY) with cached-page note.
 // - Badge + switch row is DOM-only (<500KB). Zero new deps.
+// - Phase 060: compressed-view blit uses a DPR-aware backing store
+//   (DynamicDprManager, single canvas ≤12MB) for Retina-crisp vectors.
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CanvasReader from './CanvasReader';
+import { dprBackingFor } from './DynamicDprManager';
 import { useNetworkQuality } from '../../hooks/useNetworkQuality';
 import { isLowBandwidthTier, type LowBandwidthChunkResponse } from '@repo/shared';
 
@@ -62,8 +65,14 @@ function CompressedPageView({ productId, userIdHash, tier }: { productId: string
         blobRef.current = url;
         const img = new Image();
         img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Atomic Phase 060: DPR-aware backing store (Retina-crisp vector
+          // blit, single-canvas ≤12MB so the N-window stays <30MB).
+          const dpr = dprBackingFor(canvas);
+          canvas.width = dpr.scaledWidthPx;
+          canvas.height = dpr.scaledHeightPx;
+          ctx.setTransform(dpr.scale, 0, 0, dpr.scale, 0, 0);
+          ctx.clearRect(0, 0, dpr.cssWidth, dpr.cssHeight);
+          ctx.drawImage(img, 0, 0, dpr.cssWidth, dpr.cssHeight);
           ctx.font = '14px sans-serif';
           ctx.fillStyle = 'rgba(150, 150, 150, 0.25)';
           ctx.fillText(`ID: ${data.forensicWatermarkHash || userIdHash} | ${new Date().toISOString()}`, 40, 50);

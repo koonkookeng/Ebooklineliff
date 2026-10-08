@@ -8,12 +8,13 @@
 // - Identity comes from the GraphQL @Context() (JwtAuthGuard attaches
 //   req.user); tenant falls back to 'default' for token shapes without it.
 // - Zero new deps.
-import { Args, Context, Field, ID, Int, Mutation, ObjectType, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Field, Float, ID, Int, Mutation, ObjectType, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { NetworkQualityTierEnum } from '@repo/shared';
 import { ReaderService } from './reader.service';
 import { LowBandwidthReaderService } from './services/low-bandwidth-reader.service';
+import { VectorChunkService } from './services/vector-chunk.service';
 import { resolveReaderIdentity, type ReaderGqlContext } from './reader-identity';
 
 @ObjectType('ForensicWatermarkPayload')
@@ -41,6 +42,17 @@ class ProgressSyncPayloadGql {
   @Field() updatedAt!: string;
 }
 
+@ObjectType('EbookMultiResChunkPayload')
+class EbookMultiResChunkPayloadGql {
+  @Field(() => Int) pageNumber!: number;
+  @Field() vectorSvgContent!: string;
+  @Field() dprVariant!: string;
+  @Field(() => ForensicWatermarkPayloadGql) forensicWatermarkData!: ForensicWatermarkPayloadGql;
+  @Field(() => Float) memoryFootprintMb!: number;
+  @Field() hasPrevious!: boolean;
+  @Field() hasNext!: boolean;
+}
+
 @ObjectType('LowBandwidthChunkPayload')
 class LowBandwidthChunkPayloadGql {
   @Field(() => Int) pageNumber!: number;
@@ -56,6 +68,7 @@ export class ReaderResolver {
   constructor(
     private readonly reader: ReaderService,
     private readonly lowband: LowBandwidthReaderService,
+    private readonly vectors?: VectorChunkService,
   ) {}
 
   @Query('getEbookPageChunk')
@@ -79,6 +92,24 @@ export class ReaderResolver {
   ) {
     const { userId } = resolveReaderIdentity(gqlCtx);
     return this.reader.syncEbookProgress(userId, productId, pageNumber, readDurationSec);
+  }
+
+  // Phase 060 §3.2: retina multi-resolution chunk (DPR variant + watermark).
+  @Query('getEbookRetinaPageChunk')
+  @UseGuards(JwtAuthGuard)
+  async getEbookRetinaPageChunk(
+    @Args('productId') productId: string,
+    @Args('pageNumber', { type: () => Int }) pageNumber: number,
+    @Args('deviceDpr', { type: () => Float }) deviceDpr: number,
+    @Args('cssWidth', { type: () => Float }) cssWidth: number,
+    @Args('cssHeight', { type: () => Float }) cssHeight: number,
+    @Context() gqlCtx?: ReaderGqlContext,
+  ) {
+    if (!this.vectors) throw new Error('Retina scaler unavailable');
+    const { userId } = resolveReaderIdentity(gqlCtx);
+    void cssWidth;
+    void cssHeight;
+    return this.vectors.getRetinaChunk(productId, pageNumber, deviceDpr, userId);
   }
 
   // Phase 055 §3.2: low-bandwidth optimized chunk (Brotli + watermark hash).
