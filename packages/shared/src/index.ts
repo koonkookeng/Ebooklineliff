@@ -1480,3 +1480,29 @@ export type {
   PayoutRequest,
   MerchantAnalyticsFilter,
 } from './schemas/merchant-contract';
+export {
+  PhysicalDetailSpecSchema,
+  EbookDetailSpecSchema,
+  CourseLessonSpecSchema,
+  CourseSectionSpecSchema,
+  CourseDetailSpecSchema,
+  BundleItemSpecSchema,
+  UniversalProductBuilderSchema,
+  BuilderStepBasicsSchema,
+  BuilderStepPricingSchema,
+  BUILDER_STEPS,
+  BUILDER_AUTOSAVE_MS,
+  BUILDER_DRAFT_TTL_SEC,
+  BUILDER_PRESIGN_TTL_SEC,
+  BUILDER_PUBLISH_BUDGET_MS,
+  builderDraftKey,
+} from './schemas/product-builder.schema';
+export type {
+  PhysicalDetailSpec,
+  EbookDetailSpec,
+  CourseLessonSpec,
+  CourseSectionSpec,
+  CourseDetailSpec,
+  BundleItemSpec,
+  UniversalProductBuilderInput,
+} from './schemas/product-builder.schema';

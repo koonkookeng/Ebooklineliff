@@ -1,0 +1,34 @@
+# SSOT Phase 074 §3 — Builder GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schemas/product-builder.graphql
+# Runtime is code-first (product-builder.resolver.ts); SDL is Gate 1 record.
+
+type BuilderDraftResult {
+  draftId: ID!
+}
+
+type BuilderDraftSnapshot {
+  stepIndex: Int!
+  payloadJson: String!
+}
+
+type PublishedProductResult {
+  productId: ID!
+  slug: String!
+}
+
+input SaveBuilderDraftInput {
+  draftId: ID
+  stepIndex: Int!
+  productType: String!
+  title: String
+  payloadJson: String
+}
+
+type Query {
+  loadBuilderDraft(draftId: ID!): BuilderDraftSnapshot
+}
+
+type Mutation {
+  saveBuilderDraft(input: SaveBuilderDraftInput!): BuilderDraftResult!
+  publishBuilderProduct(payloadJson: String!): PublishedProductResult!
+}

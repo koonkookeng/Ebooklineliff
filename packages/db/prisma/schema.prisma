@@ -367,6 +367,21 @@ model MerchantAnalyticsDaily {
   @@index([tenantId])
 }
 
+// Atomic Phase 074: builder draft cache (Redis owns hot state, PG persists).
+model ProductDraft {
+  id          String      @id @default(uuid())
+  sellerId    String
+  productType ProductType
+  draftName   String      @default("Untitled Draft")
+  stepIndex   Int         @default(1)
+  payloadJson Json
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sellerId])
+  @@index([updatedAt])
+}
+
 // Atomic Phase 006: LINE identity profile (1:1 with User). Canonical runtime sessions stay in
 // `Session` (Phase 005 superset); no duplicate AuthSession table (zero-redundant policy).
 model LineAuthProfile {

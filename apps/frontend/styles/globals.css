@@ -243,3 +243,85 @@ body {
   border-radius: 3px 3px 0 0;
   min-height: 2px;
 }
+
+/* Phase 074 — Studio builder wizard (CSS slide, no motion dep). */
+.builder-page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: var(--font-tenant);
+  color: var(--foreground);
+  background: var(--background);
+}
+.builder-card {
+  border: 1px solid #e2e8f0;
+  border-radius: calc(var(--radius) * 2);
+  padding: 24px;
+  background: var(--background);
+}
+.builder-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.builder-steps > div {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #94a3b8;
+}
+.builder-steps span {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  font-weight: 700;
+}
+.builder-step-active { color: var(--foreground); }
+.builder-step-active span {
+  background: var(--primary);
+  color: #fff;
+}
+.builder-step-done span {
+  background: var(--secondary);
+  color: #fff;
+}
+.builder-saved {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 12px;
+}
+.builder-slide {
+  animation: builder-slide-in 200ms ease;
+}
+@keyframes builder-slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: none; }
+}
+.builder-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.builder-nav button {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  border: 1px solid #cbd5e1;
+  background: var(--background);
+  cursor: pointer;
+  font: inherit;
+}
+.builder-nav button:last-child {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+}
+.builder-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
