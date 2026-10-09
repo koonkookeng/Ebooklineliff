@@ -1812,6 +1812,16 @@ model CourseCertificate {
   digitalSignatureHash String
   status               String       @default("ISSUED") // ISSUED, REVOKED, EXPIRED
   metadataJson         Json?        // Additional custom fields (e.g., Grade, Hours)
+  // Atomic Phase 105: public verification extensions (expand-contract; 048 canonical kept).
+  // RISK_CALL: HMAC truth stays 048 `digitalSignatureHash` (certNo:userId:courseId:displayName);
+  // no duplicate `hashSignature` column. Revocation reads `isRevoked` OR legacy `status`.
+  isRevoked      Boolean                  @default(false)
+  revokedAt      DateTime?
+  revokedReason  String?
+  viewCount      Int                      @default(0)
+
+  // Verification Audit Logs
+  verificationLogs CertificateVerificationLog[]
 
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
@@ -1819,6 +1829,21 @@ model CourseCertificate {
   @@unique([userId, courseId])
   @@index([certificateNo])
   @@index([userId])
+}
+
+// Atomic Phase 105: public QR-scan audit ledger (async, never blocks verify).
+model CertificateVerificationLog {
+  id            String            @id @default(uuid())
+  certificateId String
+  certificate   CourseCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  scannedAt     DateTime          @default(now())
+  ipAddress     String
+  userAgent     String
+  isSuccess     Boolean
+  resultStatus  String            // VERIFIED, INVALID, REVOKED, EXPIRED
+
+  @@index([certificateId])
+  @@index([scannedAt])
 }
 
 // Atomic Phase 049: DRM Canvas Shuffling (ephemeral sessions + violation audit)

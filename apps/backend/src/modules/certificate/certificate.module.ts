@@ -16,12 +16,16 @@ import { CertificateVerificationService } from './application/services/certifica
 import { CourseCompletedEventHandler, CERTIFICATE_EVENT_BUS } from './application/event-handlers/course-completed.handler';
 import { CertificateResolver } from './presentation/certificate.resolver';
 import { CertificateVerifyController } from './presentation/certificate-verify.controller';
+// Phase 105: public QR verification (rich §3.1 payload + audit ledger).
+import { PublicCertificateVerificationService } from './certificate-verification.service';
+import { PublicCertificateVerificationController } from './certificate-verification.controller';
+import { PublicCertificateResolver } from './certificate.resolver';
 import { ChromiumPdfRendererAdapter } from './infrastructure/pdf-engine/chromium-pdf-renderer.adapter';
 import { QrCodeGeneratorAdapter } from './infrastructure/qr-engine/qr-code-generator.adapter';
 
 @Module({
   imports: [R2StorageModule],
-  controllers: [CertificateVerifyController],
+  controllers: [CertificateVerifyController, PublicCertificateVerificationController],
   providers: [
     {
       provide: CERTIFICATE_EVENT_BUS,
@@ -53,6 +57,12 @@ import { QrCodeGeneratorAdapter } from './infrastructure/qr-engine/qr-code-gener
       inject: [PrismaService, RedisClusterService],
     },
     {
+      provide: PublicCertificateVerificationService,
+      useFactory: (prisma: PrismaService, redis: RedisClusterService): PublicCertificateVerificationService =>
+        new PublicCertificateVerificationService(prisma, redis),
+      inject: [PrismaService, RedisClusterService],
+    },
+    {
       provide: CourseCompletedEventHandler,
       useFactory: (
         certService: CertificatePdfGeneratorService,
@@ -62,7 +72,8 @@ import { QrCodeGeneratorAdapter } from './infrastructure/qr-engine/qr-code-gener
       inject: [CertificatePdfGeneratorService, CERTIFICATE_EVENT_BUS, PrismaService],
     },
     CertificateResolver,
+    PublicCertificateResolver,
   ],
-  exports: [CertificatePdfGeneratorService, CertificateVerificationService],
+  exports: [CertificatePdfGeneratorService, CertificateVerificationService, PublicCertificateVerificationService],
 })
 export class CertificateModule {}

@@ -2281,3 +2281,26 @@ export type {
   RecommendationItem,
   RecommendationSlatePayload,
 } from './schemas/recommendation.contract';
+
+export {
+  VerificationStatusEnum,
+  VerifyCertificateInputSchema,
+  CertificateIssuerSchema,
+  CertificateStudentInfoSchema,
+  CertificateDetailSchema,
+  CertificateVerificationPayloadSchema,
+  CERT_VERIFY_LATENCY_MS,
+  CERT_VERIFY_RAM_MB,
+  CERT_VERIFY_BUNDLE_KB,
+  CERT_VERIFY_RATE_PER_MIN,
+  certVerifyRateKey,
+  isCertificateNoFormat,
+} from './schemas/certificate-verification.schema';
+export type {
+  VerificationStatus,
+  VerifyCertificateInput,
+  CertificateIssuer,
+  CertificateStudentInfo,
+  CertificateDetail,
+  CertificateVerificationPayload,
+} from './schemas/certificate-verification.schema';

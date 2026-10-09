@@ -162,6 +162,9 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/line-oa/config' ||
     // Phase 037: public TOC/curriculum for logged-out PDP/discovery.
     pathname.startsWith('/api/v1/catalog/structure/') ||
+    // Phase 105: public certificate QR verification (recruiters hold no account).
+    pathname.startsWith('/api/v1/certificates/public/') ||
+    pathname.startsWith('/verify/') ||
     pathname.startsWith('/api/search') ||
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||
