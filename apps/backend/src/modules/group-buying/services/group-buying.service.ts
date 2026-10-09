@@ -1,8 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 090 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class GroupBuyingServiceService {}
+// SSOT Phase 090 — Legacy service alias (canonical: application/services)
+export { CreateGroupRoomService } from '../application/services/create-room.service';
+export { JoinGroupRoomService } from '../application/services/join-room.service';
+export { GroupExpiryService } from '../application/services/group-expiry.service';

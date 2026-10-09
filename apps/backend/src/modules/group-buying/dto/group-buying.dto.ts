@@ -1,8 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 090 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 090 — Group-buying DTOs (legacy path re-exports SSOT schemas)
+// Canonical: apps/backend/src/modules/group-buying/dto/group-buying.dto.ts
+// - Single source stays in @repo/shared; this file only re-exports.
+export {
+  GroupBuyingStatusEnum,
+  GroupTypeEnum,
+  CreateGroupRoomInputSchema,
+  JoinGroupRoomInputSchema,
+  GroupRoomDetailsSchema,
+} from '@repo/shared';

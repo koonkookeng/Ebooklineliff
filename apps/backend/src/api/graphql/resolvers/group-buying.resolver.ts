@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 090 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class GroupBuyingResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 090 — Legacy GQL alias (canonical lives in modules/group-buying)
+// Canonical: apps/backend/src/api/graphql/resolvers/group-buying.resolver.ts
+// - Re-exports the canonical resolver so legacy imports keep working.
+export { GroupBuyingResolver } from '../../../modules/group-buying/api/graphql/group-buying.resolver';

@@ -1,10 +1,2 @@
-/**
- * AUTO-SCAFFOLD Phase 090 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class GroupBuyingControllerController {
-  @Get('health') health() { return { ok: true }; }
-}
+// SSOT Phase 090 — Legacy controller alias (canonical: modules/group-buying/api/rest)
+export { GroupBuyingController } from '../api/rest/group-buying.controller';

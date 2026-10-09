@@ -1,0 +1,67 @@
+# SSOT Phase 090 Task 2 — Group-buying intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/group-buying.graphql
+# Runtime is code-first (modules/group-buying/api/graphql/group-buying.resolver.ts).
+
+type GroupMember {
+  userId: ID!
+  displayName: String!
+  avatarUrl: String
+  joinedAt: String!
+  isCreator: Boolean!
+}
+
+type GroupRoomDetails {
+  roomId: ID!
+  productId: ID!
+  productTitle: String!
+  coverImageUrl: String!
+  creatorDisplayName: String!
+  creatorAvatarUrl: String
+  groupType: String!
+  originalPrice: Float!
+  discountedPrice: Float!
+  requiredMembers: Int!
+  currentMembersCount: Int!
+  status: String!
+  expiresAt: String!
+  members: [GroupMember!]!
+}
+
+type CreateGroupRoomPayload {
+  roomId: ID!
+  roomCode: String!
+  flexMessageJson: String!
+  inviteUrl: String!
+  expiresAt: String!
+  discountedPrice: Float!
+}
+
+type JoinGroupRoomResult {
+  success: Boolean!
+  message: String!
+  isCompleted: Boolean!
+  productId: ID
+}
+
+type GroupKFactor {
+  invitesSent: Int!
+  conversionRate: Float!
+  kFactor: Float!
+}
+
+input CreateGroupRoomInput {
+  productId: ID!
+  groupType: String!
+}
+
+type Query {
+  getGroupRoomDetails(roomId: ID!): GroupRoomDetails
+  getActiveUserGroupRooms: [GroupRoomDetails!]!
+  groupKFactor(invitesSent: Int!, conversionRate: Float!): GroupKFactor!
+}
+
+type Mutation {
+  createGroupBuyingRoom(input: CreateGroupRoomInput!): CreateGroupRoomPayload!
+  joinGroupBuyingRoom(roomId: ID!, orderId: ID!): JoinGroupRoomResult!
+  cancelGroupBuyingRoom(roomId: ID!): Boolean!
+}

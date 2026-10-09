@@ -1902,3 +1902,28 @@ export type {
   ClaimGiftPayload,
   GiftDetailResponse,
 } from './schemas/gift-contract';
+export {
+  GroupBuyingStatusEnum,
+  GroupTypeEnum,
+  CreateGroupRoomInputSchema,
+  JoinGroupRoomInputSchema,
+  GroupRoomMemberSchema,
+  GroupRoomDetailsSchema,
+  GROUP_DEFAULT_TTL_HOURS,
+  GROUP_STREAM,
+  requiredMembersFor,
+  groupRoomCode,
+  groupExpiryAt,
+  canJoin,
+  groupKFactor,
+  groupInviteUrl,
+  groupRoomLockKey,
+} from './schemas/group-buying-contract';
+export type {
+  GroupBuyingStatus,
+  GroupType,
+  CreateGroupRoomInput,
+  JoinGroupRoomInput,
+  GroupRoomMember,
+  GroupRoomDetails,
+} from './schemas/group-buying-contract';
