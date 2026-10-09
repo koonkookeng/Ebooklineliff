@@ -2111,3 +2111,26 @@ export type {
   CreateMarginNote,
   MarginNotePayload,
 } from './schemas/social-reading.schema';
+export {
+  B2BSeatStatusEnum,
+  QuizPassStatusEnum,
+  B2BCorporateTenantSchema,
+  EmployeeProgressMetricSchema,
+  EmployeeQuizResultSchema,
+  B2B_HR_STREAM,
+  HR_DASHBOARD_CACHE_TTL_SEC,
+  HR_ALLOCATE_BATCH_MAX,
+  quizPassStatus,
+  progressPercent,
+  averageScore,
+  seatUtilization,
+  hrDashboardCacheKey,
+  hrDepartmentCacheKey,
+} from './schemas/b2b-hr-contract';
+export type {
+  B2BSeatStatus,
+  QuizPassStatus,
+  B2BCorporateTenant,
+  EmployeeProgressMetric,
+  EmployeeQuizResult,
+} from './schemas/b2b-hr-contract';

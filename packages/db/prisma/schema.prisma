@@ -117,6 +117,8 @@ model User {
   pointTransactions PointTransaction[]
   // Atomic Phase 097: corporate seat assignments
   corporateSeats    CorporateSeat[]
+  // Atomic Phase 098: HR organization seat (1-1 optional back-relation)
+  b2bSeat           B2BCorporateSeat?
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -2275,6 +2277,67 @@ model CorporateSeat {
   @@index([licenseId])
   @@index([assignedUserId])
   @@index([inviteEmail])
+}
+
+// Atomic Phase 098 §4.1: B2B HR organization/seat/quiz segment (schema.md canonical).
+// RISK_CALL: status stays String (spec-verbatim INVITED/ACTIVE/REVOKED vocabulary;
+// the 097 SeatStatus enum owns the Corporate* pool — no enum drift).
+model B2BOrganization {
+  id             String            @id @default(uuid())
+  companyName    String
+  taxId          String?           @unique
+  logoUrl        String?
+  totalSeats     Int               @default(0)
+  usedSeats      Int               @default(0)
+  departments    B2BDepartment[]
+  corporateSeats B2BCorporateSeat[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model B2BDepartment {
+  id             String            @id @default(uuid())
+  organizationId String
+  organization   B2BOrganization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  seats          B2BCorporateSeat[]
+  createdAt      DateTime          @default(now())
+}
+
+model B2BCorporateSeat {
+  id             String           @id @default(uuid())
+  organizationId String
+  organization   B2BOrganization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId   String?
+  department     B2BDepartment?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  userId         String?          @unique
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  employeeEmail  String
+  employeeName   String?
+  status         String           @default("INVITED")
+  assignedAt     DateTime         @default(now())
+
+  quizAttempts   B2BQuizAttempt[]
+
+  @@index([organizationId])
+  @@index([departmentId])
+  @@index([employeeEmail])
+}
+
+model B2BQuizAttempt {
+  id            String           @id @default(uuid())
+  seatId        String
+  seat          B2BCorporateSeat @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  courseId      String
+  quizId        String
+  scoreObtained Decimal          @db.Decimal(5, 2)
+  maxScore      Decimal          @db.Decimal(5, 2)
+  isPassed      Boolean          @default(false)
+  timeTakenSec  Int
+  completedAt   DateTime         @default(now())
+
+  @@index([seatId])
+  @@index([courseId])
 }
 
 model BundleItem {

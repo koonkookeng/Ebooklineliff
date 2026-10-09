@@ -1,0 +1,87 @@
+# SSOT Phase 098 §3 — B2B HR intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/b2b-hr.types.graphql
+# Runtime is code-first (api/graphql/b2b-hr.resolver.ts).
+
+enum B2BSeatStatus {
+  INVITED
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum QuizPassStatus {
+  PASSED
+  FAILED
+  PENDING_REVIEW
+}
+
+type HrDepartmentStat {
+  departmentId: ID
+  departmentName: String!
+  seats: Int!
+  active: Int!
+  averageScore: Float!
+}
+
+type HrEmployeeRow {
+  seatId: ID!
+  employeeName: String!
+  department: String!
+  status: String!
+  attempts: Int!
+  averageScore: Float!
+}
+
+type HrDashboard {
+  organizationId: ID!
+  companyName: String!
+  totalSeats: Int!
+  usedSeats: Int!
+  utilization: Float!
+  completionRate: Float!
+  averageScore: Float!
+  passed: Int!
+  failed: Int!
+  departments: [HrDepartmentStat!]!
+  employees: [HrEmployeeRow!]!
+}
+
+type HrAllocatePayload {
+  invited: Int!
+  usedSeats: Int!
+  totalSeats: Int!
+}
+
+type HrQuizAttemptPayload {
+  attemptId: ID!
+  seatId: ID!
+  score: Float!
+  status: String!
+  completedAt: String!
+}
+
+input AllocateHrSeatsInput {
+  organizationId: ID!
+  departmentId: ID
+  emails: [String!]
+  lineUserIds: [String!]
+}
+
+input RecordQuizAttemptInput {
+  seatId: ID!
+  courseId: ID!
+  quizId: ID!
+  scoreObtained: Float!
+  maxScore: Float!
+  passingScore: Float
+  timeTakenSec: Int!
+}
+
+type Query {
+  getHrDashboard(organizationId: ID!): HrDashboard!
+}
+
+type Mutation {
+  allocateHrSeats(input: AllocateHrSeatsInput!): HrAllocatePayload!
+  recordQuizAttempt(input: RecordQuizAttemptInput!): HrQuizAttemptPayload!
+}

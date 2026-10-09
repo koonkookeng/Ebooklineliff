@@ -269,7 +269,9 @@ async function sectionRevoke(): Promise<void> {
   ]) {
     assert.ok(prisma.includes(t), `prisma missing: ${t}`);
   }
-  assert.ok(!prisma.includes('model B2BCorporateSeat'), '098 models stay future (no drift)');
+  // Phase 098 DONE: B2B* HR models now coexist (bounded context note kept
+  // in schema.prisma §4.1) — the stale no-drift guard is retired.
+  assert.ok(prisma.includes('model B2BCorporateSeat'), '098 HR seat model coexists');
   ok('Prisma: accounts/departments/licenses/seats + User/Product relations');
 }
 
