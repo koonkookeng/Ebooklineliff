@@ -1,0 +1,67 @@
+# SSOT Phase 097 §3.2 — B2B intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/b2b.graphql
+# Runtime is code-first (modules/b2b/resolvers/b2b-seat.resolver.ts).
+
+enum CorporateLicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  EXHAUSTED
+}
+
+enum SeatStatus {
+  UNASSIGNED
+  INVITED
+  ACTIVE
+  REVOKED
+}
+
+type CorporateLicense {
+  id: ID!
+  corporateAccountId: ID!
+  productId: ID!
+  totalSeats: Int!
+  usedSeats: Int!
+  availableSeats: Int!
+  licenseCode: String!
+  status: CorporateLicenseStatus!
+  expiresAt: String
+}
+
+type ClaimCorporateSeatPayload {
+  success: Boolean!
+  message: String!
+  licenseId: ID!
+  assignedSeatId: ID!
+  entitlementGranted: Boolean!
+  remainingSeats: Int!
+}
+
+type CorporateDashboardLicense {
+  licenseId: ID!
+  productTitle: String!
+  totalSeats: Int!
+  usedSeats: Int!
+  remainingSeats: Int!
+  status: String!
+  assigned: Int!
+  activeUsers: Int!
+}
+
+input BulkSeatInviteInput {
+  licenseId: ID!
+  departmentId: ID
+  emails: [String!]
+  lineUserIds: [String!]
+}
+
+type Query {
+  getCorporateLicenseInfo(licenseCode: String!): CorporateLicense!
+  getCorporateDashboard(corporateAccountId: ID!): [CorporateDashboardLicense!]!
+}
+
+type Mutation {
+  claimCorporateSeat(licenseCode: String!): ClaimCorporateSeatPayload!
+  allocateCorporateSeats(input: BulkSeatInviteInput!): Boolean!
+  revokeCorporateSeat(seatId: ID!): Boolean!
+}

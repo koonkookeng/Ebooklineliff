@@ -2070,6 +2070,28 @@ export type {
   SquadLeaderboardEntry,
 } from './schemas/squad-gamification.zod';
 export {
+  CorporateLicenseStatusEnum,
+  SeatStatusEnum,
+  CreateCorporateLicenseInputSchema,
+  ClaimCorporateSeatPayloadSchema,
+  BulkSeatInviteInputSchema,
+  CORPORATE_DEFAULT_EXPIRY_DAYS,
+  B2B_STREAM,
+  remainingSeats,
+  licenseStatusAfter,
+  corporateLicenseCode,
+  corporateClaimUrl,
+  corporateClaimLockKey,
+  maskTaxId,
+} from './schemas/b2b-contract';
+export type {
+  CorporateLicenseStatus,
+  SeatStatus,
+  CreateCorporateLicenseInput,
+  ClaimCorporateSeatPayload,
+  BulkSeatInviteInput,
+} from './schemas/b2b-contract';
+export {
   // Aliased: lesson-note.schema.ts (065) already owns `NoteVisibilityEnum` /
   // `NoteVisibility` (3-value lesson scope); the 095 social lattice
   // (5-value page scope) rides Social-prefixed barrel names.

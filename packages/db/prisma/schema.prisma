@@ -115,6 +115,8 @@ model User {
   // Atomic Phase 096: squad memberships + point ledger
   squadMemberships  SquadMember[]
   pointTransactions PointTransaction[]
+  // Atomic Phase 097: corporate seat assignments
+  corporateSeats    CorporateSeat[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -1649,6 +1651,8 @@ model Product {
   // Atomic Phase 090: group-buy configs + rooms for this product
   groupConfigs      GroupBuyingConfig?
   groupRooms        GroupBuyingRoom[]
+  // Atomic Phase 097: corporate license pools for this product
+  corporateLicenses CorporateLicense[]
   // Atomic Phase 091: pgvector content embeddings for this product
   contentVectors    ContentVectorEmbedding[]
   // Atomic Phase 092: AI companion chat sessions for this product
@@ -2190,6 +2194,87 @@ model SquadChallenge {
   createdAt     DateTime   @default(now())
 
   @@index([squadId])
+}
+
+// Atomic Phase 097 §4.1: B2B corporate license segment (schema.md canonical).
+// RISK_CALL: 098's B2B* models are a later phase (different bounded context —
+// HR quiz/seats); 097 owns the Corporate* license pool surface.
+enum CorporateLicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  EXHAUSTED
+}
+
+enum SeatStatus {
+  UNASSIGNED
+  INVITED
+  ACTIVE
+  REVOKED
+}
+
+model CorporateAccount {
+  id             String                @id @default(uuid())
+  companyName    String
+  taxId          String                @unique
+  contactEmail   String
+  contactPhone   String?
+  billingAddress String?               @db.Text
+  licenses       CorporateLicense[]
+  departments    CorporateDepartment[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([taxId])
+}
+
+model CorporateDepartment {
+  id                 String           @id @default(uuid())
+  corporateAccountId String
+  corporateAccount   CorporateAccount @relation(fields: [corporateAccountId], references: [id], onDelete: Cascade)
+  name               String
+  seats              CorporateSeat[]
+  createdAt          DateTime         @default(now())
+}
+
+model CorporateLicense {
+  id                 String                 @id @default(uuid())
+  corporateAccountId String
+  corporateAccount   CorporateAccount       @relation(fields: [corporateAccountId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product                @relation(fields: [productId], references: [id])
+  totalSeats         Int
+  usedSeats          Int                    @default(0)
+  licenseCode        String                 @unique @default(uuid())
+  status             CorporateLicenseStatus @default(ACTIVE)
+  expiresAt          DateTime?
+  seats              CorporateSeat[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([corporateAccountId])
+  @@index([licenseCode])
+}
+
+model CorporateSeat {
+  id               String               @id @default(uuid())
+  licenseId        String
+  license          CorporateLicense     @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  departmentId     String?
+  department       CorporateDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  assignedUserId   String?
+  assignedUser     User?                @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+  inviteEmail      String?
+  inviteLineUserId String?
+  status           SeatStatus           @default(UNASSIGNED)
+  assignedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([licenseId])
+  @@index([assignedUserId])
+  @@index([inviteEmail])
 }
 
 model BundleItem {
