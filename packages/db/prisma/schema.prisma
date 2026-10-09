@@ -49,6 +49,16 @@ enum KYCStatus {
   PENDING
   VERIFIED
   REJECTED
+  // Atomic Phase 085: manual-review state (schema.md canonical union)
+  ACTION_REQUIRED
+}
+
+// Atomic Phase 085 §4.1: payout account lifecycle (schema.md canonical).
+enum PayoutAccountStatus {
+  INACTIVE
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
 }
 
 model User {
@@ -1756,8 +1766,61 @@ model CreatorKYC {
   taxId             String?
   verifiedAt        DateTime?
   rejectionReason   String?
+  // Atomic Phase 085 §4.1: e-KYC extension columns (additive; 003 rows stay valid).
+  laserCodeEnc      String?   // AES-256-GCM encrypted laser code
+  firstNameTh       String?
+  lastNameTh        String?
+  birthDate         DateTime?
+  selfieImageUrl    String?
+  bookbankImageUrl  String?
+  ocrConfidence     Decimal?  @db.Decimal(5, 4)
+  faceMatchScore    Decimal?  @db.Decimal(5, 4)
+  status            KYCStatus @default(PENDING)
+  verifiedByUserId  String?
+  payoutAccount     CreatorPayoutAccount?
+  auditLogs         KYCAuditLog[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model CreatorPayoutAccount {
+  id                  String              @id @default(uuid())
+  creatorKycId        String              @unique
+  creatorKyc          CreatorKYC          @relation(fields: [creatorKycId], references: [id], onDelete: Cascade)
+  userId              String
+
+  bankCode            String
+  bankAccountNumberEnc String
+  bankAccountName     String
+  nameMatchScore      Decimal             @db.Decimal(5, 4)
+  status              PayoutAccountStatus @default(PENDING_VERIFICATION)
+
+  taxId               String?
+  isWithholdingTaxReq Boolean             @default(true)
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model KYCAuditLog {
+  id          String   @id @default(uuid())
+  kycId       String
+  kyc         CreatorKYC @relation(fields: [kycId], references: [id], onDelete: Cascade)
+  actorUserId String
+  action      String
+  ipAddress   String
+  userAgent   String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([kycId])
+  @@index([actorUserId])
 }
 
 model AuditLog {

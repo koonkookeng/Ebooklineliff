@@ -1,0 +1,52 @@
+# SSOT Phase 085 §3.2 — KYC GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/kyc/kyc.graphql
+# Runtime is code-first (modules/kyc/resolvers/kyc.resolver.ts).
+
+type KycSubmitPayload {
+  success: Boolean!
+  kycId: ID!
+  nameMatchScore: Float!
+  tier: String!
+}
+
+type KycStatusPayload {
+  kycStatus: String!
+  payoutStatus: String
+  rejectionReason: String
+}
+
+type KycDecisionPayload {
+  kycId: ID!
+  status: String!
+}
+
+type KycUploadTicket {
+  objectKey: String!
+  uploadUrl: String!
+  expiresInSec: Float!
+}
+
+type Query {
+  getKycStatus: KycStatusPayload!
+}
+
+type Mutation {
+  submitKyc(input: KycSubmissionInput!): KycSubmitPayload!
+  decideKyc(kycId: ID!, status: String!, rejectionReason: String): KycDecisionPayload!
+  kycUploadTicket(kind: String!): KycUploadTicket!
+}
+
+input KycSubmissionInput {
+  idCardNumber: String!
+  laserCode: String!
+  firstNameTh: String!
+  lastNameTh: String!
+  birthDate: String!
+  idCardImageUrl: String!
+  selfieImageUrl: String!
+  bankCode: String!
+  bankAccountNumber: String!
+  bankAccountName: String!
+  bookbankImageUrl: String!
+  taxId: String
+}

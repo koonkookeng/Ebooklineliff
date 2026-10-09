@@ -1,8 +1,71 @@
-/**
- * AUTO-SCAFFOLD Phase 085, 111 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 085 §5.1 — KYC module wiring
+// Canonical: apps/backend/src/modules/kyc/kyc.module.ts
+// (legacy class name KycModuleModule renamed — no importers.
+// pii-crypto.service.ts stays 111-owned (key rotation); everything else in
+// this folder ships with 085 — asserted in 085 tests.)
+// - AES engine + fuzzy bank match + staged OCR + stream queue + swappable
+//   Flex notify -> verification orchestrator + Prisma store -> submission +
+//   admin REST + GQL. R2 private vault via R2StorageService.
+// - Zero new deps.
 import { Module } from '@nestjs/common';
-@Module({})
-export class KycModuleModule {}
+import { PrismaService } from '../../infra/database/prisma.service';
+import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
+import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
+import { KycEncryptionService } from './services/kyc-encryption.service';
+import { BankValidationService } from './services/bank-validation.service';
+import { DopaLaserAdapter } from './adapters/dopa-laser.adapter';
+import { OcrEngineAdapter } from './adapters/ocr-engine.adapter';
+import { OcrVisionAdapter } from './infra/ocr-vision.adapter';
+import { R2PrivateVaultClient } from './infra/r2-private-vault.client';
+import { KycOcrService } from './services/kyc-ocr.service';
+import { KycQueueService } from './services/kyc-queue.service';
+import { LogOnlyKycNotify, KycNotificationService } from './services/kyc-notification.service';
+import { KycVerificationService, PrismaKycStore } from './services/kyc-verification.service';
+import { KycSubmissionController } from './controllers/kyc-submission.controller';
+import { KycAdminController } from './controllers/kyc-admin.controller';
+import { KycResolver } from './resolvers/kyc.resolver';
+
+@Module({
+  controllers: [KycSubmissionController, KycAdminController],
+  providers: [
+    KycEncryptionService,
+    BankValidationService,
+    DopaLaserAdapter,
+    OcrEngineAdapter,
+    OcrVisionAdapter,
+    R2PrivateVaultClient,
+    KycOcrService,
+    KycQueueService,
+    LogOnlyKycNotify,
+    KycNotificationService,
+    PrismaKycStore,
+    {
+      provide: KycVerificationService,
+      useFactory: (
+        store: PrismaKycStore,
+        prisma: PrismaService,
+        encryption: KycEncryptionService,
+        bank: BankValidationService,
+        ocr: KycOcrService,
+        queue: KycQueueService,
+      ) =>
+        new KycVerificationService(
+          store,
+          { run: <T>(fn: (tx: unknown) => Promise<T>) => prisma.$transaction((tx) => fn(tx)) },
+          encryption,
+          bank,
+          ocr,
+          queue,
+        ),
+      inject: [PrismaKycStore, PrismaService, KycEncryptionService, BankValidationService, KycOcrService, KycQueueService],
+    },
+    {
+      provide: KycResolver,
+      useFactory: (kyc: KycVerificationService, vault: R2PrivateVaultClient) =>
+        new KycResolver(kyc, vault),
+      inject: [KycVerificationService, R2PrivateVaultClient],
+    },
+  ],
+  exports: [KycVerificationService, PrismaKycStore, KycEncryptionService],
+})
+export class KycModule {}
