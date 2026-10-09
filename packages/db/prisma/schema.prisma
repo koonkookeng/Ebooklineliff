@@ -193,6 +193,8 @@ model User {
   // Atomic Phase 093: IRT adaptive profile (per subject) + quiz responses
   adaptiveProfiles     UserAdaptiveProfile[]
   quizResponses        AdaptiveQuizResponse[]
+  // Atomic Phase 094: creator co-pilot jobs
+  copilotJobs          AiCoPilotJob[]
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -1380,6 +1382,82 @@ model AdaptiveQuizResponse {
   @@index([questionId])
 }
 
+// Atomic Phase 094 §4.1: AI creator co-pilot segment (schema.md canonical).
+// RISK_CALL: job status uses the 4-state core lifecycle; sub-phases ride
+// progressPercent bands (see jobPhase helper). STT is adapter-driven;
+// caption files live on R2 (vault path only in DB, Gate 6).
+enum AiJobType {
+  COURSE_OUTLINE_GEN
+  VIDEO_TRANSCRIBE
+  AUTO_QUIZ_GEN
+  CAPTION_TRANSLATION
+}
+
+enum AiJobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model AiCoPilotJob {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobType         AiJobType
+  status          AiJobStatus @default(QUEUED)
+  progressPercent Int         @default(0)
+  inputPayload    Json
+  resultData      Json?
+  errorMessage    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model VideoSubtitle {
+  id           String            @id @default(uuid())
+  lessonId     String            @unique
+  lesson       CourseLesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  language     String            @default("TH")
+  vttStorageR2 String
+  srtStorageR2 String
+  segments     SubtitleSegment[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([lessonId])
+}
+
+model SubtitleSegment {
+  id              String        @id @default(uuid())
+  videoSubtitleId String
+  videoSubtitle   VideoSubtitle @relation(fields: [videoSubtitleId], references: [id], onDelete: Cascade)
+  segmentIndex    Int
+  startTimeSec    Float
+  endTimeSec      Float
+  textContent     String
+  translatedJson  Json?
+  createdAt       DateTime      @default(now())
+
+  @@index([videoSubtitleId, segmentIndex])
+}
+
+model AiGeneratedQuiz {
+  id          String       @id @default(uuid())
+  lessonId    String
+  lesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  question    String
+  optionsJson Json
+  answerIndex Int
+  explanation String
+  createdAt   DateTime     @default(now())
+
+  @@index([lessonId])
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1915,6 +1993,9 @@ model CourseLesson {
   notes              LessonNote[]
   // Atomic Phase 093: IRT adaptive question items for this lesson
   adaptiveItems      AdaptiveQuestionItem[]
+  // Atomic Phase 094: co-pilot subtitles + generated quizzes for this lesson
+  videoSubtitles     VideoSubtitle[]
+  generatedQuizzes   AiGeneratedQuiz[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

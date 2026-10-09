@@ -1,0 +1,59 @@
+# SSOT Phase 094 Task 2 — AI co-pilot intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/ai-copilot.graphql
+# Runtime is code-first (modules/ai-copilot/resolvers/ai-copilot.resolver.ts).
+
+type OutlineLesson {
+  lessonTitle: String!
+  outcome: String!
+}
+
+type OutlineSection {
+  sectionTitle: String!
+  lessons: [OutlineLesson!]!
+}
+
+type OutlinePayload {
+  jobId: ID!
+  sections: [OutlineSection!]!
+}
+
+type TranscribePayload {
+  jobId: ID!
+  queued: Int!
+}
+
+type CopilotJobStatus {
+  jobId: ID!
+  status: String!
+  progressPercentage: Int!
+  errorMessage: String
+}
+
+type GeneratedQuizItem {
+  question: String!
+  options: [String!]!
+  correctOptionIndex: Int!
+  explanation: String!
+}
+
+type GeneratedQuizPayload {
+  saved: Int!
+  questions: [GeneratedQuizItem!]!
+}
+
+input CourseOutlinePromptInput {
+  topic: String!
+  targetAudience: String!
+  difficultyLevel: String!
+  numberOfSections: Int
+}
+
+type Query {
+  copilotJobStatus(jobId: ID!): CopilotJobStatus!
+}
+
+type Mutation {
+  generateCourseOutline(input: CourseOutlinePromptInput!): OutlinePayload!
+  transcribeLessonVideo(lessonId: ID!, transcriptText: String!, durationSec: Float!): TranscribePayload!
+  generateLessonQuiz(lessonId: ID!, transcriptText: String!): GeneratedQuizPayload!
+}

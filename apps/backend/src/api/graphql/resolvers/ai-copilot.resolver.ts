@@ -1,11 +1,2 @@
-/**
- * AUTO-SCAFFOLD Phase 094 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class AiCopilotResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 094 — Legacy GQL alias (canonical lives in modules/ai-copilot)
+export { AiCopilotResolver } from '../../../modules/ai-copilot/resolvers/ai-copilot.resolver';
