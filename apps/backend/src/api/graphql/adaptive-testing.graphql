@@ -1,0 +1,32 @@
+# SSOT Phase 093 Task 2 — Adaptive testing intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/adaptive-testing.graphql
+# Runtime is code-first (modules/adaptive-testing/api/graphql/adaptive-testing.resolver.ts).
+
+type AdaptiveOption {
+  id: String!
+  text: String!
+}
+
+type AdaptiveNextQuestion {
+  questionId: ID!
+  questionText: String!
+  options: [AdaptiveOption!]!
+  currentTheta: Float!
+  estimatedMasteryPercent: Float!
+  isTestCompleted: Boolean!
+}
+
+input AdaptiveSubmitAnswerInput {
+  lessonId: ID!
+  questionId: ID!
+  selectedOptionId: String!
+  responseTimeMs: Int!
+}
+
+type Query {
+  adaptiveNextQuestion(lessonId: ID!): AdaptiveNextQuestion!
+}
+
+type Mutation {
+  submitAdaptiveAnswer(input: AdaptiveSubmitAnswerInput!): AdaptiveNextQuestion!
+}

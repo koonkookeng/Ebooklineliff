@@ -190,6 +190,9 @@ model User {
   // Atomic Phase 092: AI chat sessions + learning insight (1:1)
   aiChatSessions       AiChatSession[]
   learningInsight      UserLearningInsight?
+  // Atomic Phase 093: IRT adaptive profile (per subject) + quiz responses
+  adaptiveProfiles     UserAdaptiveProfile[]
+  quizResponses        AdaptiveQuizResponse[]
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -1327,6 +1330,56 @@ model UserLearningInsight {
   updatedAt          DateTime @updatedAt
 }
 
+// Atomic Phase 093 §4: IRT adaptive testing segment (schema.md canonical).
+// 3PL item params (a/b/c) + per-subject theta profile + response ledger.
+// Theta updates persist under Prisma atomic transactions (Gate 7).
+model AdaptiveQuestionItem {
+  id             String                 @id @default(uuid())
+  lessonId       String
+  lesson         CourseLesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questionText   String                 @db.Text
+  optionsJson    Json
+  correctOption  String
+  difficulty     Float                  @default(0.0)
+  discrimination Float                  @default(1.0)
+  pseudoGuessing Float                  @default(0.0)
+  responses      AdaptiveQuizResponse[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([lessonId])
+  @@index([difficulty])
+}
+
+model UserAdaptiveProfile {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectContext String
+  theta          Float    @default(0.0)
+  standardError  Float    @default(1.0)
+  totalQuestions Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, subjectContext])
+}
+
+model AdaptiveQuizResponse {
+  id             String               @id @default(uuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       AdaptiveQuestionItem @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption String
+  isCorrect      Boolean
+  responseTimeMs Int
+  thetaAfter     Float
+  createdAt      DateTime             @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1860,6 +1913,8 @@ model CourseLesson {
   spriteSheets       VideoSpriteSheet[]
   // Atomic Phase 065: in-video timestamped lesson notes
   notes              LessonNote[]
+  // Atomic Phase 093: IRT adaptive question items for this lesson
+  adaptiveItems      AdaptiveQuestionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

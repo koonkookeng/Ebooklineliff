@@ -1986,3 +1986,26 @@ export type {
   AdaptiveQuiz,
   QuizLevel,
 } from './schemas/ai-companion-contract';
+export {
+  AdaptiveSubmitAnswerSchema,
+  AdaptiveOptionSchema,
+  AdaptiveNextQuestionSchema,
+  ADAPTIVE_MAX_ITEMS,
+  ADAPTIVE_SE_THRESHOLD,
+  ADAPTIVE_CALC_BUDGET_MS,
+  THETA_MIN,
+  THETA_MAX,
+  ADAPTIVE_STREAM,
+  irtProbability,
+  irtInformation,
+  thetaStep,
+  thetaStandardError,
+  masteryPercent,
+  selectNextItem,
+} from './schemas/adaptive-testing-contract';
+export type {
+  AdaptiveSubmitAnswer,
+  AdaptiveOption,
+  AdaptiveNextQuestion,
+  ItemParams,
+} from './schemas/adaptive-testing-contract';
