@@ -112,6 +112,9 @@ model User {
   socialNotes       SocialNote[]
   noteReactions     SocialNoteReaction[]
   ownedStudyGroups  StudyGroup[] @relation("OwnedStudyGroups")
+  // Atomic Phase 096: squad memberships + point ledger
+  squadMemberships  SquadMember[]
+  pointTransactions PointTransaction[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -2097,6 +2100,96 @@ model SocialNoteReaction {
   type   String     @default("LIKE")
 
   @@unique([noteId, userId])
+}
+
+// Atomic Phase 096 §4.1: study squads + points + challenges (schema.md canonical).
+// RISK_CALL: totalPoints is Int (not BigInt — bigint breaks JSON transport;
+// Redis scores are floats anyway). Badge models reuse Phase 083
+// Badge/UserBadge (no duplicate badge tables).
+enum SquadMemberRole {
+  LEADER
+  CO_LEADER
+  MEMBER
+}
+
+enum PointActivityType {
+  EBOOK_PAGE_READ
+  LESSON_WATCHED
+  QUIZ_PASSED
+  DAILY_CHECKIN
+  SQUAD_CHALLENGE_COMPLETED
+  REFERRAL_BONUS
+}
+
+model StudySquad {
+  id            String           @id @default(uuid())
+  tenantId      String?
+  name          String
+  slug          String           @unique @default(uuid())
+  description   String?          @db.Text
+  avatarUrl     String?
+  squadCode     String           @unique @default(uuid())
+  maxMembers    Int              @default(5)
+  totalPoints   Int              @default(0)
+  isPrivate     Boolean          @default(false)
+  squadLeaderId String
+
+  members       SquadMember[]
+  challenges    SquadChallenge[]
+  pointLogs     PointTransaction[]
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([squadCode])
+  @@index([totalPoints(sort: Desc)])
+}
+
+model SquadMember {
+  id                String          @id @default(uuid())
+  squadId           String
+  squad             StudySquad      @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role              SquadMemberRole @default(MEMBER)
+  pointsContributed Int             @default(0)
+  joinedAt          DateTime        @default(now())
+
+  @@unique([squadId, userId])
+  @@index([userId])
+  @@index([squadId])
+}
+
+model PointTransaction {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  squadId      String?
+  squad        StudySquad?       @relation(fields: [squadId], references: [id], onDelete: SetNull)
+  activityType PointActivityType
+  pointsEarned Int
+  multiplier   Float             @default(1.0)
+  metadataJson Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@index([squadId])
+}
+
+model SquadChallenge {
+  id            String     @id @default(uuid())
+  squadId       String
+  squad         StudySquad @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  title         String
+  targetPoints  Int
+  currentPoints Int        @default(0)
+  rewardPoints  Int
+  isCompleted   Boolean    @default(false)
+  endDate       DateTime
+  createdAt     DateTime   @default(now())
+
+  @@index([squadId])
 }
 
 model BundleItem {

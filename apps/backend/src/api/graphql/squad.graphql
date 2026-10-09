@@ -1,0 +1,83 @@
+# SSOT Phase 096 — Squad + leaderboard intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/squad.graphql
+# Runtime is code-first (modules/squad/squad.resolver.ts,
+# modules/gamification/presentation/graphql/squad-points.resolver.ts,
+# modules/leaderboard/leaderboard.resolver.ts).
+
+type SquadMemberPayload {
+  userId: ID!
+  displayName: String!
+  role: String!
+  pointsContributed: Int!
+  joinedAt: String!
+}
+
+type StudySquadPayload {
+  id: ID!
+  name: String!
+  description: String
+  squadCode: String!
+  totalPoints: Int!
+  memberCount: Int!
+  maxMembers: Int!
+  members: [SquadMemberPayload!]!
+}
+
+type CreateSquadPayload {
+  squadId: ID!
+  squadCode: String!
+  flexMessageJson: String!
+  inviteUrl: String!
+}
+
+type LeaderboardEntryPayload {
+  rank: Int!
+  entityId: ID!
+  displayName: String!
+  avatarUrl: String
+  score: Int!
+  isCurrentUser: Boolean!
+}
+
+type PointClaimResultPayload {
+  success: Boolean!
+  pointsEarned: Int!
+  newTotalPoints: Int!
+  squadBonusEarned: Int!
+}
+
+type SquadChallengePayload {
+  id: ID!
+  title: String!
+  targetPoints: Int!
+  rewardPoints: Int!
+}
+
+input CreateSquadInput {
+  name: String!
+  description: String
+  maxMembers: Int
+  isPrivate: Boolean
+}
+
+input ClaimPointInput {
+  activityType: String!
+  referenceId: ID!
+  dwellTimeSec: Int!
+  signatureNonce: String!
+  squadId: ID
+}
+
+type Query {
+  getSquadDetails(squadId: ID!): StudySquadPayload
+  getMyStudySquad: StudySquadPayload
+  getLeaderboard(scope: String!, timeframe: String!, limit: Int): [LeaderboardEntryPayload!]!
+}
+
+type Mutation {
+  createStudySquad(input: CreateSquadInput!): CreateSquadPayload!
+  joinStudySquad(squadCode: String!): StudySquadPayload!
+  leaveStudySquad(squadId: ID!): Boolean!
+  claimGamificationPoints(input: ClaimPointInput!): PointClaimResultPayload!
+  createSquadChallenge(squadId: ID!, targetPoints: Int!, title: String!): SquadChallengePayload!
+}

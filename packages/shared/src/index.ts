@@ -2041,6 +2041,35 @@ export type {
   CaptionCue,
 } from './schemas/ai-copilot-contract';
 export {
+  SquadMemberRoleEnum,
+  PointActivityTypeEnum,
+  LeaderboardTimeframeEnum,
+  LeaderboardScopeEnum,
+  CreateSquadInputSchema,
+  ClaimPointInputSchema,
+  SquadLeaderboardEntrySchema,
+  POINT_TABLE,
+  MIN_DWELL_SEC,
+  CLAIM_VELOCITY_LIMIT,
+  CLAIM_VELOCITY_WINDOW_SEC,
+  CLAIM_NONCE_TTL_SEC,
+  SQUAD_STREAM,
+  pointsFor,
+  velocityExceeded,
+  leaderboardKey,
+  squadInviteUrl,
+  squadCode,
+} from './schemas/squad-gamification.zod';
+export type {
+  SquadMemberRole,
+  PointActivityType,
+  LeaderboardTimeframe,
+  LeaderboardScope,
+  CreateSquadInput,
+  ClaimPointInput,
+  SquadLeaderboardEntry,
+} from './schemas/squad-gamification.zod';
+export {
   // Aliased: lesson-note.schema.ts (065) already owns `NoteVisibilityEnum` /
   // `NoteVisibility` (3-value lesson scope); the 095 social lattice
   // (5-value page scope) rides Social-prefixed barrel names.

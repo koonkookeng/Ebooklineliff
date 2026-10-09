@@ -177,6 +177,20 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.zincrby(key, increment, member);
   }
 
+  // Phase 096 §5.2 — leaderboard slices: ZREVRANGE WITHSCORES shaped pairs.
+  async zrevrangeWithScores(key: string, start: number, stop: number): Promise<Array<{ member: string; score: number }>> {
+    const raw = (await (this.client as unknown as {
+      zrevrange(k: string, s: number, e: number, w: string): Promise<string[]>;
+    }).zrevrange(key, start, stop, 'WITHSCORES').catch(() => [])) as string[];
+    const out: Array<{ member: string; score: number }> = [];
+    for (let i = 0; i + 1 < raw.length; i += 2) {
+      const member = raw[i];
+      const score = raw[i + 1];
+      if (member !== undefined && score !== undefined) out.push({ member, score: Number(score) });
+    }
+    return out;
+  }
+
   // Phase 046 §8.1 — fixed-window rate-limit counter (additive)
   async incr(key: string): Promise<number> {
     return await this.client.incr(key);

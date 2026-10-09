@@ -428,14 +428,16 @@ function sectionParity(): void {
     const src = readFileSync(f, 'utf8');
     assert.ok(!src.includes('TODO') && !src.includes('placeholder'), `${f} unimplemented`);
   }
-  // 096-owned squad files stay scaffolds for their phase.
+  // 096 landed (Phase 096 DONE): former scaffolds are implemented — parity
+  // flipped from reservation to completion (064 precedent: parity updated).
   for (const f of [
     'apps/backend/src/modules/gamification/services/point-engine.service.ts',
     'apps/backend/src/modules/gamification/services/anti-cheat.guard.ts',
     'apps/backend/src/modules/gamification/application/subscribers/learning-event.subscriber.ts',
     'apps/backend/src/modules/gamification/events/study-activity.listener.ts',
   ]) {
-    assert.ok(readFileSync(f, 'utf8').includes('AUTO-SCAFFOLD'), `${f} must stay 096-owned`);
+    const src096 = readFileSync(f, 'utf8');
+    assert.ok(!src096.includes('AUTO-SCAFFOLD') && !src096.includes('placeholder'), `${f} 096 unimplemented`);
   }
   const mod = readFileSync('apps/backend/src/modules/gamification/gamification.module.ts', 'utf8');
   assert.ok(mod.includes('GamificationModule') && mod.includes('DailyCheckinUseCase') && mod.includes('RedeemRewardUseCase'));
@@ -473,7 +475,7 @@ function sectionParity(): void {
   }
   const barrel = readFileSync('packages/shared/src/index.ts', 'utf8');
   assert.ok(barrel.includes('gamification-contract') && barrel.includes('RewardRedemptionInputSchema'));
-  ok('Parity: module/GQL/SDL/hub/proxies/barrel (5-state, offline, zero-dep; 096 untouched)');
+  ok('Parity: module/GQL/SDL/hub/proxies/barrel (5-state, offline, zero-dep; 096 landed)');
 }
 
 async function main(): Promise<void> {
