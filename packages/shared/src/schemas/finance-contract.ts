@@ -36,6 +36,10 @@ export const FinancePayoutStatusEnum = z.enum([
   'SUCCESS',
   'FAILED',
   'REJECTED',
+  // Atomic Phase 086: bank-clearing lifecycle (additive; 081 rows unaffected).
+  // REQUESTED ≡ PENDING_APPROVAL at creation (single canonical record).
+  'PENDING_APPROVAL',
+  'FAILED_BANK_TRANSFER',
 ]);
 export type FinancePayoutStatus = z.infer<typeof FinancePayoutStatusEnum>;
 

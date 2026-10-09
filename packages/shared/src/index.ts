@@ -1816,3 +1816,20 @@ export type {
   KYCOcrResponse,
   KYCApprovalAction,
 } from './schemas/kyc-contract';
+export {
+  PayoutRequestPayloadSchema,
+  PayoutCalculationSchema,
+  BankPayoutCallbackSchema,
+  BankDispatchStatusEnum,
+  PAYOUT_CLEARING_STREAM,
+  clearingBatchNo,
+  signBankPayload,
+  verifyBankPayload,
+  payoutHoldKey,
+} from './schemas/payout-clearing.schema';
+export type {
+  PayoutRequestPayload,
+  PayoutCalculation,
+  BankPayoutCallback,
+  BankDispatchStatus,
+} from './schemas/payout-clearing.schema';

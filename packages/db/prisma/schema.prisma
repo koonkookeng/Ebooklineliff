@@ -114,6 +114,8 @@ model User {
   deviceSessions    UserDeviceSession[]
   // Atomic Phase 017: internal wallet (Meb-Killer Credits, bonus-first debit)
   wallets           Wallet[]
+  // Atomic Phase 086: payout-hold audit rows (clearing trail)
+  walletLedgers     WalletLedger[] @relation("ClearingAudit")
   // Atomic Phase 022: device viewport/safe-area metrics (async analytics, nullable user)
   userDeviceMetrics UserDeviceMetric[]
   // Atomic Phase 026: viral share logs + referral attributions
@@ -440,6 +442,9 @@ enum PayoutStatus {
   PROCESSING_BANK
   SUCCESS
   FAILED
+  // Atomic Phase 086: clearing lifecycle (BDD-1 PENDING_APPROVAL, BDD-2 FAILED_BANK_TRANSFER)
+  PENDING_APPROVAL
+  FAILED_BANK_TRANSFER
 }
 
 // Atomic Phase 081: double-entry vocabulary (schema.md canonical).
@@ -798,6 +803,11 @@ model PayoutTransaction {
   status               PayoutStatus @default(REQUESTED)
   bankAccountDetail    Json?
   withholdingTaxRecord WithholdingTaxRecord?
+  // Atomic Phase 086: human payout number (nullable for pre-086 rows; fixes
+  // an 081 latent bug where the repo wrote payoutNo with no column).
+  payoutNo             String?         @unique
+  // Atomic Phase 086: bank batch reference (callback replay key).
+  transRef             String?         @unique
   processedAt       DateTime?
   createdAt         DateTime        @default(now())
 
@@ -805,6 +815,8 @@ model PayoutTransaction {
   @@index([payoutStatus])
   @@index([userId])
   @@index([status])
+  @@index([payoutNo])
+  @@index([transRef])
 }
 
 // Atomic Phase 081 §4.1: double-entry ledger segment (schema.md canonical).
@@ -2341,19 +2353,27 @@ model Wallet {
 
 model WalletLedger {
   id           String     @id @default(uuid())
-  walletId     String
-  wallet       Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  type         LedgerType
+  walletId     String?
+  wallet       Wallet?    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type         LedgerType?
   amount       Decimal    @db.Decimal(12, 2)
   balanceAfter Decimal    @db.Decimal(12, 2)
-  description  String
+  description  String     @default("")
   referenceId  String?
   createdById  String?
+  // Atomic Phase 086: clearing-audit columns (additive; 017 rows unaffected).
+  // The double-entry book stays in 081 LedgerEntry — these columns are the
+  // payout hold/deduct/refund trail (PAYOUT_LOCK/PAYOUT_DEDUCT/REFUND_RELEASE).
+  userId          String?
+  user            User?    @relation("ClearingAudit", fields: [userId], references: [id], onDelete: Cascade)
+  balanceBefore   Decimal? @db.Decimal(12, 2)
+  transactionType String?
   createdAt    DateTime   @default(now())
 
   @@index([walletId])
   @@index([referenceId])
   @@index([createdAt])
+  @@index([userId])
 }
 
 // Atomic Phase 019 §4.1: transactional LINE receipts (log + notification records only —

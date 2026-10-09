@@ -1,0 +1,38 @@
+# SSOT Phase 086 — Payout clearing intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/payout.graphql
+# Runtime is code-first (modules/payout/resolvers/payout.resolver.ts).
+# NOTE: requestPayout is owned by the finance module (081) — this module
+# exposes requestSellerPayout to avoid a field collision.
+
+type SellerPayoutPayload {
+  success: Boolean!
+  payoutId: ID!
+  grossAmount: Float!
+  taxAmount: Float!
+  netAmount: Float!
+  status: String!
+}
+
+type ClearingBatchPayload {
+  batchNo: String!
+  cleared: [ID!]!
+  transRef: String!
+}
+
+type ClearingQueueItem {
+  id: ID!
+  userId: ID!
+  grossAmount: Float!
+  netTransferAmount: Float!
+  status: String!
+}
+
+type Query {
+  clearingQueue: [ClearingQueueItem!]!
+  clearingQueueCount: Int!
+}
+
+type Mutation {
+  requestSellerPayout(amount: Float!, bankAccountId: ID!, remark: String): SellerPayoutPayload!
+  approveClearingBatch(payoutIds: [ID!]!): ClearingBatchPayload!
+}
