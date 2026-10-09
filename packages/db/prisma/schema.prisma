@@ -108,6 +108,10 @@ model User {
   drmOfflineLeases      DrmOfflineLease[]
   // Atomic Phase 065: in-video timestamped lesson notes
   notes             LessonNote[]
+  // Atomic Phase 095: social margin notes + reactions + owned study groups
+  socialNotes       SocialNote[]
+  noteReactions     SocialNoteReaction[]
+  ownedStudyGroups  StudyGroup[] @relation("OwnedStudyGroups")
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -1726,6 +1730,8 @@ model EbookDetail {
   // Atomic Phase 041: reader bookmarks + highlights (cascade with the book)
   bookmarks      EbookBookmark[]
   highlights     EbookHighlight[]
+  // Atomic Phase 095: social margin notes (cascade with the book)
+  socialNotes    SocialNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2004,10 +2010,21 @@ model CourseLesson {
 }
 
 // Atomic Phase 065: in-video lesson note engine (timestamp-linked notes).
+// Atomic Phase 095: union with social lattice (FRIENDS, AUTHOR_OFFICIAL).
 enum NoteVisibility {
   PRIVATE
   STUDY_GROUP
   PUBLIC
+  FRIENDS
+  AUTHOR_OFFICIAL
+}
+
+// Atomic Phase 095 §4: social note types (page-anchored margin notes).
+enum NoteType {
+  MARGIN_TEXT
+  TEXT_HIGHLIGHT
+  VOICE_SNIPPET
+  QUESTION_THREAD
 }
 
 model LessonNote {
@@ -2030,6 +2047,56 @@ model LessonNote {
   @@index([userId, courseId])
   @@index([lessonId, timestampSec])
   @@index([visibility])
+}
+
+// Atomic Phase 095 §4: social reading segment (schema.md canonical).
+// RISK_CALL: StudyGroup carries memberIds String[] (spec lists owner-only;
+// members are required for the STUDY_GROUP privacy gate, Gate 4).
+model SocialNote {
+  id           String         @id @default(uuid())
+  ebookId      String
+  ebook        EbookDetail    @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pageNumber   Int
+  positionX    Float
+  positionY    Float
+  selectedText String?        @db.Text
+  content      String         @db.Text
+  visibility   NoteVisibility @default(PUBLIC)
+  noteType     NoteType       @default(MARGIN_TEXT)
+  studyGroupId String?
+  studyGroup   StudyGroup?    @relation(fields: [studyGroupId], references: [id], onDelete: SetNull)
+  likesCount   Int            @default(0)
+
+  reactions    SocialNoteReaction[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([ebookId, pageNumber])
+  @@index([userId])
+  @@index([visibility])
+}
+
+model StudyGroup {
+  id          String       @id @default(uuid())
+  name        String
+  ownerId     String
+  owner       User         @relation("OwnedStudyGroups", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberIds   String[]     @default([])
+  socialNotes SocialNote[]
+  createdAt   DateTime     @default(now())
+}
+
+model SocialNoteReaction {
+  id     String     @id @default(uuid())
+  noteId String
+  note   SocialNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  userId String
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   String     @default("LIKE")
+
+  @@unique([noteId, userId])
 }
 
 model BundleItem {

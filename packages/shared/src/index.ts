@@ -2040,3 +2040,23 @@ export type {
   OutlineSection,
   CaptionCue,
 } from './schemas/ai-copilot-contract';
+export {
+  // Aliased: lesson-note.schema.ts (065) already owns `NoteVisibilityEnum` /
+  // `NoteVisibility` (3-value lesson scope); the 095 social lattice
+  // (5-value page scope) rides Social-prefixed barrel names.
+  NoteVisibilityEnum as SocialNoteVisibilityEnum,
+  NoteTypeEnum as SocialNoteTypeEnum,
+  CreateMarginNoteSchema,
+  MarginNotePayloadSchema,
+  SOCIAL_STREAM,
+  socialPageKey,
+  notePinColor,
+  canViewNote,
+  isAuthorNote,
+} from './schemas/social-reading.schema';
+export type {
+  NoteVisibility as SocialNoteVisibility,
+  NoteType as SocialNoteType,
+  CreateMarginNote,
+  MarginNotePayload,
+} from './schemas/social-reading.schema';

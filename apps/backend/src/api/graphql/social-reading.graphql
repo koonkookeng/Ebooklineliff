@@ -1,0 +1,46 @@
+# SSOT Phase 095 Task 2 — Social reading intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/social-reading.graphql
+# Runtime is code-first (modules/social-reading/presentation/graphql/social-reading.resolver.ts).
+
+type MarginNote {
+  id: ID!
+  userDisplayName: String!
+  userAvatarUrl: String
+  isAuthorNote: Boolean!
+  pageNumber: Int!
+  positionX: Float!
+  positionY: Float!
+  content: String!
+  likesCount: Int!
+}
+
+type CreateNotePayload {
+  noteId: ID!
+  flexMessageJson: String!
+}
+
+type LikeNotePayload {
+  liked: Boolean!
+  likesCount: Int!
+}
+
+input CreateMarginNoteInput {
+  ebookId: ID!
+  pageNumber: Int!
+  positionX: Float!
+  positionY: Float!
+  selectedText: String
+  content: String!
+  visibility: String!
+  noteType: String!
+  studyGroupId: ID
+}
+
+type Query {
+  pageSocialNotes(ebookId: ID!, pageNumber: Int!): [MarginNote!]!
+}
+
+type Mutation {
+  createMarginNote(input: CreateMarginNoteInput!): CreateNotePayload!
+  toggleLikeNote(noteId: ID!, ebookId: ID!, pageNumber: Int!): LikeNotePayload!
+}

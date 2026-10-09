@@ -1,11 +1,2 @@
-/**
- * AUTO-SCAFFOLD Phase 095 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class SocialReadingResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 095 — Legacy GQL alias (canonical lives in modules/social-reading)
+export { SocialReadingResolver } from '../../../modules/social-reading/presentation/graphql/social-reading.resolver';
