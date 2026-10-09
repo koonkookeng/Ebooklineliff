@@ -2254,3 +2254,30 @@ export type {
   BotQueryInput,
   AIResponsePayload,
 } from './schemas/support-ticket-contract';
+
+export {
+  RecommendationReasonTypeEnum,
+  RecommendationAlgorithmEnum,
+  InteractionEventTypeEnum,
+  TrackInteractionEventSchema,
+  RecommendationItemSchema,
+  RecommendationSlatePayloadSchema,
+  COLD_START_INTERACTION_THRESHOLD,
+  SLATE_TTL_SEC,
+  SLATE_DEFAULT_LIMIT,
+  REC_LATENCY_BUDGET_MS,
+  REC_RAM_BUDGET_MB,
+  REC_EMBEDDING_DIMS,
+  REC_RATE_LIMIT_PER_MIN,
+  recSlateCacheKey,
+  recEventStreamKey,
+  recRateLimitKey,
+} from './schemas/recommendation.contract';
+export type {
+  RecommendationReasonType,
+  RecommendationAlgorithm,
+  InteractionEventType,
+  TrackInteractionEvent,
+  RecommendationItem,
+  RecommendationSlatePayload,
+} from './schemas/recommendation.contract';

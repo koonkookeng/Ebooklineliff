@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 104 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class RecommendationResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 104 — api-layer resolver alias (no logic duplication).
+// Canonical: apps/backend/src/api/graphql/recommendation.resolver.ts
+// (legacy src/backend/api/graphql/recommendation.resolver.ts)
+// - Single implementation lives in modules/recommendation/resolvers.
+export { RecommendationResolver } from '../../modules/recommendation/resolvers/recommendation.resolver';

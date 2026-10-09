@@ -127,6 +127,10 @@ model User {
   liveHandRaises    LiveHandRaise[]
   // Atomic Phase 103: helpdesk tickets + bot history
   supportTickets    SupportTicket[]
+  // Atomic Phase 104: preference profile + interaction/slate logs
+  preferenceProfile UserPreferenceProfile?
+  interactionLogs   UserInteractionLog[]
+  slateLogs         RecommendationSlateLog[]
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -1670,6 +1674,10 @@ model Product {
   liveSessions      LiveSession[]
   // Atomic Phase 091: pgvector content embeddings for this product
   contentVectors    ContentVectorEmbedding[]
+  // Atomic Phase 104: rec embedding row + interaction/slate logs
+  recEmbedding      ProductEmbedding?
+  interactionLogs   UserInteractionLog[]
+  slateLogs         RecommendationSlateLog[]
   // Atomic Phase 092: AI companion chat sessions for this product
   aiChatSessions    AiChatSession[]
   // Atomic Phase 042: watermark seed issuance per product
@@ -2648,6 +2656,80 @@ model AIBotConversationHistory {
   createdAt DateTime @default(now())
 
   @@index([userId, sessionId])
+}
+
+// Atomic Phase 104 §4.1: hybrid AI recommendation segment (schema.md canonical).
+enum InteractionType {
+  ITEM_VIEW
+  READING_DWELL_TIME
+  VIDEO_WATCH_PROGRESS
+  ADD_TO_CART
+  PURCHASE_COMPLETED
+  FLEX_SHARE_CLICK
+}
+
+enum RecommendationReasonType {
+  BASED_ON_READING_HISTORY
+  BASED_ON_COURSE_COMPLETION
+  VECTOR_SIMILARITY_MATCH
+  COLLABORATIVE_USER_ALSO_BOUGHT
+  TRENDING_IN_CATEGORY
+  COLD_START_ONBOARDING
+}
+
+model UserPreferenceProfile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredCategories Json
+  priceSensitivity    Float    @default(0.5)
+  embedding           Unsupported("vector(768)")?
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ProductEmbedding {
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  embedding   Unsupported("vector(768)")
+  summaryText String   @db.Text
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model UserInteractionLog {
+  id                 String          @id @default(uuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  eventType          InteractionType
+  dwellTimeSec       Int?            @default(0)
+  progressPercentage Float?          @default(0.0)
+  createdAt          DateTime        @default(now())
+
+  @@index([userId, eventType])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model RecommendationSlateLog {
+  id             String                   @id @default(uuid())
+  userId         String
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  positionIndex  Int
+  reasonType     RecommendationReasonType
+  isClicked      Boolean                  @default(false)
+  isPurchased    Boolean                  @default(false)
+  createdAt      DateTime                 @default(now())
+
+  @@index([userId])
+  @@index([productId])
 }
 
 // Atomic Phase 100 §4.1: room entitlement gatekeeper segment (schema.md canonical).
