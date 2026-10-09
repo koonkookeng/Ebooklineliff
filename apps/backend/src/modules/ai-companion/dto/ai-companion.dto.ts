@@ -1,8 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 092 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 092 §5.1 — AI companion DTOs (legacy path re-exports SSOT)
+// Canonical: apps/backend/src/modules/ai-companion/dto/ai-companion.dto.ts
+// - Single source stays in @repo/shared; this file only re-exports.
+export {
+  AiContextSourceEnum,
+  AiSummaryRequestSchema,
+  AiChatQuerySchema,
+  AiChatResponseSchema,
+  AdaptiveQuizSchema,
+  QuizLevelEnum,
+} from '@repo/shared';

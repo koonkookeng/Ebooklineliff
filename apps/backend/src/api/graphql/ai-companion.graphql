@@ -1,0 +1,76 @@
+# SSOT Phase 092 — AI companion intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/ai-companion.graphql
+# Runtime is code-first (modules/ai-companion/resolvers/ai-companion.resolver.ts).
+
+type AiCitation {
+  pageNumber: Int
+  timestampSec: Int
+  snippetText: String!
+}
+
+type AiChatResponse {
+  sessionId: ID!
+  messageId: ID!
+  answerMarkdown: String!
+  citations: [AiCitation!]!
+  tokenUsed: Int!
+}
+
+type AiChatMessageItem {
+  messageId: ID!
+  sender: String!
+  content: String!
+  createdAt: String!
+}
+
+type AiSummaryPayload {
+  summary: String!
+  citations: [AiCitation!]!
+}
+
+type AdaptiveQuizQuestionPublic {
+  questionId: String!
+  prompt: String!
+  options: [String!]!
+  explanation: String!
+}
+
+type AdaptiveQuizPayload {
+  quizId: ID!
+  lessonId: ID!
+  level: String!
+  questions: [AdaptiveQuizQuestionPublic!]!
+}
+
+type AdaptiveQuizResult {
+  score: Int!
+  correct: Int!
+  total: Int!
+  nextLevel: String!
+}
+
+input AiChatQueryInput {
+  sessionId: ID
+  productId: ID!
+  userQuestion: String!
+  currentPage: Int
+  currentLessonSec: Int
+}
+
+input AiSummaryInput {
+  productId: ID!
+  sourceType: String!
+  targetPage: Int
+  lessonId: ID
+}
+
+type Query {
+  aiChatHistory(sessionId: ID!): [AiChatMessageItem!]!
+}
+
+type Mutation {
+  askAiCompanion(input: AiChatQueryInput!): AiChatResponse!
+  summarizeContent(input: AiSummaryInput!): AiSummaryPayload
+  generateAdaptiveQuiz(lessonId: ID!, chunks: [String!]!): AdaptiveQuizPayload!
+  submitAdaptiveQuiz(quizId: ID!, lessonId: ID!, answers: [Int!]!): AdaptiveQuizResult!
+}

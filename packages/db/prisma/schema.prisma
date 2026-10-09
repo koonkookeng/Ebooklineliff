@@ -187,6 +187,9 @@ model User {
   // Atomic Phase 090: created group-buy rooms + memberships
   createdGroupRooms    GroupBuyingRoom[] @relation("CreatedGroupRooms")
   groupMemberships     GroupBuyingMember[]
+  // Atomic Phase 092: AI chat sessions + learning insight (1:1)
+  aiChatSessions       AiChatSession[]
+  learningInsight      UserLearningInsight?
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -1282,6 +1285,48 @@ model ContentVectorEmbedding {
   @@index([sourceType, sourceId])
 }
 
+// Atomic Phase 092 §4: AI companion segment (schema.md canonical).
+// RISK_CALL: vector storage reuses Phase 091 ContentVectorEmbedding — no
+// ContentVectorChunk duplicate table. Chat history + insight persist under
+// Prisma atomic transactions (Gate 7).
+model AiChatSession {
+  id           String          @id @default(uuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  messages     AiChatMessage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([userId, productId])
+}
+
+model AiChatMessage {
+  id               String        @id @default(uuid())
+  sessionId        String
+  session          AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender           String
+  content          String        @db.Text
+  citationsJson    Json?
+  promptTokens     Int           @default(0)
+  completionTokens Int           @default(0)
+  createdAt        DateTime      @default(now())
+
+  @@index([sessionId])
+}
+
+model UserLearningInsight {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comprehensionRate  Float    @default(0.0)
+  weakTopicsJson     Json     @default("[]")
+  strengthTopicsJson Json     @default("[]")
+  adaptedQuizLevel   String   @default("MEDIUM")
+  updatedAt          DateTime @updatedAt
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1468,6 +1513,8 @@ model Product {
   groupRooms        GroupBuyingRoom[]
   // Atomic Phase 091: pgvector content embeddings for this product
   contentVectors    ContentVectorEmbedding[]
+  // Atomic Phase 092: AI companion chat sessions for this product
+  aiChatSessions    AiChatSession[]
   // Atomic Phase 042: watermark seed issuance per product
   watermarkSeeds WatermarkSeedLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
