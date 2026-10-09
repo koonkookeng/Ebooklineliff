@@ -1880,3 +1880,25 @@ export type {
   DiscountBreakdown,
   StackLineInput,
 } from './schemas/promotion.schema';
+export {
+  GiftStatusEnum,
+  GreetingThemeEnum,
+  CreateGiftOrderInputSchema,
+  ClaimGiftPayloadSchema,
+  GiftDetailResponseSchema,
+  GIFT_DEFAULT_EXPIRY_DAYS,
+  GIFT_STREAM,
+  giftClaimCode,
+  giftExpiryAt,
+  canClaim,
+  giftKFactor,
+  giftClaimUrl,
+  giftClaimLockKey,
+} from './schemas/gift-contract';
+export type {
+  GiftStatus,
+  GreetingTheme,
+  CreateGiftOrderInput,
+  ClaimGiftPayload,
+  GiftDetailResponse,
+} from './schemas/gift-contract';

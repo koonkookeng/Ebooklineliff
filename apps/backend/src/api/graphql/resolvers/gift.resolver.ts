@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 089 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class GiftResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 089 Task 4 — legacy alias (canonical lives in modules/gift)
+// Canonical: apps/backend/src/api/graphql/resolvers/gift.resolver.ts
+// Re-export only (078–088 precedent); registered once via GiftModule.
+export { GiftResolver } from '../../../modules/gift/api/graphql/gift.resolver';

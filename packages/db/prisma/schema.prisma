@@ -181,6 +181,9 @@ model User {
   stockReservations    StockReservation[]
   // Atomic Phase 088: coupon redemptions
   couponRedemptions    CouponRedemption[]
+  // Atomic Phase 089: sent/received gifts
+  sentGifts            GiftOrder[] @relation("SentGifts")
+  receivedGifts        GiftOrder[] @relation("ReceivedGifts")
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -1127,6 +1130,57 @@ model PointRedemptionRule {
   updatedAt         DateTime @updatedAt
 }
 
+// Atomic Phase 089 §4.1: gift center segment (schema.md canonical).
+// RISK_CALL: orderId is NULLABLE (gift precedes sender payment; bound at
+// checkout — payment core untouched). claimCode is human-readable
+// GIFT-<base36>-<rand4>, still @unique.
+enum GiftStatus {
+  PENDING_PAYMENT
+  READY_TO_CLAIM
+  CLAIMED
+  EXPIRED_REVERTED
+  CANCELLED_REFUNDED
+}
+
+enum GreetingTheme {
+  BIRTHDAY_CELEBRATION
+  NEW_YEAR_GOALS
+  CONGRATULATIONS
+  THANK_YOU
+  CUSTOM_BRANDED
+}
+
+model GiftOrder {
+  id                String          @id @default(uuid())
+  orderId           String?         @unique
+  order             Order?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderUserId      String
+  senderUser        User            @relation("SentGifts", fields: [senderUserId], references: [id])
+  recipientUserId   String?
+  recipientUser     User?           @relation("ReceivedGifts", fields: [recipientUserId], references: [id])
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id])
+
+  claimCode         String          @unique
+  status            GiftStatus      @default(PENDING_PAYMENT)
+  greetingTheme     GreetingTheme   @default(BIRTHDAY_CELEBRATION)
+  greetingMessage   String          @db.Text
+  senderDisplayName String
+  isAnonymous       Boolean         @default(false)
+
+  expiresAt         DateTime
+  claimedAt         DateTime?
+  revertedAt        DateTime?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([claimCode])
+  @@index([senderUserId])
+  @@index([recipientUserId])
+  @@index([status])
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1306,6 +1360,8 @@ model Product {
   shareEvents    ShareEvent[]
   // Atomic Phase 087: flash sale items
   flashSaleItems    FlashSaleItem[]
+  // Atomic Phase 089: gift orders for this product
+  giftOrders        GiftOrder[]
   // Atomic Phase 042: watermark seed issuance per product
   watermarkSeeds WatermarkSeedLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
@@ -1818,6 +1874,8 @@ model Order {
   commissionLogs       CommissionLog[]
   // Atomic Phase 088: coupon redemptions against this order
   couponRedemptions    CouponRedemption[]
+  // Atomic Phase 089: gift wrapper for this order (sender checkout bind)
+  giftOrder            GiftOrder?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 

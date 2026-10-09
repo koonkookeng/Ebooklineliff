@@ -1,0 +1,59 @@
+# SSOT Phase 089 Task 4 — Gift intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/gift.graphql
+# Runtime is code-first (modules/gift/api/graphql/gift.resolver.ts).
+
+type GiftDetail {
+  giftId: ID!
+  claimCode: String!
+  status: String!
+  productTitle: String!
+  productCoverUrl: String!
+  productType: String!
+  senderName: String!
+  greetingTheme: String!
+  greetingMessage: String!
+  expiresAt: String!
+  claimedAt: String
+  recipientName: String
+}
+
+type CreateGiftPayload {
+  giftId: ID!
+  claimCode: String!
+  flexMessageJson: String!
+  claimUrl: String!
+  expiresAt: String!
+}
+
+type ClaimGiftResult {
+  success: Boolean!
+  message: String!
+  productId: ID
+}
+
+type GiftKFactor {
+  sent: Int!
+  claimed: Int!
+  kFactor: Float!
+}
+
+input CreateGiftOrderInput {
+  productId: ID!
+  greetingTheme: String!
+  greetingMessage: String!
+  senderDisplayName: String!
+  isAnonymous: Boolean
+  expiryDays: Int
+}
+
+type Query {
+  giftDetail(claimCode: String!): GiftDetail
+  mySentGifts: [GiftDetail!]!
+  giftKFactor: GiftKFactor!
+}
+
+type Mutation {
+  createGiftOrder(input: CreateGiftOrderInput!): CreateGiftPayload!
+  claimGiftEntitlement(claimCode: String!): ClaimGiftResult!
+  bindGiftPayment(giftId: ID!, orderId: ID!): Boolean!
+}

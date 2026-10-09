@@ -1,6 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 089 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 089 §7 — Gift domain events (stream vocabulary)
+// Canonical: apps/backend/src/modules/gift/domain/events/gift-expired.event.ts
+export const GIFT_EXPIRED_EVENT = 'gift.expired';
+
+export interface GiftExpiredEvent {
+  event: typeof GIFT_EXPIRED_EVENT;
+  giftId: string;
+  senderUserId: string;
+  productId: string;
+  at: number;
+}
