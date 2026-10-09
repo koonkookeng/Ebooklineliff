@@ -1,0 +1,54 @@
+# SSOT Phase 088 §3.2 — Promotion intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schema/promotion.graphql
+# Runtime is code-first (modules/promotion/resolvers/promotion.resolver.ts).
+
+type AppliedCouponDetail {
+  code: String!
+  title: String!
+  discountAmount: Float!
+}
+
+type DiscountCalculationResult {
+  subtotal: Float!
+  shopCouponDiscount: Float!
+  shippingFeeOriginal: Float!
+  shippingDiscount: Float!
+  pointsDiscount: Float!
+  pointsRedeemed: Int!
+  netAmount: Float!
+  appliedShopCoupon: AppliedCouponDetail
+  appliedFreeShippingCoupon: AppliedCouponDetail
+  isSuccess: Boolean!
+  errorMessage: String
+}
+
+type CouponScheme {
+  code: String!
+  title: String!
+  couponType: String!
+  discountValue: Float!
+}
+
+input OrderItemInput {
+  productId: ID!
+  price: Float!
+  quantity: Int!
+}
+
+input CalculateStackableDiscountInput {
+  cartId: ID!
+  shopCouponCode: String
+  freeShippingCouponCode: String
+  redeemPoints: Int
+  orderItems: [OrderItemInput!]!
+  shippingFee: Float
+}
+
+extend type Query {
+  getEligibleCoupons(subtotal: Float!): [CouponScheme!]!
+  getUserPointBalance: Int!
+}
+
+extend type Mutation {
+  calculateStackableDiscount(input: CalculateStackableDiscountInput!): DiscountCalculationResult!
+}

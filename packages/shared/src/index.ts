@@ -1856,3 +1856,27 @@ export type {
   ReserveStockInput,
   ReserveStockResponse,
 } from './schemas/flash-sale-contract';
+export {
+  DiscountTypeEnum,
+  DiscountTargetEnum,
+  ApplyCouponInputSchema,
+  DiscountBreakdownSchema,
+  POINTS_PER_THB,
+  POINTS_MIN_REDEEM,
+  POINTS_MAX_PCT,
+  COUPON_TRY_LIMIT,
+  COUPON_TRY_WINDOW_SEC,
+  PROMOTION_STREAM,
+  stackDiscounts,
+  isCouponLive,
+  quotaLeft,
+  couponLockKey,
+  couponTryKey,
+} from './schemas/promotion.schema';
+export type {
+  DiscountType,
+  DiscountTarget,
+  ApplyCouponInput,
+  DiscountBreakdown,
+  StackLineInput,
+} from './schemas/promotion.schema';

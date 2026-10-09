@@ -179,6 +179,8 @@ model User {
   redemptions          RewardRedemption[]
   // Atomic Phase 087: flash stock reservations
   stockReservations    StockReservation[]
+  // Atomic Phase 088: coupon redemptions
+  couponRedemptions    CouponRedemption[]
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -1048,6 +1050,83 @@ model MerchantAnalyticsDaily {
   @@index([tenantId])
 }
 
+// Atomic Phase 088 §4.1: stackable coupon segment (088 spec set; the
+// schema.md union with 117 values lands additively in 117).
+enum CouponType {
+  FIXED_AMOUNT
+  PERCENTAGE
+  FREE_SHIPPING
+}
+
+enum CouponScope {
+  GLOBAL
+  TENANT_SPECIFIC
+  PRODUCT_SPECIFIC
+  CATEGORY_SPECIFIC
+}
+
+model Coupon {
+  id                String              @id @default(uuid())
+  tenantId          String?
+  code              String              @unique
+  title             String
+  description       String?             @db.Text
+  couponType        CouponType
+  scope             CouponScope         @default(GLOBAL)
+  discountValue     Decimal             @db.Decimal(10, 2)
+  maxDiscountAmount Decimal?            @db.Decimal(10, 2)
+  minOrderAmount    Decimal             @default(0.00) @db.Decimal(10, 2)
+  totalQuota        Int
+  usedQuota         Int                 @default(0)
+  perUserLimit      Int                 @default(1)
+  startAt           DateTime
+  expireAt          DateTime
+  isActive          Boolean             @default(true)
+
+  targetProducts    CouponTargetProduct[]
+  redemptions       CouponRedemption[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([code])
+  @@index([tenantId])
+  @@index([isActive, startAt, expireAt])
+}
+
+model CouponTargetProduct {
+  id        String   @id @default(uuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([couponId, productId])
+}
+
+model CouponRedemption {
+  id         String   @id @default(uuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  discounted Decimal  @db.Decimal(10, 2)
+  redeemedAt DateTime @default(now())
+
+  @@index([userId, couponId])
+  @@index([orderId])
+}
+
+model PointRedemptionRule {
+  id                String   @id @default(uuid())
+  pointsPerThb      Int      @default(10)
+  minPointsToRedeem Int      @default(100)
+  maxPointsPercent  Decimal  @default(50.00) @db.Decimal(5, 2)
+  updatedAt         DateTime @updatedAt
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1737,6 +1816,8 @@ model Order {
   shipments            Shipment[]
   // Atomic Phase 079: multi-tier commission ledger
   commissionLogs       CommissionLog[]
+  // Atomic Phase 088: coupon redemptions against this order
+  couponRedemptions    CouponRedemption[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 

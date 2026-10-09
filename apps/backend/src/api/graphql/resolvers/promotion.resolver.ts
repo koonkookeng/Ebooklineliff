@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 088 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class PromotionResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 088 §3.2 — legacy alias (canonical lives in modules/promotion)
+// Canonical: apps/backend/src/api/graphql/resolvers/promotion.resolver.ts
+// Re-export only (078–087 precedent); registered once via PromotionModule.
+export { PromotionResolver } from '../../../modules/promotion/resolvers/promotion.resolver';
