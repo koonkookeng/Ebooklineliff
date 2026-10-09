@@ -1,0 +1,21 @@
+# SSOT Phase 107 §3 — PII vault GraphQL intent SDL (code-first parity)
+type PiiPolicyPayload {
+  tenantId: String!
+  role: String!
+  canUnmask: Boolean!
+  maxUnmasksPerDay: Int!
+}
+
+type UnmaskResultPayload {
+  plainText: String!
+  expiresInSec: Int!
+}
+
+extend type Query {
+  piiPolicy(tenantId: ID!, role: String!): PiiPolicyPayload!
+}
+
+extend type Mutation {
+  upsertUserPii(userId: ID!, phone: String, bankAccount: String, idCard: String): Boolean!
+  requestUnmaskPiiField(targetUserId: ID!, fieldType: String!, reason: String!): UnmaskResultPayload!
+}

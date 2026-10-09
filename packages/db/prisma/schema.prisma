@@ -134,6 +134,8 @@ model User {
   // Atomic Phase 106: granular RBAC assignments + security audit trail
   tenantRoleAssignments UserTenantRole[]
   securityAuditLogs     SecurityAuditLog[]
+  // Atomic Phase 107: field-level encrypted PII vault (1:1, blind-index search)
+  piiVault              UserPII?
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -4796,4 +4798,70 @@ model SecurityAuditLog {
 
   @@index([userId, timestamp])
   @@index([tenantId, action])
+}
+
+// Atomic Phase 107 §4.1: PDPA Data Scope Control + Field-Level Encryption segment
+// (additive expand-contract; plaintext NEVER persists — AES-256-GCM JSON envelopes
+// in UserPII + HMAC blind indexes for exact-match search without decryption).
+enum DataScopeRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  COMPLIANCE_OFFICER
+  SUPPORT_STAFF
+  FULFILLMENT_OPERATOR
+  MEMBER
+}
+
+enum SensitiveFieldType {
+  PHONE_NUMBER
+  BANK_ACCOUNT
+  NATIONAL_ID
+  TAX_ID
+  STREET_ADDRESS
+  EMAIL_ADDRESS
+}
+
+model UserPII {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  encryptedPhone       Json?
+  encryptedBankAccount Json?
+  encryptedIdCard      Json?
+  phoneHash            String?  @unique
+  bankAccountHash      String?  @unique
+  idCardHash           String?  @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([phoneHash])
+  @@index([idCardHash])
+}
+
+model PIIAccessAuditLog {
+  id           String             @id @default(uuid())
+  actorUserId  String
+  targetUserId String
+  fieldType    SensitiveFieldType
+  accessScope  DataScopeRole
+  actionReason String
+  ipAddress    String
+  userAgent    String
+  accessedAt   DateTime           @default(now())
+
+  @@index([actorUserId])
+  @@index([targetUserId])
+  @@index([accessedAt])
+}
+
+model DataScopePolicy {
+  id              String        @id @default(uuid())
+  tenantId        String
+  role            DataScopeRole
+  canUnmask       Boolean       @default(false)
+  maxUnmasksPerDay Int          @default(50)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([tenantId, role])
 }

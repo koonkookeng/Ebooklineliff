@@ -2336,3 +2336,33 @@ export type {
   EvaluatePermissionInput,
   TokenIntrospectionResponse,
 } from './schemas/permission-matrix.schema';
+export {
+  SensitiveFieldTypeEnum,
+  DataScopeLevelEnum,
+  DataScopeRoleEnum,
+  EncryptedFieldSchema,
+  MaskedUserPayloadSchema,
+  UnmaskRequestSchema,
+  PII_MASK_BUDGET_MS,
+  PII_UNMASK_TTL_SEC,
+  PII_UNMASK_MAX_PER_DAY,
+  PII_AUDIT_STREAM,
+  PII_LIFF_RAM_MB,
+  piiAuditKey,
+  blindIndex,
+  maskPhone,
+  maskBankAccount,
+  maskIdCard,
+  maskEmail,
+  maskAddress,
+  maskByFieldType,
+  isUnmaskedRole,
+} from './schemas/pdpa-scope.schema';
+export type {
+  SensitiveFieldType,
+  DataScopeLevel,
+  DataScopeRole,
+  EncryptedField,
+  MaskedUserPayload,
+  UnmaskRequest,
+} from './schemas/pdpa-scope.schema';
