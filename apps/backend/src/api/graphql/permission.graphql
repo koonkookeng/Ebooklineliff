@@ -1,0 +1,28 @@
+# SSOT Phase 106 §3.2 — Permission Matrix GraphQL intent SDL (code-first parity)
+type BitwisePermissionMatrix {
+  roleId: ID!
+  roleName: String!
+  tenantId: ID!
+  permissionBitmask: String!
+  grantedScopes: [String!]!
+  updatedAt: String!
+}
+
+type PermissionEvaluationResult {
+  allowed: Boolean!
+  missingBits: String!
+  missingScopes: [String!]!
+  evaluatedInMs: Float!
+}
+
+extend type Query {
+  getTenantRoleMatrix(tenantId: ID!, roleId: ID!): BitwisePermissionMatrix!
+  evaluateUserAccess(tenantId: ID!, requiredBitmask: String!, requiredScope: String!): PermissionEvaluationResult!
+  inspectActiveJwtScopes: [String!]!
+}
+
+extend type Mutation {
+  updateRoleBitwiseMatrix(tenantId: ID!, roleId: ID!, bitmask: String!, scopes: [String!]!): BitwisePermissionMatrix!
+  revokeJwtScope(jti: ID!, reason: String!): Boolean!
+  issueScopedTemporaryToken(targetTenantId: ID!, requestedScopes: [String!]!, ttlSeconds: Int): String!
+}

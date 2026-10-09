@@ -1,6 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 Task 4 — RevokeJwtScopeCommand (JTI blacklist intent, <1s fan-out)
+export interface RevokeJwtScopeCommand {
+  jti: string;
+  userId: string;
+  reason: string;
+  ttlSeconds?: number;
+}

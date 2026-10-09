@@ -1,6 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 §5.1 — ScopeAccessDeniedException (403 + audit context)
+import { ForbiddenException } from '@nestjs/common';
+
+export class ScopeAccessDeniedException extends ForbiddenException {
+  constructor(message = 'Access Denied: Required Scope Mismatch') {
+    super(message);
+    this.name = 'ScopeAccessDeniedException';
+  }
+}

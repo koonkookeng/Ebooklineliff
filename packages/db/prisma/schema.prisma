@@ -131,6 +131,9 @@ model User {
   preferenceProfile UserPreferenceProfile?
   interactionLogs   UserInteractionLog[]
   slateLogs         RecommendationSlateLog[]
+  // Atomic Phase 106: granular RBAC assignments + security audit trail
+  tenantRoleAssignments UserTenantRole[]
+  securityAuditLogs     SecurityAuditLog[]
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -4724,4 +4727,73 @@ model HandshakeToken {
   createdAt      DateTime @default(now())
 
   @@index([handshakeToken])
+}
+
+// Atomic Phase 106 §4.1: Granular Bitwise Permission Matrix + JWT Scope engine
+// (additive expand-contract; BigInt masks ride Decimal(39,0) for 128-bit proofing).
+model SecurityRole {
+  id              String              @id @default(uuid())
+  tenantId        String
+  name            String
+  description     String?
+  bitwiseMask     Decimal             @default(0) @db.Decimal(39, 0)
+  scopes          RoleScopeRegistry[]
+  userAssignments UserTenantRole[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model RoleScopeRegistry {
+  id           String       @id @default(uuid())
+  roleId       String
+  role         SecurityRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  scopePattern String
+  createdAt    DateTime     @default(now())
+
+  @@index([roleId])
+  @@index([scopePattern])
+}
+
+model UserTenantRole {
+  id         String       @id @default(uuid())
+  userId     String
+  tenantId   String
+  roleId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       SecurityRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  customMask Decimal?     @db.Decimal(39, 0)
+  createdAt  DateTime     @default(now())
+
+  @@unique([userId, tenantId, roleId])
+  @@index([userId, tenantId])
+}
+
+model RevocationBlacklist {
+  jti       String   @id
+  userId    String
+  reason    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model SecurityAuditLog {
+  id             String   @id @default(uuid())
+  tenantId       String?
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action         String
+  requiredScope  String?
+  providedScopes String[]
+  granted        Boolean
+  ipAddress      String   @default("unknown")
+  userAgent      String   @default("Unknown")
+  timestamp      DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([tenantId, action])
 }

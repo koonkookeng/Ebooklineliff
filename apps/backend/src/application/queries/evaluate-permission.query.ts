@@ -1,6 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 Task 5 — EvaluatePermissionQuery (BDD Scenario 1+2 intent)
+export interface EvaluatePermissionQuery {
+  userId: string;
+  tenantId: string;
+  userBitmask: string;
+  userScopes: string[];
+  requiredBitmask: string;
+  requiredScopes: string[];
+}

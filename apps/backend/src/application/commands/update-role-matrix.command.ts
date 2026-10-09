@@ -1,6 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 Task 5 — UpdateRoleMatrixCommand (CQRS intent, Zod-gated by controller)
+export interface UpdateRoleMatrixCommand {
+  tenantId: string;
+  roleId: string;
+  bitmask: string;
+  scopes: string[];
+  actorUserId: string;
+  ipAddress?: string;
+  userAgent?: string;
+}

@@ -1,6 +1,9 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 §5.1 — InvalidBitmaskException (fail-fast Zod/domain boundary)
+import { BadRequestException } from '@nestjs/common';
+
+export class InvalidBitmaskException extends BadRequestException {
+  constructor(message = 'Invalid permission bitmask') {
+    super(message);
+    this.name = 'InvalidBitmaskException';
+  }
+}

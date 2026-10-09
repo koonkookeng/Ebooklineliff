@@ -1,6 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 106 Task 5 — GetRoleMatrixQuery (tenant-scoped read intent)
+export interface GetRoleMatrixQuery {
+  tenantId: string;
+  roleId: string;
+}

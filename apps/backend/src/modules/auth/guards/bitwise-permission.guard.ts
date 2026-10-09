@@ -1,10 +1,2 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — NestJS guard
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-@Injectable()
-export class BitwisePermissionGuardGuard implements CanActivate {
-  canActivate(_ctx: ExecutionContext): boolean { return true; }
-}
+// SSOT Phase 106 Task 3 — module guard re-exports (single logic point in presentation/)
+export { BitwisePermissionGuard } from '../../../presentation/guards/bitwise-permission.guard';

@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 106 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class PermissionResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 106 — api-layer resolver alias (no logic duplication).
+// Canonical: apps/backend/src/api/graphql/resolvers/permission.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/permission.resolver.ts)
+// - Single implementation lives in modules/security-matrix/security-matrix.resolver.
+export { SecurityMatrixResolver as PermissionResolver } from '../../../modules/security-matrix/security-matrix.resolver';
