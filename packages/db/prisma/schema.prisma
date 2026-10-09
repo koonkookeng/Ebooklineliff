@@ -119,6 +119,10 @@ model User {
   corporateSeats    CorporateSeat[]
   // Atomic Phase 098: HR organization seat (1-1 optional back-relation)
   b2bSeat           B2BCorporateSeat?
+  // Atomic Phase 099: instructed live sessions + chat/vote rows
+  liveSessions      LiveSession[] @relation("InstructorSessions")
+  liveChatMessages  LiveChatMessage[]
+  livePollVotes     LivePollVote[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -1655,6 +1659,8 @@ model Product {
   groupRooms        GroupBuyingRoom[]
   // Atomic Phase 097: corporate license pools for this product
   corporateLicenses CorporateLicense[]
+  // Atomic Phase 099: live class sessions paywalled by this product
+  liveSessions      LiveSession[]
   // Atomic Phase 091: pgvector content embeddings for this product
   contentVectors    ContentVectorEmbedding[]
   // Atomic Phase 092: AI companion chat sessions for this product
@@ -2338,6 +2344,132 @@ model B2BQuizAttempt {
 
   @@index([seatId])
   @@index([courseId])
+}
+
+// Atomic Phase 099 §4.1: ultra-low latency live segment (schema.md canonical
+// union with 101 chat vocabulary — TEXT/LINE_STICKER used by 099 BDD-2;
+// ANNOUNCEMENT/PRODUCT_PIN/SYSTEM_EVENT reserved for 101).
+// RISK_CALL: no aws-sdk/socket.io (zero-dep rule) — playback rides native
+// video + HMAC short-lived tokens (§5.2 deviation documented in live module);
+// chat rides SSE+REST (057 transport precedent, 101 gateway untouched).
+enum LiveStreamVendor {
+  WEBRTC_NATIVE
+  AMAZON_IVS
+  CLOUDFLARE_STREAM_LIVE
+  HLS_LOW_LATENCY
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  STARTING
+  LIVE
+  PAUSED
+  ENDED
+  ARCHIVED
+}
+
+enum LiveMessageType {
+  TEXT
+  LINE_STICKER
+  ANNOUNCEMENT
+  PRODUCT_PIN
+  SYSTEM_EVENT
+}
+
+model LiveSession {
+  id               String            @id @default(uuid())
+  productId        String?
+  product          Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+  instructorId     String
+  instructor       User              @relation("InstructorSessions", fields: [instructorId], references: [id])
+  title            String
+  description      String            @db.Text
+  coverImageUrl    String
+  vendor           LiveStreamVendor  @default(AMAZON_IVS)
+  status           LiveSessionStatus @default(SCHEDULED)
+  streamKey        String            @unique
+  playbackArn      String?
+  scheduledAt      DateTime
+  startedAt        DateTime?
+  endedAt          DateTime?
+  peakViewers      Int               @default(0)
+
+  chatMessages     LiveChatMessage[]
+  polls            LivePoll[]
+  vodRecord        LiveToVodRecord?
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([productId])
+  @@index([instructorId])
+  @@index([status])
+}
+
+model LiveChatMessage {
+  id               String          @id @default(uuid())
+  sessionId        String
+  session          LiveSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messageType      LiveMessageType @default(TEXT)
+  content          String          @db.Text
+  stickerPackageId String?
+  stickerId        String?
+  isPinned         Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
+}
+
+model LivePoll {
+  id          String           @id @default(uuid())
+  sessionId   String
+  session     LiveSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question    String           @db.Text
+  isActive    Boolean          @default(true)
+  expiresAt   DateTime?
+  options     LivePollOption[]
+  votes       LivePollVote[]
+  createdAt   DateTime         @default(now())
+
+  @@index([sessionId, isActive])
+}
+
+model LivePollOption {
+  id        String         @id @default(uuid())
+  pollId    String
+  poll      LivePoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text      String
+  votes     LivePollVote[]
+
+  @@index([pollId])
+}
+
+model LivePollVote {
+  id        String         @id @default(uuid())
+  pollId    String
+  poll      LivePoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    LivePollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([pollId, userId])
+  @@index([pollId, optionId])
+}
+
+model LiveToVodRecord {
+  id            String      @id @default(uuid())
+  sessionId     String      @unique
+  session       LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  storagePathR2 String
+  hlsMasterUrl  String
+  durationSec   Int         @default(0)
+  fileSizeBytes BigInt      @default(0)
+  createdAt     DateTime    @default(now())
 }
 
 model BundleItem {
