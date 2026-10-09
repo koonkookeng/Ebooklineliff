@@ -1,8 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 084 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 084 §5.1 — Abandoned cart DTOs (thin transport; Zod owns validation)
+// Canonical: apps/backend/src/modules/messaging/dto/abandoned-cart.dto.ts
+// - Zero new deps.
+export interface MarkAbandonedDto {
+  cartId: string;
+}
+
+export interface RecoverCartDto {
+  recoveryToken: string;
+}

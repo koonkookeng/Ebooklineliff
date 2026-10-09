@@ -2169,8 +2169,10 @@ model Cart {
   abandonedAt    DateTime?
   recoveredAt    DateTime?
   items          CartItem[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  // Atomic Phase 084: recovery message ledger (owns AbandonedCartLog).
+  logs           AbandonedCartLog[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([userId])
   @@index([status, lastActivityAt])
@@ -2184,12 +2186,53 @@ model CartItem {
   product      Product  @relation(fields: [productId], references: [id])
   quantity     Int      @default(1)
   itemCategory String   @default("DIGITAL") // "DIGITAL" or "PHYSICAL"
+  // Atomic Phase 084: unit price snapshot at add-time (additive; totals fall
+  // back to the live Product price when null).
+  price        Decimal? @db.Decimal(10, 2)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@unique([cartId, productId])
   @@index([cartId])
   @@index([productId])
+}
+
+// Atomic Phase 084 §4.1: behavioral messaging segment (schema.md canonical).
+enum NotificationStep {
+  STEP_1_15_MIN
+  STEP_2_3_HOURS
+}
+
+model AbandonedCartLog {
+  id             String           @id @default(uuid())
+  cartId         String
+  cart           Cart             @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  step           NotificationStep
+  sentAt         DateTime         @default(now())
+  lineMessageId  String?
+  couponCode     String?
+  isClicked      Boolean          @default(false)
+  clickedAt      DateTime?
+
+  createdAt      DateTime         @default(now())
+
+  @@index([cartId])
+  @@index([step])
+}
+
+model BehavioralCampaign {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  isActive      Boolean  @default(true)
+  delayMinutes  Int      @default(15)
+  discountType  String   @default("PERCENTAGE")
+  discountValue Decimal  @default(10.00) @db.Decimal(10, 2)
+  flexTemplate  Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, isActive])
 }
 
 model ShippingRateTable {

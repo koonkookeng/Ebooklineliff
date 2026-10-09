@@ -1,0 +1,51 @@
+# SSOT Phase 084 §3.2 — Behavioral messaging intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/messaging/messaging.graphql
+# Runtime is code-first (modules/messaging/resolvers/abandoned-cart.resolver.ts).
+
+enum AbandonedCartStatus {
+  ACTIVE
+  ABANDONED
+  RECOVERED
+  EXPIRED
+}
+
+type AbandonedCartItem {
+  productId: ID!
+  title: String!
+  coverImageUrl: String!
+  price: Float!
+  quantity: Int!
+}
+
+type AbandonedCartSession {
+  cartId: ID!
+  userId: ID!
+  status: AbandonedCartStatus!
+  items: [AbandonedCartItem!]!
+  totalAmount: Float!
+  discountAmount: Float
+  recoveryCouponCode: String
+  expiresAt: String
+}
+
+type RecoveryPayload {
+  success: Boolean!
+  message: String!
+  cartSession: AbandonedCartSession
+}
+
+type AbandonedCartAnalyticsPayload {
+  totalAbandonedCount: Int!
+  recoveredCount: Int!
+  recoveredRevenue: Float!
+  recoveryRatePercentage: Float!
+}
+
+extend type Query {
+  getAbandonedCartAnalytics(tenantId: ID!): AbandonedCartAnalyticsPayload!
+}
+
+extend type Mutation {
+  markCartAsAbandoned(cartId: ID!): Boolean!
+  recoverAbandonedCart(recoveryToken: String!): RecoveryPayload!
+}
