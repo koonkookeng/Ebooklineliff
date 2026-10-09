@@ -41,12 +41,30 @@ import { LiveGatekeeperService, type GateCache } from './live-gatekeeper.service
 import { LiveStreamGateway } from './live-stream.gateway';
 import { LiveStreamResolver } from '../../api/graphql/live-stream.resolver';
 import { PrismaLiveGatekeeperRepository } from './services/live-gatekeeper.repository';
+// Phase 102: VOD pipeline (ledger + FIFO worker + lesson attach + webhook).
+import { LiveStreamWebhookController } from '../../api/webhooks/live-stream-webhook.controller';
+import { StreamResolver } from '../../api/graphql/resolvers/stream.resolver';
+import { LiveToVodService, type VodEvents } from './application/live-to-vod.service';
+import { TranscodeProcessorWorker } from './application/transcode-processor.worker';
+import { VodSummaryService } from './application/vod-summary.service';
+import { PrismaVodJobRepository } from './application/vod-job.repository';
+import { FfmpegTranscoderAdapter } from './infrastructure/ffmpeg-transcoder.adapter';
+import { R2VaultStorageAdapter } from './infrastructure/r2-vault-storage.adapter';
+import { LessonService } from '../course/lesson.service';
+
+function vodEventsOf(redis: RedisClusterService): VodEvents {
+  return {
+    xaddPipeline: (s: string, b: Array<Record<string, string | number>>) => redis.xaddPipeline(s, b),
+    set: (k: string, v: string, ...a: Array<string | number>) => redis.set(k, v, ...a),
+    get: (k: string) => redis.get(k),
+  };
+}
 
 const execAsync = promisify(exec);
 
 @Module({
   imports: [R2StorageModule, ProgressModule],
-  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController, ScrubbingController, LiveAccessController],
+  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController, ScrubbingController, LiveAccessController, LiveStreamWebhookController],
   providers: [
     VideoTranscodeQueue,
     HlsSegmenterService,
@@ -153,6 +171,55 @@ const execAsync = promisify(exec);
       provide: LiveStreamResolver,
       useFactory: (gate: LiveGatekeeperService): LiveStreamResolver => new LiveStreamResolver(gate),
       inject: [LiveGatekeeperService],
+    },
+    // ---- Phase 102 VOD pipeline (ledger + FIFO + lesson attach) ----
+    PrismaVodJobRepository,
+    FfmpegTranscoderAdapter,
+    VodSummaryService,
+    LessonService,
+    {
+      provide: R2VaultStorageAdapter,
+      useFactory: (vault: R2StorageService): R2VaultStorageAdapter =>
+        new R2VaultStorageAdapter(vault as never),
+      inject: [R2StorageService],
+    },
+    {
+      provide: TranscodeProcessorWorker,
+      useFactory: (
+        ledger: PrismaVodJobRepository,
+        vault: R2VaultStorageAdapter,
+        ffmpeg: FFmpegTranscoderService,
+        lessons: LessonService,
+        summary: VodSummaryService,
+        redis: RedisClusterService,
+      ): TranscodeProcessorWorker =>
+        new TranscodeProcessorWorker(
+          ledger,
+          vault,
+          ffmpeg,
+          lessons,
+          summary,
+          {
+            // BDD-1 LINE step: enrolled-student broadcast rides the 084
+            // campaign lane; the worker's live.vod.ready stream event (below)
+            // is the reliable instant fan-out. Best-effort hook kept here.
+            notifyVodReady: async () => undefined,
+          },
+          vodEventsOf(redis),
+        ),
+      inject: [PrismaVodJobRepository, R2VaultStorageAdapter, FFmpegTranscoderService, LessonService, VodSummaryService, RedisClusterService],
+    },
+    {
+      provide: LiveToVodService,
+      useFactory: (ledger: PrismaVodJobRepository, queue: VideoTranscodeQueue, redis: RedisClusterService, worker: TranscodeProcessorWorker): LiveToVodService =>
+        new LiveToVodService(ledger, queue, vodEventsOf(redis), (job) => worker.run(job)),
+      inject: [PrismaVodJobRepository, VideoTranscodeQueue, RedisClusterService, TranscodeProcessorWorker],
+    },
+    {
+      provide: StreamResolver,
+      useFactory: (pipeline: LiveToVodService, worker: TranscodeProcessorWorker, lessons: LessonService): StreamResolver =>
+        new StreamResolver(pipeline, worker, lessons),
+      inject: [LiveToVodService, TranscodeProcessorWorker, LessonService],
     },
     {
       provide: ThumbnailScrubbingService,

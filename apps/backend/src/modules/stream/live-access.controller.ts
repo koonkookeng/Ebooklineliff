@@ -10,6 +10,8 @@ import { TenantGuard } from '../../common/guards/tenant.guard';
 import { LiveEntitlementCheckSchema, HeartbeatPayloadSchema } from './dto/live-entitlement.dto';
 import { LiveGatekeeperService } from './live-gatekeeper.service';
 import { LiveStreamGateway } from './live-stream.gateway';
+import { LiveToVodService } from './application/live-to-vod.service';
+import { LessonService } from '../course/lesson.service';
 
 type LooseReq = Record<string, unknown>;
 
@@ -26,6 +28,8 @@ export class LiveAccessController {
   constructor(
     private readonly gate: LiveGatekeeperService,
     private readonly kicks: LiveStreamGateway,
+    private readonly vod: LiveToVodService,
+    private readonly lessons: LessonService,
   ) {}
 
   @Post('token')
@@ -93,5 +97,21 @@ export class LiveAccessController {
     const r = await this.gate.kickSession({ liveRoomId: roomId, userId: b.userId, reason });
     await this.kicks.emitKick(roomId, b.userId, reason);
     return r;
+  }
+
+  // Phase 102: VOD status probe for the fallback player (BDD-2 polling).
+  @Get('vod-status')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async vodStatus(@Query('lessonId') lessonId: string | undefined) {
+    if (!lessonId) throw new BadRequestException('Missing lessonId');
+    const progressPct = await this.vod.progressOf(lessonId);
+    const row = await this.lessons.findVod(lessonId).catch(() => null);
+    const ready = (row?.isLiveRecorded && row.videoHlsUrl) || progressPct >= 100;
+    return {
+      lessonId,
+      progressPct: ready ? 100 : progressPct,
+      status: ready ? 'VOD_AVAILABLE' : 'PROCESSING_VOD',
+      hlsPlaylistUrl: row?.videoHlsUrl ?? null,
+    };
   }
 }

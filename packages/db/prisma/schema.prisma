@@ -1992,6 +1992,10 @@ model CourseLesson {
   videoHlsUrl String
   durationSec Int           @default(0)
   isPreview   Boolean       @default(false)
+  // Atomic Phase 102: live-recorded VOD flags (additive; pipeline-owned)
+  isLiveRecorded Boolean  @default(false)
+  aiSummaryText  String?  @db.Text
+  liveSession    LiveSession?
   // Atomic Phase 078: studio HLS pipeline (additive; existing cols untouched)
   rawStorageKey   String?
   transcodeStatus HlsTranscodeStatus @default(PENDING)
@@ -2393,12 +2397,17 @@ model LiveSession {
   vendor           LiveStreamVendor  @default(AMAZON_IVS)
   status           LiveSessionStatus @default(SCHEDULED)
   streamKey        String            @unique
-  playbackArn      String?
+  playbackArn      String?           // For Amazon IVS
   scheduledAt      DateTime
   startedAt        DateTime?
   endedAt          DateTime?
   peakViewers      Int               @default(0)
+  // Atomic Phase 102: optional lesson binding (union with the 099 core —
+  // the 099 product-paywall path is untouched; VOD attach uses lessonId).
+  lessonId         String?           @unique
+  lesson           CourseLesson?     @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
+  // Relations
   chatMessages     LiveChatMessage[]
   polls            LivePoll[]
   vodRecord        LiveToVodRecord?
@@ -2406,6 +2415,8 @@ model LiveSession {
   // 099 session core — LivePoll.expiresAt stays optional expand-contract).
   handRaises       LiveHandRaise[]
   analytics        LiveAnalytics?
+  // Atomic Phase 102: pipeline job ledger (one active job per session).
+  transcodeJob     TranscodeJob?
 
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -2479,6 +2490,25 @@ model LiveToVodRecord {
   durationSec   Int         @default(0)
   fileSizeBytes BigInt      @default(0)
   createdAt     DateTime    @default(now())
+}
+
+// Atomic Phase 102 §4.1: pipeline job ledger (FIFO + retry + DLQ mirror).
+model TranscodeJob {
+  id              String      @id @default(uuid())
+  liveSessionId   String      @unique
+  liveSession     LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  lessonId        String
+  progressPct     Float       @default(0.0)
+  hlsManifestPath String?
+  durationSec     Int         @default(0)
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([lessonId])
+  @@index([liveSessionId])
 }
 
 // Atomic Phase 101 §4.1: interactive classroom segment (schema.md canonical).
