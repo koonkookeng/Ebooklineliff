@@ -2161,3 +2161,31 @@ export type {
   LiveChatMessagePayload,
   LivePollVote,
 } from './schemas/live-contract';
+export {
+  LiveAccessStatusEnum,
+  LiveEntitlementCheckSchema,
+  PlaybackTokenResponseSchema,
+  HeartbeatPayloadSchema,
+  KickSessionEventSchema,
+  LIVE_EPHEMERAL_TOKEN_TTL_SEC,
+  LIVE_HEARTBEAT_INTERVAL_SEC,
+  LIVE_DEVICE_TTL_SEC,
+  LIVE_EDGE_CACHE_TTL_SEC,
+  LIVE_ROOM_GATE_BUDGET_MS,
+  LIVE_KICK_BUDGET_MS,
+  LIVE_ANON_VELOCITY_MAX,
+  LIVE_KICK_CHANNEL,
+  LIVE_GATE_STREAM,
+  liveEdgeKey,
+  liveDeviceKey,
+  liveKickStreamKey,
+  liveEphemeralBody,
+  isGranted,
+} from './schemas/live-entitlement-contract';
+export type {
+  LiveAccessStatus,
+  LiveEntitlementCheck,
+  PlaybackTokenResponse,
+  HeartbeatPayload,
+  KickSessionEvent,
+} from './schemas/live-entitlement-contract';

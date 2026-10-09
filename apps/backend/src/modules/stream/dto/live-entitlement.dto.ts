@@ -1,8 +1,18 @@
-/**
- * AUTO-SCAFFOLD Phase 100 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 100 §3.1 — Live entitlement DTOs (Zod-gated boundary)
+// Canonical: apps/backend/src/modules/stream/dto/live-entitlement.dto.ts
+// - Re-exports the SSOT contract; controllers/GQL import from here so the
+//   HTTP layer never drifts from @repo/shared. Zero new deps.
+export {
+  LiveAccessStatusEnum,
+  LiveEntitlementCheckSchema,
+  PlaybackTokenResponseSchema,
+  HeartbeatPayloadSchema,
+  KickSessionEventSchema,
+} from '@repo/shared';
+export type {
+  LiveAccessStatus,
+  LiveEntitlementCheck,
+  PlaybackTokenResponse,
+  HeartbeatPayload,
+  KickSessionEvent,
+} from '@repo/shared';

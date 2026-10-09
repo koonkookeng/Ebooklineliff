@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 100 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class LiveStreamResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 100 §3.2 — module alias (single runtime in api/graphql)
+// Canonical: apps/backend/src/modules/stream/live-stream.resolver.ts
+// - Re-export only (097 alias precedent); StreamModule provides the api
+//   resolver class directly. Zero new deps.
+export { LiveStreamResolver } from '../../api/graphql/live-stream.resolver';

@@ -35,12 +35,18 @@ import { StreamPlaybackResolver } from '../../api/graphql/stream/stream.resolver
 import { ProgressModule } from './progress/progress.module';
 import { TranscodeWorkerHost } from './transcoder.worker';
 import { VideoTranscodeProcessor044 } from './workers/video-transcode.processor';
+// Phase 100: room gatekeeper (edge-first verdicts + 30s tokens + SSE kicks).
+import { LiveAccessController } from './live-access.controller';
+import { LiveGatekeeperService, type GateCache } from './live-gatekeeper.service';
+import { LiveStreamGateway } from './live-stream.gateway';
+import { LiveStreamResolver } from '../../api/graphql/live-stream.resolver';
+import { PrismaLiveGatekeeperRepository } from './services/live-gatekeeper.repository';
 
 const execAsync = promisify(exec);
 
 @Module({
   imports: [R2StorageModule, ProgressModule],
-  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController, ScrubbingController],
+  controllers: [UploadController, StreamController, StreamTranscodeController, TranscodeKeyController, ScrubbingController, LiveAccessController],
   providers: [
     VideoTranscodeQueue,
     HlsSegmenterService,
@@ -126,6 +132,28 @@ const execAsync = promisify(exec);
     StreamJobResolver,
     StreamPlaybackResolver,
     ScrubbingResolver,
+    // Phase 100 providers (port-based, tsx-importable like the rest).
+    PrismaLiveGatekeeperRepository,
+    {
+      provide: LiveGatekeeperService,
+      useFactory: (repo: PrismaLiveGatekeeperRepository, edge: RedisClusterService): LiveGatekeeperService =>
+        new LiveGatekeeperService(repo, edge as unknown as GateCache),
+      inject: [PrismaLiveGatekeeperRepository, RedisClusterService],
+    },
+    {
+      provide: LiveStreamGateway,
+      useFactory: (edge: RedisClusterService): LiveStreamGateway =>
+        new LiveStreamGateway(
+          { xaddPipeline: (s: string, b: Array<Record<string, string | number>>) => edge.xaddPipeline(s, b) },
+          edge as unknown as import('./live-stream.gateway').KickPubSub,
+        ),
+      inject: [RedisClusterService],
+    },
+    {
+      provide: LiveStreamResolver,
+      useFactory: (gate: LiveGatekeeperService): LiveStreamResolver => new LiveStreamResolver(gate),
+      inject: [LiveGatekeeperService],
+    },
     {
       provide: ThumbnailScrubbingService,
       useFactory: (prisma: PrismaService, edge: RedisClusterService): ThumbnailScrubbingService =>
