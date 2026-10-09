@@ -1833,3 +1833,26 @@ export type {
   BankPayoutCallback,
   BankDispatchStatus,
 } from './schemas/payout-clearing.schema';
+export {
+  FlashSaleStatusEnum,
+  FlashSaleProductItemSchema,
+  ReserveStockInputSchema,
+  ReserveStockResponseSchema,
+  FLASH_HOLD_TTL_SEC,
+  FLASH_RESERVE_RATE_WINDOW_SEC,
+  FLASH_STREAM,
+  flashDiscountPct,
+  flashTag,
+  flashStockKey,
+  flashUserKey,
+  flashRateKey,
+  flashRemaining,
+  campaignPhase,
+  countdownParts,
+} from './schemas/flash-sale-contract';
+export type {
+  FlashSaleStatus,
+  FlashSaleProductItem,
+  ReserveStockInput,
+  ReserveStockResponse,
+} from './schemas/flash-sale-contract';

@@ -177,6 +177,8 @@ model User {
   checkins             DailyCheckin[]
   userBadges           UserBadge[]
   redemptions          RewardRedemption[]
+  // Atomic Phase 087: flash stock reservations
+  stockReservations    StockReservation[]
   shareEvents          ShareEvent[]
 
   @@index([lineUserId])
@@ -962,6 +964,75 @@ model WithholdingTaxCertificate {
   @@index([paymentDate])
 }
 
+// Atomic Phase 087 §4.1: flash sale segment (schema.md canonical).
+enum FlashSaleStatus {
+  UPCOMING
+  ACTIVE
+  PAUSED
+  ENDED
+  SOLD_OUT
+}
+
+model FlashSaleCampaign {
+  id          String             @id @default(uuid())
+  tenantId    String             @default("default")
+  title       String
+  description String?            @db.Text
+  bannerUrl   String?
+  startTime   DateTime
+  endTime     DateTime
+  status      FlashSaleStatus    @default(UPCOMING)
+
+  items       FlashSaleItem[]
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([tenantId, status])
+  @@index([startTime, endTime])
+}
+
+model FlashSaleItem {
+  id             String            @id @default(uuid())
+  campaignId     String
+  campaign       FlashSaleCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  flashPrice     Decimal           @db.Decimal(10, 2)
+  allocatedStock Int
+  reservedStock  Int               @default(0)
+  soldQty        Int               @default(0)
+  maxPerUser     Int               @default(1)
+
+  reservations   StockReservation[]
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([campaignId, productId])
+  @@index([productId])
+}
+
+model StockReservation {
+  id               String        @id @default(uuid())
+  reservationToken String        @unique @default(uuid())
+  flashSaleItemId  String
+  flashSaleItem    FlashSaleItem @relation(fields: [flashSaleItemId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quantity         Int           @default(1)
+  status           String        @default("HOLD")
+  expiresAt        DateTime
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([reservationToken])
+  @@index([expiresAt, status])
+}
+
 model MerchantAnalyticsDaily {
   id                 String   @id @default(uuid())
   tenantId           String
@@ -1154,6 +1225,8 @@ model Product {
   shareLogs      ShareLog[]
   // Atomic Phase 079: signed referral share events
   shareEvents    ShareEvent[]
+  // Atomic Phase 087: flash sale items
+  flashSaleItems    FlashSaleItem[]
   // Atomic Phase 042: watermark seed issuance per product
   watermarkSeeds WatermarkSeedLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)

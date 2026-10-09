@@ -128,6 +128,22 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     return setFn(key, value, ...args);
   }
 
+  // Phase 087 — atomic Lua eval (additive; flash-sale stock locks).
+  // Cluster-safe only when ALL script keys share one hash tag.
+  async evalLua(script: string, keys: string[], argv: Array<string | number>): Promise<unknown> {
+    const evalFn = this.client.eval.bind(this.client) as (...a: unknown[]) => Promise<unknown>;
+    return evalFn(script, keys.length, ...keys, ...argv);
+  }
+
+  // Phase 087 — signed counter restores (additive; hold-release sweeper).
+  async incrby(key: string, n: number): Promise<number> {
+    return this.client.incrby(key, n);
+  }
+
+  async decrby(key: string, n: number): Promise<number> {
+    return this.client.decrby(key, n);
+  }
+
   async getBuffer(key: string): Promise<Buffer | null> {
     return (await this.client.getBuffer(key)) as Buffer | null;
   }

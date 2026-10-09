@@ -1,0 +1,54 @@
+# SSOT Phase 087 §3.2 — Flash sale intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/schema/flash-sale.graphql
+# Runtime is code-first (modules/flash-sale/resolvers/flash-sale.resolver.ts).
+
+enum FlashSaleStatus {
+  UPCOMING
+  ACTIVE
+  PAUSED
+  ENDED
+  SOLD_OUT
+}
+
+type FlashSaleProductItem {
+  productId: ID!
+  productTitle: String!
+  coverImageUrl: String!
+  originalPrice: Float!
+  flashSalePrice: Float!
+  allocatedStock: Int!
+  soldQty: Int!
+  remainingStock: Int!
+  maxPerUser: Int!
+  discountPercentage: Int!
+}
+
+type FlashSaleCampaign {
+  id: ID!
+  tenantId: String!
+  title: String!
+  description: String
+  startTime: String!
+  endTime: String!
+  status: FlashSaleStatus!
+  serverCurrentTime: String!
+  items: [FlashSaleProductItem!]!
+}
+
+type StockReservationResult {
+  success: Boolean!
+  reservationToken: String
+  expiresAt: String
+  message: String!
+  remainingStock: Int!
+}
+
+type Query {
+  getActiveFlashSaleCampaign(tenantId: String!): FlashSaleCampaign
+  getFlashSaleItemStatus(campaignId: ID!, productId: ID!): FlashSaleProductItem
+}
+
+type Mutation {
+  reserveFlashSaleStock(campaignId: ID!, productId: ID!, quantity: Int!): StockReservationResult!
+  cancelStockReservation(reservationToken: String!): Boolean!
+}

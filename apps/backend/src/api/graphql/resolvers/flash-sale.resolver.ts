@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 087 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class FlashSaleResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 087 §3.2 — legacy alias (canonical lives in modules/flash-sale)
+// Canonical: apps/backend/src/api/graphql/resolvers/flash-sale.resolver.ts
+// Re-export only (078–086 precedent); registered once via FlashSaleModule.
+export { FlashSaleResolver } from '../../../modules/flash-sale/resolvers/flash-sale.resolver';
