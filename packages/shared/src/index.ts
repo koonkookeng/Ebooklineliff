@@ -2231,3 +2231,26 @@ export type {
   TranscodeJobPayload,
   VODStatusUpdatePayload,
 } from './schemas/live-to-vod.schema';
+
+export {
+  TicketStatusEnum,
+  TicketPriorityEnum,
+  SenderTypeEnum,
+  SupportTicketPayloadSchema,
+  BotQueryInputSchema,
+  AIResponsePayloadSchema,
+  TICKET_SLA_MINUTES,
+  FCR_SILENCE_MINUTES,
+  ticketNumber,
+  ticketMessageStreamKey,
+  ticketAgentLockKey,
+  ESCALATION_CONFIDENCE_THRESHOLD,
+} from './schemas/support-ticket-contract';
+export type {
+  TicketStatus,
+  TicketPriority,
+  SenderType,
+  SupportTicketPayload,
+  BotQueryInput,
+  AIResponsePayload,
+} from './schemas/support-ticket-contract';

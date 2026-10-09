@@ -125,6 +125,8 @@ model User {
   livePollVotes     LivePollVote[]
   // Atomic Phase 101: hand-raise requests
   liveHandRaises    LiveHandRaise[]
+  // Atomic Phase 103: helpdesk tickets + bot history
+  supportTickets    SupportTicket[]
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -2546,6 +2548,106 @@ model LiveAnalytics {
   totalPollVotes  Int         @default(0)
   avgWatchSec     Float       @default(0.0)
   updatedAt       DateTime    @updatedAt
+}
+
+// Atomic Phase 103 §4.1: Support & Helpdesk segment (schema.md canonical).
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SenderType {
+  USER
+  AI_BOT
+  HUMAN_AGENT
+  SYSTEM_ALERT
+}
+
+model SupportCategory {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  tickets     SupportTicket[]
+  createdAt   DateTime        @default(now())
+}
+
+model SupportTicket {
+  id           String            @id @default(uuid())
+  ticketNo     String            @unique
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     SupportCategory   @relation(fields: [categoryId], references: [id])
+  assignedTo   String?           // Agent User ID
+  subject      String
+  priority     TicketPriority    @default(MEDIUM)
+  status       TicketStatus      @default(OPEN)
+  messages     TicketMessage[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([assignedTo])
+}
+
+model TicketMessage {
+  id            String            @id @default(uuid())
+  ticketId      String
+  ticket        SupportTicket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderType    SenderType
+  senderId      String?
+  messageText   String            @db.Text
+  attachments   TicketAttachment[]
+  createdAt     DateTime          @default(now())
+
+  @@index([ticketId])
+}
+
+model TicketAttachment {
+  id         String        @id @default(uuid())
+  messageId  String
+  message    TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileUrl    String
+  fileType   String
+  fileSize   Int
+  createdAt  DateTime      @default(now())
+}
+
+model KnowledgeBaseVector {
+  id          String   @id @default(uuid())
+  tenantId    String
+  category    String
+  question    String   @db.Text
+  answer      String   @db.Text
+  embedding   Unsupported("vector(1536)")? // pgvector Integration
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model AIBotConversationHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  sessionId String
+  userQuery String   @db.Text
+  botAnswer String   @db.Text
+  isHandled Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([userId, sessionId])
 }
 
 // Atomic Phase 100 §4.1: room entitlement gatekeeper segment (schema.md canonical).
