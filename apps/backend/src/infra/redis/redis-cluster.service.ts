@@ -177,6 +177,32 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
     await this.client.zincrby(key, increment, member);
   }
 
+  // Phase 101 §5.4 — hand-raise FIFO queue primitives (additive; score = epoch ms).
+  async zadd(key: string, score: number, member: string): Promise<void> {
+    await (this.client as unknown as { zadd(k: string, s: number, m: string): Promise<unknown> }).zadd(key, score, member);
+  }
+
+  async zrange(key: string, start: number, stop: number): Promise<string[]> {
+    return (await (this.client as unknown as { zrange(k: string, s: number, e: number): Promise<string[]> }).zrange(key, start, stop).catch(() => [])) as string[];
+  }
+
+  async zrem(key: string, member: string): Promise<void> {
+    await (this.client as unknown as { zrem(k: string, m: string): Promise<unknown> }).zrem(key, member).catch(() => undefined);
+  }
+
+  async pfadd(key: string, member: string): Promise<void> {
+    await (this.client as unknown as { pfadd(k: string, m: string): Promise<unknown> }).pfadd(key, member).catch(() => undefined);
+  }
+
+  async sismember(key: string, member: string): Promise<boolean> {
+    const n = await (this.client as unknown as { sismember(k: string, m: string): Promise<number> }).sismember(key, member).catch(() => 0);
+    return n === 1;
+  }
+
+  async sadd(key: string, member: string): Promise<void> {
+    await (this.client as unknown as { sadd(k: string, m: string): Promise<unknown> }).sadd(key, member).catch(() => undefined);
+  }
+
   // Phase 096 §5.2 — leaderboard slices: ZREVRANGE WITHSCORES shaped pairs.
   async zrevrangeWithScores(key: string, start: number, stop: number): Promise<Array<{ member: string; score: number }>> {
     const raw = (await (this.client as unknown as {

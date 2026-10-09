@@ -169,7 +169,7 @@ const execAsync = promisify(exec);
       inject: [PrismaService, R2StorageService],
     },
   ],
-  exports: [VideoUploadService, StreamService, FfmpegWorkerProcessor, VideoTranscodeQueue, FFmpegTranscoderService, TranscodeWorkerHost, TranscodeJobReaderService, ThumbnailScrubbingService, VttGeneratorProcessor],
+  exports: [VideoUploadService, StreamService, FfmpegWorkerProcessor, VideoTranscodeQueue, FFmpegTranscoderService, TranscodeWorkerHost, TranscodeJobReaderService, ThumbnailScrubbingService, VttGeneratorProcessor, LiveGatekeeperService, PrismaLiveGatekeeperRepository],
 })
 export class StreamModule {}
 

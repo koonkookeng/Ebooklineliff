@@ -123,6 +123,8 @@ model User {
   liveSessions      LiveSession[] @relation("InstructorSessions")
   liveChatMessages  LiveChatMessage[]
   livePollVotes     LivePollVote[]
+  // Atomic Phase 101: hand-raise requests
+  liveHandRaises    LiveHandRaise[]
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -2400,6 +2402,10 @@ model LiveSession {
   chatMessages     LiveChatMessage[]
   polls            LivePoll[]
   vodRecord        LiveToVodRecord?
+  // Atomic Phase 101: hand-raise queue + analytics ledger (union with the
+  // 099 session core — LivePoll.expiresAt stays optional expand-contract).
+  handRaises       LiveHandRaise[]
+  analytics        LiveAnalytics?
 
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -2473,6 +2479,43 @@ model LiveToVodRecord {
   durationSec   Int         @default(0)
   fileSizeBytes BigInt      @default(0)
   createdAt     DateTime    @default(now())
+}
+
+// Atomic Phase 101 §4.1: interactive classroom segment (schema.md canonical).
+enum HandRaiseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+model LiveHandRaise {
+  id            String         @id @default(uuid())
+  sessionId     String
+  session       LiveSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        HandRaiseStatus @default(PENDING)
+  queuePosition Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([sessionId, status])
+  @@index([userId])
+}
+
+model LiveAnalytics {
+  id              String      @id @default(uuid())
+  sessionId       String      @unique
+  session         LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  peakViewers     Int         @default(0)
+  totalMessages   Int         @default(0)
+  totalStickers   Int         @default(0)
+  totalHandRaises Int         @default(0)
+  totalPollVotes  Int         @default(0)
+  avgWatchSec     Float       @default(0.0)
+  updatedAt       DateTime    @updatedAt
 }
 
 // Atomic Phase 100 §4.1: room entitlement gatekeeper segment (schema.md canonical).

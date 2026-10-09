@@ -1,4 +1,4 @@
-// SSOT Phase 099 BDD-1/2 — LIFF live room entry (5-state)
+// SSOT Phase 099 BDD-1/2 + Phase 101 §6.1 — LIFF live room entry (5-state)
 // Canonical: apps/frontend/app/(liff)/live/[sessionId]/page.tsx
 'use client';
 
@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLiveSession } from '../../../../hooks/useLiveSession';
 import { WebRtcIvsPlayer } from '../../../../components/live/WebRtcIvsPlayer';
-import { LiveChatOverlay } from '../../../../components/live/LiveChatOverlay';
+import { LiveInteractionOverlay } from '../../../../components/live/LiveInteractionOverlay';
 
 function LiveRoomInner() {
   const params = useParams();
@@ -42,7 +42,11 @@ function LiveRoomInner() {
         playbackToken={access.playbackToken}
         watermarkText={access.watermarkData.text}
       />
-      <LiveChatOverlay sessionId={access.sessionId} />
+      {/* Phase 101 overlay (viewers + window-50 chat + stickers + raise + polls)
+          replaces the 099 chat-only overlay on the same SSE transport. */}
+      {access.playbackToken && (
+        <LiveInteractionOverlay sessionId={access.sessionId} token={access.playbackToken} />
+      )}
     </div>
   );
 }

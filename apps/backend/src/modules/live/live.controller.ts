@@ -1,4 +1,4 @@
-// SSOT Phase 099 — Live REST (join/chat-SSE/poll/vote/session/vod intake)
+// SSOT Phase 099 + Phase 101 — Live REST (sessions/chat/polls/raise/SSE)
 // Canonical: apps/backend/src/modules/live/live.controller.ts
 // - RISK_CALL: single-file seam (spec tree lists no controllers/ — the HTTP
 //   surface BDD-1/2/3 needs lives here instead of scattering). SSE chat
@@ -8,6 +8,8 @@ import { Observable } from 'rxjs';
 import { randomUUID } from 'node:crypto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
+import { LiveSocketGateway } from '../../gateways/live-socket/live-socket.gateway';
+import { LiveSocketGuard } from '../../gateways/live-socket/guards/live-socket.guard';
 import { CreateLiveSessionSchema } from './application/dtos/create-live-session.dto';
 import { JoinLiveStreamSchema, WebrtcOfferSchema } from './application/dtos/join-live-stream.dto';
 import { MintPlaybackTokenUseCase } from './application/use-cases/mint-ivs-token.usecase';
@@ -15,6 +17,10 @@ import { HandleWebrtcSignalingUseCase } from './application/use-cases/handle-web
 import { ConvertLiveToVodUseCase } from './application/use-cases/convert-live-to-vod.usecase';
 import { LiveChatGateway } from './infrastructure/websocket/live-chat.gateway';
 import { PrismaLiveRepository } from './infrastructure/persistence/live-session.repository';
+import { LiveStreamService } from './services/live-stream.service';
+import { LiveChatEngine } from './services/live-chat.engine';
+import { LivePollEngine } from './services/live-poll.engine';
+import { HandRaiseQueue } from './services/hand-raise.queue';
 import { assertTransition, type LiveStatus } from './domain/entities/live-session.entity';
 
 type LooseReq = Record<string, unknown>;
@@ -33,6 +39,12 @@ export class LiveController {
     private readonly vod: ConvertLiveToVodUseCase,
     private readonly chat: LiveChatGateway,
     private readonly repo: PrismaLiveRepository,
+    private readonly streams: LiveStreamService,
+    private readonly engine: LiveChatEngine,
+    private readonly polls: LivePollEngine,
+    private readonly raises: HandRaiseQueue,
+    private readonly socket: LiveSocketGateway,
+    private readonly socketGuard: LiveSocketGuard,
   ) {}
 
   @Post('sessions')
@@ -147,5 +159,110 @@ export class LiveController {
       .convert({ sessionId: b.sessionId, durationSec: b.durationSec, fileSizeBytes: b.fileSizeBytes, lessonId: b.lessonId })
       .then((r) => res.status(200).json(r))
       .catch((e: Error) => res.status(400).json({ message: e.message }));
+  }
+
+  // ---- Phase 101 interaction surface (SSE room hub + engines) ----
+
+  // Room event stream: viewers/chat/polls/raise fan-out (token handshake).
+  @Sse('sessions/:id/room/stream')
+  roomStream(@Param('id') id: string, @Query('token') token: string): Observable<{ data: unknown }> {
+    const gate = this.socketGuard.canActivate({ sessionId: id, token });
+    if (!gate) throw new BadRequestException('Invalid room token');
+    return new Observable((subscriber) => {
+      const release = this.socket.subscribe(id, {
+        write: (chunk: string) => subscriber.next({ data: chunk }),
+      });
+      return release;
+    });
+  }
+
+  @Post('sessions/:id/viewers/join')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  viewerJoin(@Param('id') id: string) {
+    return this.streams.viewerJoin(id);
+  }
+
+  @Post('sessions/:id/viewers/leave')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  viewerLeave(@Param('id') id: string) {
+    return this.streams.viewerLeave(id);
+  }
+
+  @Post('sessions/:id/chat/send')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async sendChat(@Req() req: LooseReq, @Param('id') id: string, @Body() body: unknown) {
+    const b = (body ?? {}) as { content?: string; messageType?: string; stickerPackageId?: string; stickerId?: string };
+    const msg = await this.engine.send({
+      sessionId: id,
+      userId: actorOf(req),
+      content: b.content ?? '',
+      messageType: b.messageType,
+      stickerPackageId: b.stickerPackageId,
+      stickerId: b.stickerId,
+    });
+    await this.socket.broadcast(id, 'newMessage', msg);
+    return msg;
+  }
+
+  @Get('sessions/:id/chat/enriched')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  enrichedChat(@Param('id') id: string, @Query('limit') limit?: string) {
+    return this.engine.history(id, limit ? Number(limit) : 50);
+  }
+
+  @Post('sessions/:id/polls')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async createSessionPoll(@Param('id') id: string, @Body() body: unknown) {
+    const b = (body ?? {}) as { question?: string; options?: string[]; durationSec?: number };
+    const poll = await this.polls.create({
+      sessionId: id,
+      question: b.question ?? '',
+      options: b.options ?? [],
+      durationSec: b.durationSec ?? 60,
+    });
+    await this.socket.broadcast(id, 'pollCreated', poll);
+    return poll;
+  }
+
+  @Post('polls/:pollId/vote2')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async vote2(@Req() req: LooseReq, @Param('pollId') pollId: string, @Body() body: unknown) {
+    const b = (body ?? {}) as { optionId?: string };
+    if (!b.optionId) throw new BadRequestException('Invalid vote');
+    const results = await this.polls.vote({ pollId, optionId: b.optionId, userId: actorOf(req) });
+    await this.socket.broadcast(results.sessionId, 'pollVoteUpdate', results);
+    return results;
+  }
+
+  @Get('polls/:pollId/results')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  pollResults(@Param('pollId') pollId: string) {
+    return this.polls.results(pollId);
+  }
+
+  @Post('sessions/:id/raise')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async raiseHand(@Req() req: LooseReq, @Param('id') id: string) {
+    const raise = await this.raises.request(id, actorOf(req));
+    await this.socket.broadcast(id, 'handRaiseUpdate', raise);
+    return raise;
+  }
+
+  @Post('raises/:raiseId/resolve')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async resolveRaise(@Param('raiseId') raiseId: string, @Body() body: unknown) {
+    const status = ((body ?? {}) as { status?: string }).status ?? '';
+    if (!['APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'].includes(status)) {
+      throw new BadRequestException('Invalid raise status');
+    }
+    const row = await this.raises.resolve(raiseId, status as 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED');
+    await this.socket.broadcast(row.sessionId, 'handRaiseUpdate', row);
+    return row;
+  }
+
+  @Get('sessions/:id/raise-queue')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  raiseQueue(@Param('id') id: string) {
+    return this.raises.queue(id);
   }
 }

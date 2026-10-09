@@ -107,3 +107,96 @@ export function liveVodPrefix(sessionId: string): string {
 export function liveChatWindow<T>(items: T[], cap: number = LIVE_CHAT_WINDOW): T[] {
   return items.length > cap ? items.slice(items.length - cap) : items;
 }
+
+/* ------------------------------------------------------------------ */
+/* Atomic Phase 101 §3.1 — interactive classroom surface (additive).   */
+/* RISK_CALL: LiveChatMessagePayloadSchema keeps its 099 shape         */
+/* (099 tests lock it); the 101 chat/HR shapes land as new names so    */
+/* neither phase drifts. Subscriptions (§3.2) ride SSE, not WS.        */
+/* ------------------------------------------------------------------ */
+
+export const LiveHandRaiseStatusEnum = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED']);
+export type LiveHandRaiseStatus = z.infer<typeof LiveHandRaiseStatusEnum>;
+
+export const LiveMessageTypeEnum = z.enum(['TEXT', 'LINE_STICKER', 'ANNOUNCEMENT', 'PRODUCT_PIN', 'SYSTEM_EVENT']);
+export type LiveMessageType = z.infer<typeof LiveMessageTypeEnum>;
+
+export const LiveInteractiveChatSchema = z.object({
+  id: z.string().uuid(),
+  sessionId: z.string().uuid(),
+  userId: z.string(),
+  displayName: z.string(),
+  avatarUrl: z.string().url().nullable(),
+  messageType: LiveMessageTypeEnum,
+  content: z.string().max(500),
+  stickerPackageId: z.string().optional(),
+  stickerId: z.string().optional(),
+  timestamp: z.string().datetime(),
+});
+export type LiveInteractiveChat = z.infer<typeof LiveInteractiveChatSchema>;
+
+export const LiveHandRaisePayloadSchema = z.object({
+  id: z.string().uuid(),
+  sessionId: z.string().uuid(),
+  userId: z.string(),
+  displayName: z.string(),
+  status: LiveHandRaiseStatusEnum,
+  queuePosition: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+});
+export type LiveHandRaisePayload = z.infer<typeof LiveHandRaisePayloadSchema>;
+
+export const LivePollOptionSchema = z.object({
+  optionId: z.string().uuid(),
+  text: z.string().min(1).max(200),
+  voteCount: z.number().int().nonnegative(),
+});
+export type LivePollOption = z.infer<typeof LivePollOptionSchema>;
+
+export const LivePollPayloadSchema = z.object({
+  pollId: z.string().uuid(),
+  sessionId: z.string().uuid(),
+  question: z.string().min(1).max(300),
+  options: z.array(LivePollOptionSchema),
+  isActive: z.boolean(),
+  totalVotes: z.number().int().nonnegative(),
+  userVotedOptionId: z.string().uuid().nullable().optional(),
+  // RISK_CALL: nullable (099 polls carry no expiry; 101 sets durationSec).
+  expiresAt: z.string().datetime().nullable(),
+});
+export type LivePollPayload = z.infer<typeof LivePollPayloadSchema>;
+
+/** Hand-raise FIFO queue (Redis ZSET, score = request epoch ms). */
+export function liveRaiseQueueKey(sessionId: string): string {
+  return `live:raise-queue:${sessionId}`;
+}
+
+/** Atomic poll counters (Redis hashes + HyperLogLog voter sets). */
+export function livePollCounterKey(pollId: string): string {
+  return `live:poll:votes:${pollId}`;
+}
+
+/** Voter membership set for exactly-once voting (<100ms, BDD-3). */
+export function livePollVotersKey(pollId: string): string {
+  return `live:poll:voters:${pollId}`;
+}
+
+/** Concurrent viewer counter (BDD-1 peak 100k). */
+export function liveViewerKey(sessionId: string): string {
+  return `live:viewers:${sessionId}`;
+}
+
+/** Room fan-out channel for chat/poll/raise/viewer events (SSE bridge). */
+export function liveRoomChannel(sessionId: string): string {
+  return `live:room:${sessionId}`;
+}
+
+/** Vote share % per option (rounded to 2dp, sums ≈ 100). */
+export function pollPercentages(votes: Array<{ optionId: string; votes: number }>): Array<{ optionId: string; votes: number; percentage: number }> {
+  const total = votes.reduce((a, v) => a + v.votes, 0);
+  return votes.map((v) => ({
+    optionId: v.optionId,
+    votes: v.votes,
+    percentage: total === 0 ? 0 : Math.round((v.votes / total) * 10000) / 100,
+  }));
+}
