@@ -1927,3 +1927,31 @@ export type {
   GroupRoomMember,
   GroupRoomDetails,
 } from './schemas/group-buying-contract';
+export {
+  VectorDistanceMetricEnum,
+  ContentSourceTypeEnum,
+  VectorEmbeddingPayloadSchema,
+  SemanticSearchInputSchema,
+  VectorSearchResultItemSchema,
+  AiAskContextQuerySchema,
+  EMBEDDING_DIMS,
+  CHUNK_WORDS_MIN,
+  CHUNK_WORDS_MAX,
+  CHUNK_OVERLAP_WORDS,
+  AI_EXCERPT_MAX_CHARS,
+  SEMANTIC_SEARCH_P95_MS,
+  VECTOR_STREAM,
+  cosineSimilarity,
+  chunkText,
+  capExcerpt,
+  watermarkTag,
+  similarityBadge,
+} from './schemas/vector-search-contract';
+export type {
+  VectorDistanceMetric,
+  ContentSourceType,
+  VectorEmbeddingPayload,
+  SemanticSearchInput,
+  VectorSearchResultItem,
+  AiAskContextQuery,
+} from './schemas/vector-search-contract';

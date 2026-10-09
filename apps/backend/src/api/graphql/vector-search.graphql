@@ -1,0 +1,48 @@
+# SSOT Phase 091 Task 5 — Vector search + AI RAG intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/vector-search.graphql
+# Runtime is code-first (modules/vector-search/api/graphql/vector-search.resolver.ts).
+
+type VectorSearchResultItem {
+  sourceType: String!
+  sourceId: ID!
+  productId: ID!
+  productTitle: String!
+  chunkIndex: Int!
+  contentText: String!
+  similarityScore: Float!
+  pageNumber: Int
+  videoTimestampSec: Int
+}
+
+type SemanticSearchPayload {
+  items: [VectorSearchResultItem!]!
+  tookMs: Int!
+}
+
+type AiAskPayload {
+  answer: String!
+  referencedPages: [Int!]!
+}
+
+input SemanticSearchInput {
+  queryText: String!
+  sourceTypes: [String!]
+  productIdFilter: ID
+  limit: Int
+  similarityThreshold: Float
+}
+
+input AiAskContextQueryInput {
+  productId: ID!
+  userQuestion: String!
+  currentPage: Int
+}
+
+type Query {
+  semanticSearch(input: SemanticSearchInput!): SemanticSearchPayload!
+}
+
+type Mutation {
+  askAiAboutBook(input: AiAskContextQueryInput!): AiAskPayload!
+  ingestContentVectors(productId: ID!, sourceType: String!, sourceId: ID!, contentText: String!, pageNumber: Int): Int!
+}

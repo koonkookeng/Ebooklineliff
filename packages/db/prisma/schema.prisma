@@ -1253,6 +1253,35 @@ model GroupBuyingMember {
   @@index([userId])
 }
 
+// Atomic Phase 091 §4.1: pgvector content embedding segment (schema.md canonical).
+// RISK_CALL: embedding is Unsupported("vector(1536)") (pgvector-native; Prisma
+// cannot express HNSW — see infra/postgres/pgvector-091.sql companion).
+// Tenant isolation is mandatory on every query (Gate 4).
+enum ContentSourceType {
+  EBOOK_CHUNK
+  COURSE_TRANSCRIPT
+  PRODUCT_DESCRIPTION
+}
+
+model ContentVectorEmbedding {
+  id           String            @id @default(uuid())
+  tenantId     String
+  productId    String
+  product      Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sourceType   ContentSourceType
+  sourceId     String
+  chunkIndex   Int
+  contentText  String            @db.Text
+  embedding    Unsupported("vector(1536)")?
+  metadataJson Json?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([productId])
+  @@index([sourceType, sourceId])
+}
+
 // Atomic Phase 075: per-warehouse SKU ledger + immutable audit trail.
 model WarehouseStock {
   id               String         @id @default(uuid())
@@ -1437,6 +1466,8 @@ model Product {
   // Atomic Phase 090: group-buy configs + rooms for this product
   groupConfigs      GroupBuyingConfig?
   groupRooms        GroupBuyingRoom[]
+  // Atomic Phase 091: pgvector content embeddings for this product
+  contentVectors    ContentVectorEmbedding[]
   // Atomic Phase 042: watermark seed issuance per product
   watermarkSeeds WatermarkSeedLog[]
   // Phase 010: storefront merchandising (expand-contract; defaults keep old rows valid)
