@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 114 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class ClearinghouseResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 114 §3.2 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/resolvers/clearinghouse.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/clearinghouse.resolver.ts)
+export { ClearinghouseResolver as ClearinghouseModuleResolver } from '../../../modules/clearinghouse/resolvers/clearinghouse.resolver';

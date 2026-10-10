@@ -1,0 +1,54 @@
+# SSOT Phase 114 §3.2 — clearinghouse GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/clearinghouse/clearinghouse.graphql
+# Runtime is code-first (modules/clearinghouse/resolvers/clearinghouse.resolver.ts).
+
+type FinancialSummary {
+  totalGrossCashflow: Float!
+  totalEscrowHeld: Float!
+  totalPlatformRevenue: Float!
+  totalCreatorPayable: Float!
+  totalTaxWithheld: Float!
+  unreconciledDiscrepanciesCount: Int!
+}
+
+type LedgerEntryPayload {
+  id: ID!
+  accountType: String!
+  entryType: String!
+  amount: Float!
+  description: String!
+  createdAt: String!
+}
+
+type PayoutExecutionResult {
+  payoutId: ID!
+  sellerId: ID!
+  grossAmount: Float!
+  taxAmount: Float!
+  netPayoutAmount: Float!
+  status: String!
+  taxCertificateUrl: String
+  executedAt: String!
+}
+
+type ReconciliationResult {
+  matched: Int!
+  discrepancies: Int!
+  msPerItem: Float!
+}
+
+input PayoutRequestInput {
+  sellerId: ID!
+  requestedAmount: Float!
+  bankAccountId: ID!
+}
+
+extend type Query {
+  getFinancialClearinghouseSummary(tenantId: ID): FinancialSummary!
+  getLedgerEntries(tenantId: ID, limit: Int, offset: Int): [LedgerEntryPayload!]!
+}
+
+extend type Mutation {
+  requestSellerPayout(input: PayoutRequestInput!): PayoutExecutionResult!
+  reconcileBankStatement(statementFileUrl: String!): ReconciliationResult!
+}

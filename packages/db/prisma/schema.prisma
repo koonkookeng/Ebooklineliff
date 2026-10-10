@@ -159,6 +159,8 @@ model User {
   creatorAppeals     CreatorAppeal[]
   // Atomic Phase 113: buyer-filed dispute claims
   buyerDisputes      DisputeClaim[] @relation("BuyerDisputes")
+  // Atomic Phase 114: automated revenue payouts received
+  sellerPayouts      SellerPayout[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -523,6 +525,9 @@ enum PayoutStatus {
 }
 
 // Atomic Phase 081: double-entry vocabulary (schema.md canonical).
+// Atomic Phase 114: + CASH_ASSET / ESCROW_LIABILITY / PLATFORM_REVENUE /
+// CREATOR_PAYABLE / TAX_WITHHOLDING_PAYABLE / REFUND_RESERVE (canonical
+// union; AFFILIATE_PAYABLE shared — additive only).
 enum LedgerAccountType {
   CASH_EQUIVALENT
   SELLER_PAYABLE
@@ -530,9 +535,22 @@ enum LedgerAccountType {
   PLATFORM_REVENUE_FEE
   WITHHOLDING_TAX_PAYABLE
   ESCROW_HOLD
+  CASH_ASSET
+  ESCROW_LIABILITY
+  PLATFORM_REVENUE
+  CREATOR_PAYABLE
+  TAX_WITHHOLDING_PAYABLE
+  REFUND_RESERVE
 }
 
 enum EntryType {
+  DEBIT
+  CREDIT
+}
+
+// Atomic Phase 114 §4.1: clearinghouse entry vocabulary (schema.md
+// canonical; value-parity with EntryType — separate enum per spec).
+enum TransactionEntryType {
   DEBIT
   CREDIT
 }
@@ -3023,6 +3041,8 @@ model Order {
   // Atomic Phase 113: escrow hold (1:1) + dispute claim (1:1 per order)
   escrowAccount        EscrowAccount?
   disputeClaim         DisputeClaim?
+  // Atomic Phase 114: clearinghouse settlement ledger rows (1 order : N rows)
+  clearingEntries      FinancialClearinghouseLedger[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
@@ -3407,6 +3427,68 @@ model DisputeTimeline {
   createdAt   DateTime     @default(now())
 
   @@index([disputeId])
+}
+
+// Atomic Phase 114 §4.1: financial clearinghouse ledger (schema.md canonical).
+// PayoutStatus reuses the 081/086 union (PENDING..REJECTED all present).
+model FinancialClearinghouseLedger {
+  id            String               @id @default(uuid())
+  tenantId      String               @default("default")
+  orderId       String?
+  payoutId      String?
+  accountType   LedgerAccountType
+  entryType     TransactionEntryType
+  amount        Decimal              @db.Decimal(14, 2)
+  currency      String               @default("THB")
+  description   String
+  referenceCode String?              @unique
+  createdAt     DateTime             @default(now())
+
+  order         Order?               @relation(fields: [orderId], references: [id])
+  payout        SellerPayout?        @relation(fields: [payoutId], references: [id])
+
+  @@index([tenantId])
+  @@index([accountType])
+  @@index([orderId])
+  @@index([payoutId])
+}
+
+model SellerPayout {
+  id                 String                         @id @default(uuid())
+  tenantId           String                         @default("default")
+  sellerId           String
+  seller             User                           @relation(fields: [sellerId], references: [id])
+  grossAmount        Decimal                        @db.Decimal(12, 2)
+  taxRatePercent     Decimal                        @default(3.00) @db.Decimal(5, 2)
+  taxWithheldAmount  Decimal                        @db.Decimal(12, 2)
+  netPayoutAmount    Decimal                        @db.Decimal(12, 2)
+  payoutStatus       PayoutStatus                   @default(PENDING)
+  bankName           String
+  bankAccountNumber  String
+  bankAccountName    String
+  transRef           String?                        @unique
+  taxCertificatePath String?
+  executedAt         DateTime?
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+
+  ledgerEntries      FinancialClearinghouseLedger[]
+
+  @@index([sellerId])
+  @@index([payoutStatus])
+  @@index([tenantId])
+}
+
+model RevenueShareRule {
+  id                    String   @id @default(uuid())
+  tenantId              String   @default("default")
+  productType           String
+  platformFeePercent    Decimal  @db.Decimal(5, 2)
+  creatorSharePercent   Decimal  @db.Decimal(5, 2)
+  affiliateSharePercent Decimal  @db.Decimal(5, 2)
+  createdAt             DateTime @default(now())
+
+  @@unique([tenantId, productType])
 }
 
 model AuditLog {
