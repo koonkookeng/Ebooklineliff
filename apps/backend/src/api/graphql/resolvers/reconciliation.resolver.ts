@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 115 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class ReconciliationResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 115 §3.2 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/resolvers/reconciliation.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/reconciliation.resolver.ts)
+export { ReconciliationResolver as ReconciliationModuleResolver } from '../../../modules/reconciliation/resolvers/reconciliation.resolver';

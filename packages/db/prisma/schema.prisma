@@ -3043,6 +3043,9 @@ model Order {
   disputeClaim         DisputeClaim?
   // Atomic Phase 114: clearinghouse settlement ledger rows (1 order : N rows)
   clearingEntries      FinancialClearinghouseLedger[]
+  // Atomic Phase 115: matched bank statements + manual override links
+  matchedStatements    BankStatement[]
+  manualOverrides      FinancialManualOverride[]
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
@@ -3489,6 +3492,106 @@ model RevenueShareRule {
   createdAt             DateTime @default(now())
 
   @@unique([tenantId, productType])
+}
+
+// Atomic Phase 115 §4.1: auto-reconciliation vocabulary (schema.md canonical).
+enum ReconciliationStatus {
+  UNMATCHED
+  AUTO_MATCHED
+  MANUAL_OVERRIDDEN
+  DISCREPANCY_FLAGGED
+  REJECTED_DUPLICATE
+}
+
+// Atomic Phase 115 §4.1: statement source vocabulary (schema.md canonical).
+enum StatementSource {
+  OPEN_BANKING_API
+  BANK_WEBHOOK
+  CSV_IMPORT
+  SCRAPER_FEED
+}
+
+model BankAccountConfig {
+  id                     String          @id @default(uuid())
+  tenantId               String          @default("DEFAULT")
+  bankName               String
+  bankCode               String
+  accountNumber          String          @unique
+  promptPayId            String?
+  autoMatchToleranceMins Int             @default(30)
+  isEnabled              Boolean         @default(true)
+  statements             BankStatement[]
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  @@index([tenantId])
+}
+
+model BankStatement {
+  id                 String               @id @default(uuid())
+  bankAccountId      String
+  bankAccount        BankAccountConfig    @relation(fields: [bankAccountId], references: [id])
+  transRef           String?              @unique
+  amount             Decimal              @db.Decimal(12, 2)
+  txType             String               @default("CREDIT")
+  txTimestamp        DateTime
+  senderBank         String?
+  senderName         String?
+  rawPayload         Json
+  hashSign           String
+  status             ReconciliationStatus @default(UNMATCHED)
+  mismatchReason     String?
+  matchedOrderId     String?              @unique
+  matchedOrder       Order?               @relation(fields: [matchedOrderId], references: [id])
+  source             StatementSource      @default(BANK_WEBHOOK)
+
+  reconciliationLogs ReconciliationLog[]
+  manualOverrides    FinancialManualOverride[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([hashSign])
+  @@index([transRef])
+  @@index([status])
+  @@index([txTimestamp])
+  @@index([amount])
+}
+
+model ReconciliationLog {
+  id                 String        @id @default(uuid())
+  bankStatementId    String
+  bankStatement      BankStatement @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  orderId            String?
+  matchScore         Float
+  matchedByAlgorithm String
+  executionTimeMs    Int
+  createdAt          DateTime      @default(now())
+
+  @@index([bankStatementId])
+}
+
+model FinancialManualOverride {
+  id              String        @id @default(uuid())
+  bankStatementId String
+  bankStatement   BankStatement @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  orderId         String
+  order           Order         @relation(fields: [orderId], references: [id])
+  initiatedBy     String
+  approvedBy      String?
+  reason          String        @db.Text
+  note            String?       @db.Text
+  previousStatus  String
+  newStatus       String
+  isApproved      Boolean       @default(false)
+  auditHash       String
+  ipAddress       String
+  userAgent       String
+  createdAt       DateTime      @default(now())
+
+  @@index([bankStatementId])
+  @@index([orderId])
+  @@index([initiatedBy])
 }
 
 model AuditLog {

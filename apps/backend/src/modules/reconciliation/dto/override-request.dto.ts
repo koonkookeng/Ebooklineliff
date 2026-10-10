@@ -1,8 +1,15 @@
-/**
- * AUTO-SCAFFOLD Phase 115 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 115 §3.1 — override transport DTOs (thin; Zod owns validation)
+// Canonical: apps/backend/src/modules/reconciliation/dto/override-request.dto.ts
+// - Zero new deps.
+export interface OverrideRequestDto {
+  statementId: string;
+  orderId: string;
+  overrideReason: string;
+  adjustmentNote?: string;
+  checkerUserId?: string;
+}
+
+export interface OverrideApprovalDto {
+  overrideId: string;
+  checkerUserId?: string;
+}

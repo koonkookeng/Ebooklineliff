@@ -2575,3 +2575,29 @@ export type {
   ClearinghouseTaxCalc,
   SettlementSplit,
 } from './schemas/clearinghouse-contract';
+export {
+  ReconciliationStatusEnum,
+  StatementSourceEnum,
+  MismatchReasonEnum,
+  BankStatementImportSchema,
+  ManualOverridePayloadSchema,
+  RECON_DEFAULT_TOLERANCE_MINS,
+  MAKER_CHECKER_THRESHOLD_THB,
+  RECON_MATCH_SLA_MS,
+  RECON_AUTO_MATCH_TARGET_PCT,
+  RECON_STREAM,
+  RECON_GENESIS_HASH,
+  hashStatement,
+  windowBounds,
+  makerCheckerRequired,
+  autoMatchRate,
+  chainStep,
+  reconQueueKey,
+} from './schemas/reconciliation-contract';
+export type {
+  ReconciliationStatus,
+  StatementSource,
+  MismatchReason,
+  BankStatementImportInput,
+  ManualOverridePayload,
+} from './schemas/reconciliation-contract';

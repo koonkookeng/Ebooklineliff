@@ -1,0 +1,46 @@
+# SSOT Phase 115 §3.2 — reconciliation GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/reconciliation/reconciliation.graphql
+# Runtime is code-first (modules/reconciliation/resolvers/reconciliation.resolver.ts).
+
+enum ReconciliationStatus {
+  UNMATCHED
+  AUTO_MATCHED
+  MANUAL_OVERRIDDEN
+  DISCREPANCY_FLAGGED
+  REJECTED_DUPLICATE
+}
+
+type BankStatementNode {
+  id: ID!
+  bankCode: String!
+  accountNumber: String!
+  transRef: String
+  amount: Float!
+  txType: String!
+  txTimestamp: String!
+  senderName: String
+  status: ReconciliationStatus!
+  matchedOrderId: String
+  matchedOrderNumber: String
+  mismatchReason: String
+  createdAt: String!
+}
+
+type ReconciliationSummaryKPI {
+  totalStatementsCount: Int!
+  autoMatchedRatePercentage: Float!
+  totalMatchedAmount: Float!
+  pendingDiscrepanciesCount: Int!
+  manualOverriddenCount: Int!
+}
+
+extend type Query {
+  getReconciliationKPI(tenantId: ID!, startDate: String!, endDate: String!): ReconciliationSummaryKPI!
+  listBankStatements(status: ReconciliationStatus, page: Int = 1, limit: Int = 50): [BankStatementNode!]!
+}
+
+extend type Mutation {
+  reconcileBankStatement(statementId: ID!): BankStatementNode!
+  executeManualOverride(statementId: ID!, orderId: ID!, reason: String!, note: String): BankStatementNode!
+  approveOverrideChecker(overrideLogId: ID!): Boolean!
+}
