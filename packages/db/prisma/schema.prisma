@@ -157,6 +157,8 @@ model User {
   // Atomic Phase 112: filed flag reports + creator appeals
   contentFlagReports ContentFlagReport[]
   creatorAppeals     CreatorAppeal[]
+  // Atomic Phase 113: buyer-filed dispute claims
+  buyerDisputes      DisputeClaim[] @relation("BuyerDisputes")
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -3018,6 +3020,9 @@ model Order {
   couponRedemptions    CouponRedemption[]
   // Atomic Phase 089: gift wrapper for this order (sender checkout bind)
   giftOrder            GiftOrder?
+  // Atomic Phase 113: escrow hold (1:1) + dispute claim (1:1 per order)
+  escrowAccount        EscrowAccount?
+  disputeClaim         DisputeClaim?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
@@ -3302,6 +3307,106 @@ model CreatorAppeal {
 
   @@index([creatorId])
   @@index([status])
+}
+
+// Atomic Phase 113 §4.1: escrow fund settlement (schema.md canonical).
+enum EscrowStatus {
+  HELD
+  DISPUTED_HOLD
+  RELEASED_TO_SELLER
+  REFUNDED_TO_BUYER
+  PARTIALLY_REFUNDED
+}
+
+// Atomic Phase 113 §4.1: dispute claim reasons (schema.md canonical).
+enum DisputeReason {
+  PHYSICAL_ITEM_DAMAGED
+  PHYSICAL_ITEM_NOT_RECEIVED
+  WRONG_ITEM_SENT
+  EBOOK_FILE_CORRUPTED
+  COURSE_CONTENT_MISMATCH
+  DUPLICATE_PAYMENT
+  OTHER
+}
+
+// Atomic Phase 113 §4.1: dispute lifecycle states (schema.md canonical).
+enum DisputeStatus {
+  SUBMITTED
+  AWAITING_SELLER_RESPONSE
+  UNDER_ADMIN_ARBITRATION
+  APPROVED_REFUND_BUYER
+  REJECTED_RELEASE_SELLER
+  CANCELLED_BY_BUYER
+}
+
+model EscrowAccount {
+  id            String       @id @default(uuid())
+  orderId       String       @unique
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerId      String
+  grossAmount   Decimal      @db.Decimal(10, 2)
+  platformFee   Decimal      @default(0.00) @db.Decimal(10, 2)
+  netSellerPay  Decimal      @db.Decimal(10, 2)
+  holdingUntil  DateTime
+  status        EscrowStatus @default(HELD)
+  disputeClaim  DisputeClaim?
+  releasedAt    DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([holdingUntil])
+}
+
+model DisputeClaim {
+  id                    String         @id @default(uuid())
+  disputeNo             String         @unique
+  orderId               String         @unique
+  order                 Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  escrowId              String         @unique
+  escrow                EscrowAccount  @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  buyerId               String
+  buyer                 User           @relation("BuyerDisputes", fields: [buyerId], references: [id])
+  reason                DisputeReason
+  description           String         @db.Text
+  requestedRefundAmount Decimal        @db.Decimal(10, 2)
+  approvedRefundAmount  Decimal?       @db.Decimal(10, 2)
+  status                DisputeStatus  @default(SUBMITTED)
+  adminComment          String?        @db.Text
+  resolvedById          String?
+  evidences             DisputeEvidence[]
+  timelines             DisputeTimeline[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([buyerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model DisputeEvidence {
+  id         String       @id @default(uuid())
+  disputeId  String
+  dispute    DisputeClaim @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  fileUrl    String
+  fileType   String       @default("IMAGE")
+  uploadedAt DateTime     @default(now())
+
+  @@index([disputeId])
+}
+
+model DisputeTimeline {
+  id          String       @id @default(uuid())
+  disputeId   String
+  dispute     DisputeClaim @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  actorRole   String
+  actionState String
+  note        String?      @db.Text
+  createdAt   DateTime     @default(now())
+
+  @@index([disputeId])
 }
 
 model AuditLog {

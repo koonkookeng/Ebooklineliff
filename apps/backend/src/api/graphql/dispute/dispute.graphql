@@ -1,0 +1,85 @@
+# SSOT Phase 113 §3.2 — dispute + escrow GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/dispute/dispute.graphql
+# Runtime is code-first (modules/dispute/dispute.resolver.ts).
+
+enum DisputeReason {
+  PHYSICAL_ITEM_DAMAGED
+  PHYSICAL_ITEM_NOT_RECEIVED
+  WRONG_ITEM_SENT
+  EBOOK_FILE_CORRUPTED
+  COURSE_CONTENT_MISMATCH
+  DUPLICATE_PAYMENT
+  OTHER
+}
+
+enum DisputeStatus {
+  SUBMITTED
+  AWAITING_SELLER_RESPONSE
+  UNDER_ADMIN_ARBITRATION
+  APPROVED_REFUND_BUYER
+  REJECTED_RELEASE_SELLER
+  CANCELLED_BY_BUYER
+}
+
+enum EscrowStatus {
+  HELD
+  DISPUTED_HOLD
+  RELEASED_TO_SELLER
+  REFUNDED_TO_BUYER
+  PARTIALLY_REFUNDED
+}
+
+type DisputeEvidence {
+  id: ID!
+  fileUrl: String!
+  fileType: String!
+  uploadedAt: String!
+}
+
+type DisputeClaimPayload {
+  id: ID!
+  disputeNo: String!
+  orderId: ID!
+  reason: DisputeReason!
+  description: String!
+  status: DisputeStatus!
+  requestedRefundAmount: Float!
+  approvedRefundAmount: Float
+  evidences: [DisputeEvidence!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EscrowStatusPayload {
+  escrowId: ID!
+  orderId: ID!
+  grossAmount: Float!
+  holdingUntil: String!
+  status: EscrowStatus!
+}
+
+input CreateDisputeInput {
+  orderId: ID!
+  reason: DisputeReason!
+  description: String!
+  evidenceImageUrls: [String!]!
+  requestedRefundAmount: Float!
+}
+
+input ResolveDisputeInput {
+  disputeId: ID!
+  resolutionStatus: DisputeStatus!
+  adminComment: String!
+  approvedRefundAmount: Float!
+  refundToWallet: Boolean!
+}
+
+extend type Query {
+  getDisputeByOrder(orderId: ID!): DisputeClaimPayload
+  getEscrowStatus(orderId: ID!): EscrowStatusPayload
+}
+
+extend type Mutation {
+  createDisputeClaim(input: CreateDisputeInput!): DisputeClaimPayload!
+  resolveDisputeArbitration(input: ResolveDisputeInput!): DisputeClaimPayload!
+}

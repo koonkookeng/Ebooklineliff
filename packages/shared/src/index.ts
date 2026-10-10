@@ -2518,3 +2518,31 @@ export type {
   ModerationReviewPayload,
   AppealStatus,
 } from './schemas/moderation.schema';
+export {
+  DisputeReasonEnum,
+  DisputeStatusEnum,
+  EscrowStatusEnum,
+  CreateDisputeInputSchema,
+  ResolveDisputeInputSchema,
+  DISPUTE_OPEN_STATES,
+  DISPUTE_TERMINAL_STATES,
+  ESCROW_HOLD_DAYS,
+  DISPUTE_FRAUD_MONTHLY_LIMIT,
+  DISPUTE_MTTR_SLA_MS,
+  DISPUTE_QUEUE_PAGE_SIZE,
+  DISPUTE_EVENT_STREAM,
+  buildDisputeNo,
+  escrowHoldingUntil,
+  escrowExpired,
+  refundCap,
+  claimFrequencyRisk,
+  escrowKey,
+  disputeQueueKey,
+} from './schemas/dispute-escrow.schema';
+export type {
+  DisputeReason,
+  DisputeStatus,
+  EscrowStatus,
+  CreateDisputeInput,
+  ResolveDisputeInput,
+} from './schemas/dispute-escrow.schema';
