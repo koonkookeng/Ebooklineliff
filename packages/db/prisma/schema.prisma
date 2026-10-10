@@ -123,6 +123,10 @@ model User {
   // Atomic Phase 119: fingerprint-bound trusted devices + live sessions
   boundDevices        UserDevice[]
   boundActiveSessions ActiveSession[]
+  // Atomic Phase 120: login telemetry + known devices + security prefs
+  loginLogs           UserLoginLog[]
+  knownDevices        KnownUserDevice[]
+  securitySetting     UserSecuritySetting?
   // Atomic Phase 063: offline sync audit + DRM lease grants
   offlineSyncAudits     OfflineSyncLog[]
   drmOfflineLeases      DrmOfflineLease[]
@@ -5599,6 +5603,82 @@ model SecurityAuditLog {
   @@index([userId, timestamp])
   @@index([tenantId, action])
   @@index([eventType])
+}
+
+// Atomic Phase 120 §4.1: IP anomaly vocabulary (schema.md canonical).
+enum IpAnomalyType {
+  NORMAL
+  NEW_IP_LOCATION
+  NEW_COUNTRY
+  IMPOSSIBLE_TRAVEL
+  KNOWN_VPN_PROXY
+  HIGH_VELOCITY_ROTATION
+  DEVICE_FINGERPRINT_MISMATCH
+}
+
+model UserLoginLog {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress         String
+  country           String?
+  countryCode       String?
+  region            String?
+  city              String?
+  latitude          Float?
+  longitude         Float?
+  isp               String?
+  userAgent         String
+  deviceFingerprint String
+  isVpnProxy        Boolean       @default(false)
+  riskScore         Int           @default(0)
+  riskLevel         RiskLevel     @default(LOW)
+  anomalyType       IpAnomalyType @default(NORMAL)
+  isMfaChallenged   Boolean       @default(false)
+  isSessionBlocked  Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+model KnownUserDevice {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceFingerprint String
+  deviceName        String?
+  lastUsedIp        String
+  lastUsedCountry   String?
+  trustScore        Int      @default(100)
+  lastSeenAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@unique([userId, deviceFingerprint])
+  @@index([userId])
+}
+
+model SecurityIpBlacklist {
+  id         String    @id @default(uuid())
+  ipAddress  String    @unique
+  reason     String
+  riskScore  Int       @default(100)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([ipAddress])
+}
+
+model UserSecuritySetting {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enableGeoAlerts        Boolean  @default(true)
+  enableLineFlexAlerts   Boolean  @default(true)
+  strictImpossibleTravel Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
 }
 
 // Atomic Phase 107 §4.1: PDPA Data Scope Control + Field-Level Encryption segment

@@ -5,6 +5,10 @@
 //   app.module already imports infra/security/security.module.ts (028) under
 //   that name. Verifier + eviction + HLS signer + edge repo + guards +
 //   controller. Prisma/Redis ride @Global InfraModule. Zero new deps.
+// - Phase 120 RISK_CALL (additive-only, documented): the 120 anomaly lane
+//   (GeoIp/Velocity/Risk/IpAnomaly/Flex services) registers here because the
+//   phase boundary lists the service files but no new module file; the 119
+//   providers above are byte-untouched.
 import { Module } from '@nestjs/common';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
@@ -16,6 +20,12 @@ import { LogOnlyDeviceNotify, DeviceNotificationService } from './device-notify.
 import { DeviceFingerprintGuard } from './guards/device-fingerprint.guard';
 import { ConcurrentStreamGuard } from './guards/concurrent-stream.guard';
 import { SecurityFingerprintController } from './controllers/security-fingerprint.controller';
+import { GeoipLookupService } from './services/geoip-lookup.service';
+import { VelocityCheckerService } from './services/velocity-checker.service';
+import { RiskCalculatorService } from './services/risk-calculator.service';
+import { IpAnomalyService } from './services/ip-anomaly.service';
+import { LogOnlyFlexDelivery, LineFlexAlertService } from './services/line-flex-alert.service';
+import { SecurityResolver } from '../../api/graphql/resolvers/security.resolver';
 
 @Module({
   controllers: [SecurityFingerprintController],
@@ -58,7 +68,31 @@ import { SecurityFingerprintController } from './controllers/security-fingerprin
       useFactory: (redis: RedisClusterService, prisma: PrismaService) => new ConcurrentStreamGuard(redis, prisma),
       inject: [RedisClusterService, PrismaService],
     },
+    // ---- Phase 120 additive lane (119 providers above untouched) ----
+    GeoipLookupService,
+    VelocityCheckerService,
+    RiskCalculatorService,
+    LogOnlyFlexDelivery,
+    LineFlexAlertService,
+    {
+      provide: IpAnomalyService,
+      useFactory: (
+        geoIp: GeoipLookupService,
+        velocity: VelocityCheckerService,
+        risk: RiskCalculatorService,
+        alerts: LineFlexAlertService,
+        prisma: PrismaService,
+        redis: RedisClusterService,
+      ) => new IpAnomalyService(geoIp, velocity, risk, alerts, prisma, redis),
+      inject: [GeoipLookupService, VelocityCheckerService, RiskCalculatorService, LineFlexAlertService, PrismaService, RedisClusterService],
+    },
+    {
+      provide: SecurityResolver,
+      useFactory: (anomaly: IpAnomalyService, sessions: SessionEvictionService) =>
+        new SecurityResolver(anomaly, sessions),
+      inject: [IpAnomalyService, SessionEvictionService],
+    },
   ],
-  exports: [FingerprintVerifierService, SessionEvictionService, HlsTokenSignerService, ActiveSessionRedisRepository, DeviceFingerprintGuard, ConcurrentStreamGuard],
+  exports: [FingerprintVerifierService, SessionEvictionService, HlsTokenSignerService, ActiveSessionRedisRepository, DeviceFingerprintGuard, ConcurrentStreamGuard, GeoipLookupService, VelocityCheckerService, RiskCalculatorService, IpAnomalyService, LineFlexAlertService, SecurityResolver],
 })
 export class DeviceSecurityModule {}
