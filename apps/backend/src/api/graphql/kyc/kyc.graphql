@@ -1,6 +1,7 @@
 # SSOT Phase 085 §3.2 — KYC GraphQL intents (SDL record)
 # Canonical: apps/backend/src/api/graphql/kyc/kyc.graphql
 # Runtime is code-first (modules/kyc/resolvers/kyc.resolver.ts).
+# Phase 111 additive §3.2 intents (runtime: resolvers/kyc-queue.resolver.ts).
 
 type KycSubmitPayload {
   success: Boolean!
@@ -48,5 +49,53 @@ input KycSubmissionInput {
   bankAccountNumber: String!
   bankAccountName: String!
   bookbankImageUrl: String!
+  taxId: String
+}
+
+# Phase 111 §3.2 queue intents (masked payloads, paginated review).
+type KycDetailPayload {
+  id: ID!
+  userId: ID!
+  status: String!
+  idCardNumberMasked: String!
+  fullNameTh: String!
+  bankName: String!
+  bankAccountNumberMasked: String!
+  bankAccountName: String!
+  idCardImageUrlSigned: String!
+  bankBookImageUrlSigned: String!
+  riskLevel: String!
+  confidenceScore: Float!
+  submittedAt: String!
+  verifiedAt: String
+  rejectionReason: String
+}
+
+type KycQueuePaginatedResponse {
+  items: [KycDetailPayload!]!
+  totalCount: Int!
+  pendingCount: Int!
+  highRiskCount: Int!
+}
+
+extend type Query {
+  getMyKycStatus111: KycStatusPayload!
+  getKycVerificationQueue(status: String, riskLevel: String, page: Int, limit: Int): KycQueuePaginatedResponse!
+}
+
+extend type Mutation {
+  submitCreatorKyc111(input: KycSubmissionInputPayload!): Boolean!
+  reviewCreatorKyc(kycId: ID!, action: String!, rejectionReason: String): Boolean!
+}
+
+input KycSubmissionInputPayload {
+  idCardNumber: String!
+  fullNameTh: String!
+  dateOfBirth: String!
+  bankName: String!
+  bankAccountNumber: String!
+  bankAccountName: String!
+  idCardImageBase64: String!
+  bankBookImageBase64: String!
   taxId: String
 }

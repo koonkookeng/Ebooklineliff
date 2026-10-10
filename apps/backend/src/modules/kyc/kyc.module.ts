@@ -6,6 +6,10 @@
 // - AES engine + fuzzy bank match + staged OCR + stream queue + swappable
 //   Flex notify -> verification orchestrator + Prisma store -> submission +
 //   admin REST + GQL. R2 private vault via R2StorageService.
+// - Phase 111 additive: PiiCryptoService facade (mask helpers), KycRiskService
+//   (§7.1 tiers + blind-index duplicates), KycQueueReviewService (paginated
+//   queue + atomic VERIFIED→SELLER verdicts + Flex), KycQueueResolver/
+//   KycQueueController, 300s docViewUrl. 085 providers untouched.
 // - Zero new deps.
 import { Module } from '@nestjs/common';
 import { PrismaService } from '../../infra/database/prisma.service';
@@ -19,14 +23,19 @@ import { OcrVisionAdapter } from './infra/ocr-vision.adapter';
 import { R2PrivateVaultClient } from './infra/r2-private-vault.client';
 import { KycOcrService } from './services/kyc-ocr.service';
 import { KycQueueService } from './services/kyc-queue.service';
+import { KycRiskService } from './services/kyc-risk.service';
+import { PiiCryptoService } from './services/pii-crypto.service';
 import { LogOnlyKycNotify, KycNotificationService } from './services/kyc-notification.service';
 import { KycVerificationService, PrismaKycStore } from './services/kyc-verification.service';
 import { KycSubmissionController } from './controllers/kyc-submission.controller';
 import { KycAdminController } from './controllers/kyc-admin.controller';
+import { KycQueueController } from './controllers/kyc-queue.controller';
 import { KycResolver } from './resolvers/kyc.resolver';
+import { KycQueueResolver } from './resolvers/kyc-queue.resolver';
+import { KycQueueReviewService } from './services/kyc-queue-review.service';
 
 @Module({
-  controllers: [KycSubmissionController, KycAdminController],
+  controllers: [KycSubmissionController, KycAdminController, KycQueueController],
   providers: [
     KycEncryptionService,
     BankValidationService,
@@ -36,6 +45,14 @@ import { KycResolver } from './resolvers/kyc.resolver';
     R2PrivateVaultClient,
     KycOcrService,
     KycQueueService,
+    KycRiskService,
+    {
+      provide: PiiCryptoService,
+      useFactory: (enc: KycEncryptionService) => new PiiCryptoService(enc),
+      inject: [KycEncryptionService],
+    },
+    KycQueueReviewService,
+    KycQueueResolver,
     LogOnlyKycNotify,
     KycNotificationService,
     PrismaKycStore,
@@ -66,6 +83,6 @@ import { KycResolver } from './resolvers/kyc.resolver';
       inject: [KycVerificationService, R2PrivateVaultClient],
     },
   ],
-  exports: [KycVerificationService, PrismaKycStore, KycEncryptionService],
+  exports: [KycVerificationService, PrismaKycStore, KycEncryptionService, PiiCryptoService, KycRiskService, KycQueueReviewService],
 })
 export class KycModule {}

@@ -318,10 +318,12 @@ function sectionParity(): void {
     const src = readFileSync(f, 'utf8');
     assert.ok(!src.includes('TODO') && !src.includes('placeholder'), `${f} unimplemented`);
   }
-  // pii-crypto (key rotation) stays 111-owned.
+  // pii-crypto (key rotation) is 111-owned — implemented by Phase 111 Task 2
+  // (facade over KycEncryptionService + PDPA masks). Updated from the
+  // pre-111 AUTO-SCAFFOLD placeholder guard; 085 cipher ownership unchanged.
   assert.ok(
-    readFileSync('apps/backend/src/modules/kyc/services/pii-crypto.service.ts', 'utf8').includes('AUTO-SCAFFOLD'),
-    'pii-crypto stays 111-owned',
+    readFileSync('apps/backend/src/modules/kyc/services/pii-crypto.service.ts', 'utf8').includes('PiiCryptoService'),
+    'pii-crypto 111-owned (implemented)',
   );
   const fin = readFileSync('apps/backend/src/modules/kyc/services/kyc-verification.service.ts', 'utf8');
   assert.ok(fin.includes('PrismaKycStore') && fin.includes('assertSubmittable'));

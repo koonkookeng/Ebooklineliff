@@ -3136,6 +3136,12 @@ model CreatorKYC {
   ocrConfidence     Decimal?  @db.Decimal(5, 4)
   faceMatchScore    Decimal?  @db.Decimal(5, 4)
   status            KYCStatus @default(PENDING)
+  // Atomic Phase 111 §4.1: AI fraud risk assessment (additive; 085 rows default LOW).
+  riskLevel         KYCRiskLevel @default(LOW)
+  isPossibleTamper  Boolean      @default(false)
+  // SHA-256 blind index of the ID number for duplicate detection (random-IV
+  // AES-GCM ciphertext cannot be compared; the blind index can).
+  idCardBlindIdx    String?
   verifiedByUserId  String?
   payoutAccount     CreatorPayoutAccount?
   auditLogs         KYCAuditLog[]
@@ -3144,6 +3150,18 @@ model CreatorKYC {
 
   @@index([status])
   @@index([userId])
+  @@index([riskLevel])
+  // Atomic Phase 111 §4.1 queue ordering + blind-index duplicate lookup.
+  @@index([createdAt])
+  @@index([idCardBlindIdx])
+}
+
+// Atomic Phase 111 §4.1: KYC fraud risk levels (schema.md canonical).
+enum KYCRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 model CreatorPayoutAccount {

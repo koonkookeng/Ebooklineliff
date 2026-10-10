@@ -1,11 +1,8 @@
-/**
- * AUTO-SCAFFOLD Phase 111 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class KycResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 111 §3.2 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/kyc.resolver.ts
+// (legacy src/backend/api/graphql/kyc.resolver.ts)
+// - 085 KycResolver (submitKyc/getKycStatus/decideKyc) + 111 KycQueueResolver
+//   (getKycVerificationQueue/reviewCreatorKyc/submitCreatorKyc111/
+//   getMyKycStatus111) re-exported; no scaffold placeholder.
+export { KycResolver as KycModuleResolver } from '../../modules/kyc/resolvers/kyc.resolver';
+export { KycQueueResolver as KycQueueModuleResolver } from '../../modules/kyc/resolvers/kyc-queue.resolver';

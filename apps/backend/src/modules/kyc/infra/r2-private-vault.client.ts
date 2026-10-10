@@ -6,7 +6,7 @@
 // - Zero new deps.
 import { Injectable } from '@nestjs/common';
 import { R2StorageService } from '../../../infra/cloudflare/r2-storage.service';
-import { KYC_UPLOAD_TTL_SEC, KYC_VIEW_TTL_SEC, kycObjectKey } from '@repo/shared';
+import { KYC_UPLOAD_TTL_SEC, KYC_VIEW_TTL_SEC, kycObjectKey, KYC_DOC_VIEW_TTL_SEC } from '@repo/shared';
 
 @Injectable()
 export class R2PrivateVaultClient {
@@ -25,5 +25,13 @@ export class R2PrivateVaultClient {
   /** 3-minute review URL (caller writes the KYCAuditLog view row). */
   viewUrl(objectKey: string): { url: string; expiresInSec: number } {
     return { url: this.r2.presignedGetUrl(objectKey, KYC_VIEW_TTL_SEC), expiresInSec: KYC_VIEW_TTL_SEC };
+  }
+
+  /**
+   * Phase 111 §8.1: 5-minute (300s) doc URL for the admin split-view
+   * workspace. Private bucket, zero egress — caller audit-logs the view.
+   */
+  docViewUrl(objectKey: string): { url: string; expiresInSec: number } {
+    return { url: this.r2.presignedGetUrl(objectKey, KYC_DOC_VIEW_TTL_SEC), expiresInSec: KYC_DOC_VIEW_TTL_SEC };
   }
 }

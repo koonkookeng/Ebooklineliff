@@ -2465,3 +2465,23 @@ export type {
   User360Profile,
   InspectorUiState,
 } from './schemas/inspector-contract';
+export {
+  KYCDocTypeEnum,
+  KYCRiskLevelEnum,
+  KycSubmissionInputSchema,
+  KycReviewPayloadSchema,
+  OcrExtractionResultSchema,
+  KYC_QUEUE_PAGE_SIZE,
+  KYC_DOC_VIEW_TTL_SEC,
+  KYC_VERDICT_SLA_MS,
+  kycQueueKey,
+  kycRiskTier111,
+  isValidKycSubmissionId,
+} from './schemas/kyc-queue.schema';
+export type {
+  KYCDocType,
+  KYCRiskLevel,
+  KycSubmissionInput,
+  KycReviewPayload,
+  OcrExtractionResult,
+} from './schemas/kyc-queue.schema';
