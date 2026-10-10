@@ -1,0 +1,150 @@
+# SSOT Phase 108 §3.2 — Tenant Orchestration GraphQL Intent Schema (contract record)
+# Canonical: apps/backend/src/api/graphql/tenant/tenant-orchestration.graphql
+# Runtime is code-first
+# (apps/backend/src/modules/tenant-orchestration/resolvers/tenant-orchestration.resolver.ts);
+# this SDL is the Gate 1 SSOT-sync record. Intent names match spec §3.2 verbatim.
+
+enum CompanyStatusEnum {
+  PENDING_KYC
+  TRIAL_ACTIVE
+  TRIAL_EXPIRED
+  ACTIVE
+  SUSPENDED_PAYMENT_OVERDUE
+  SUSPENDED_POLICY_VIOLATION
+  MAINTENANCE
+}
+
+enum DomainVerificationStatusEnum {
+  PENDING_DNS
+  PROVISIONING_SSL
+  ACTIVE
+  FAILED_DNS_NOT_FOUND
+  EXPIRED
+}
+
+enum PackageTierEnum {
+  STARTER_FREE
+  PRO_CREATOR
+  ENTERPRISE_ACADEMY
+  CUSTOM_WHITE_LABEL
+}
+
+input CreateTenantInput {
+  companyName: String!
+  slug: String!
+  packageTier: PackageTierEnum!
+  primaryContactEmail: String!
+  customDomains: [String!]
+}
+
+input UpdateCompanyStatusInput {
+  tenantId: ID!
+  status: CompanyStatusEnum!
+  reason: String
+}
+
+input UpdateTenantPackageInput {
+  tenantId: ID!
+  packageTier: PackageTierEnum!
+}
+
+input AddTenantCustomDomainInput {
+  tenantId: ID!
+  domain: String!
+}
+
+type TenantDomainPayload {
+  id: ID!
+  domain: String!
+  isPrimary: Boolean!
+  status: DomainVerificationStatusEnum!
+  sslVerified: Boolean!
+  cnameTarget: String
+  verifiedAt: String
+}
+
+type TenantSubscriptionPayload {
+  id: ID!
+  packageTier: PackageTierEnum!
+  monthlyFee: Float!
+  startsAt: String!
+  expiresAt: String!
+  isAutoRenew: Boolean!
+  paymentStatus: String!
+}
+
+type TenantUsageMetricPayload {
+  recordedDate: String!
+  activeUsersCount: Int!
+  storageBytesUsed: String!
+  apiCallsCount: Int!
+  liffSessionsCount: Int!
+}
+
+type TenantCompanyPayload {
+  id: ID!
+  name: String!
+  slug: String!
+  status: CompanyStatusEnum!
+  packageTier: PackageTierEnum!
+  contactEmail: String!
+  primaryColor: String!
+  maxUsers: Int!
+  maxStorageBytes: String!
+  maxMonthlyLiffMAU: Int!
+  featureFlags: String!
+  domains: [TenantDomainPayload!]!
+  activeSubscription: TenantSubscriptionPayload
+  usageMetrics: [TenantUsageMetricPayload!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type TenantConnection {
+  items: [TenantCompanyPayload!]!
+  total: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+}
+
+type QuotaStatusPayload {
+  allowed: Boolean!
+  current: Int!
+  max: Int!
+  percentage: Float!
+  warning: Boolean!
+}
+
+type AllQuotaStatusPayload {
+  users: QuotaStatusPayload!
+  storage: QuotaStatusPayload!
+  mau: QuotaStatusPayload!
+}
+
+type DomainVerificationPayload {
+  id: ID!
+  domain: String!
+  status: DomainVerificationStatusEnum!
+  sslVerified: Boolean!
+  verifiedAt: String
+}
+
+type CachePurgePayload {
+  purged: Int!
+}
+
+type Query {
+  getTenantsList(status: CompanyStatusEnum, packageTier: PackageTierEnum, search: String, page: Int, limit: Int): TenantConnection!
+  getTenantDetail(tenantId: ID!): TenantCompanyPayload!
+  getTenantQuotaStatus(tenantId: ID!): AllQuotaStatusPayload!
+  verifyDomainStatus(tenantId: ID!, domain: String!): DomainVerificationPayload!
+}
+
+type Mutation {
+  createTenantCompany(input: CreateTenantInput!): TenantCompanyPayload!
+  updateTenantStatus(input: UpdateCompanyStatusInput!): TenantCompanyPayload!
+  updateTenantPackage(input: UpdateTenantPackageInput!): TenantCompanyPayload!
+  addTenantCustomDomain(input: AddTenantCustomDomainInput!): DomainVerificationPayload!
+  purgeTenantCache(tenantId: ID!): CachePurgePayload!
+}

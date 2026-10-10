@@ -1,8 +1,7 @@
-/**
- * AUTO-SCAFFOLD Phase 108 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 108 — legacy alias: UpdateCompanyStatus schema lives in
+// ./create-tenant.dto.ts (single source); this file re-exports it so older
+// imports keep working (Zero Redundant Code policy).
+export {
+  UpdateCompanyStatusDtoSchema,
+  type UpdateCompanyStatusDto,
+} from './create-tenant.dto';

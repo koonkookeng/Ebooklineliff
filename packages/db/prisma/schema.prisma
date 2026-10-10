@@ -377,6 +377,7 @@ model Tenant {
   products      Product[]
   brandingConfig TenantBrandingConfig?
   customDomains TenantDomain[]
+  companies     TenantCompany[]
   memberships   UserTenantMapping[]
   themeConfig   CompanyTheme?
   createdAt     DateTime  @default(now())
@@ -4864,4 +4865,112 @@ model DataScopePolicy {
   updatedAt       DateTime      @updatedAt
 
   @@unique([tenantId, role])
+}
+
+// Atomic Phase 108 §4.1: Multi-Tenant Orchestration Console
+// (additive expand-contract; separate from Phase 071 Tenant model for orchestration-level management).
+enum CompanyStatus {
+  PENDING_KYC
+  TRIAL_ACTIVE
+  TRIAL_EXPIRED
+  ACTIVE
+  SUSPENDED_PAYMENT_OVERDUE
+  SUSPENDED_POLICY_VIOLATION
+  MAINTENANCE
+}
+
+enum DomainStatus {
+  PENDING_DNS
+  PROVISIONING_SSL
+  ACTIVE
+  FAILED_DNS_NOT_FOUND
+  EXPIRED
+}
+
+enum PackageTier {
+  STARTER_FREE
+  PRO_CREATOR
+  ENTERPRISE_ACADEMY
+  CUSTOM_WHITE_LABEL
+}
+
+model TenantCompany {
+  id                String               @id @default(uuid())
+  name              String
+  slug              String               @unique
+  status            CompanyStatus        @default(PENDING_KYC)
+  packageTier       PackageTier          @default(STARTER_FREE)
+  contactEmail      String
+  contactPhone      String?
+  logoUrl           String?
+  primaryColor      String               @default("#10B981")
+
+  // Resource Quotas
+  maxUsers          Int                  @default(1000)
+  maxStorageBytes   BigInt               @default(10737418240) // Default 10 GB
+  maxMonthlyLiffMAU Int                  @default(5000)
+
+  // Dynamic Feature Flags Configuration
+  featureFlags      Json                 @default("{\"customDomain\": false, \"affiliate\": true, \"whiteLabel\": false}")
+
+  // Relations
+  // RISK_CALL Phase 108: link to Phase 071 Tenant is optional — spec §4.1
+  // TenantCompany IS the top-level company (no parent required); the link
+  // is populated only when a Phase 071 storefront Tenant exists.
+  tenant            Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId          String?
+  domains           TenantCompanyDomain[]
+  subscriptions     TenantSubscription[]
+  usageMetrics      TenantUsageMetric[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([packageTier])
+}
+
+model TenantCompanyDomain {
+  id           String         @id @default(uuid())
+  tenantId     String
+  tenant       TenantCompany  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  domain       String         @unique
+  isPrimary    Boolean        @default(false)
+  status       DomainStatus   @default(PENDING_DNS)
+  sslVerified  Boolean        @default(false)
+  cnameTarget  String         @default("ingress.omnichannel-liff.com")
+  verifiedAt   DateTime?
+  createdAt    DateTime       @default(now())
+
+  @@index([tenantId])
+  @@index([domain])
+}
+
+model TenantSubscription {
+  id             String        @id @default(uuid())
+  tenantId       String
+  tenant         TenantCompany @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  packageTier    PackageTier
+  monthlyFee     Decimal       @db.Decimal(10, 2)
+  startsAt       DateTime
+  expiresAt      DateTime
+  isAutoRenew    Boolean       @default(true)
+  paymentStatus  String        @default("PAID")
+  createdAt      DateTime      @default(now())
+
+  @@index([tenantId])
+}
+
+model TenantUsageMetric {
+  id               String        @id @default(uuid())
+  tenantId         String
+  tenant           TenantCompany @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  recordedDate     DateTime      @db.Date
+  activeUsersCount Int          @default(0)
+  storageBytesUsed BigInt       @default(0)
+  apiCallsCount    Int          @default(0)
+  liffSessionsCount Int         @default(0)
+
+  @@unique([tenantId, recordedDate])
+  @@index([tenantId])
 }

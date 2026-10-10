@@ -2366,3 +2366,31 @@ export type {
   MaskedUserPayload,
   UnmaskRequest,
 } from './schemas/pdpa-scope.schema';
+export {
+  CompanyStatusEnum,
+  DomainVerificationStatusEnum,
+  PackageTierEnum,
+  CreateTenantPayloadSchema,
+  TenantQuotaConfigSchema,
+  UpdateTenantStatusSchema,
+  QUOTA_MATRIX,
+  DEFAULT_FEATURE_FLAGS,
+  INGRESS_CNAME_TARGET,
+  DEFAULT_SUBDOMAIN_SUFFIX,
+  TENANT_EDGE_CACHE_TTL_SEC,
+  QUOTA_WARN_RATIO,
+  TENANT_LIST_MAX_LIMIT,
+  isServingStatus,
+  statusChangeNeedsReason,
+  quotaWarn,
+  defaultSubdomainFor,
+  isValidHostname,
+} from './schemas/tenant-orchestration.schema';
+export type {
+  CompanyStatus,
+  DomainVerificationStatus,
+  PackageTier,
+  CreateTenantPayload,
+  TenantQuotaConfig,
+  UpdateTenantStatus,
+} from './schemas/tenant-orchestration.schema';

@@ -1,8 +1,27 @@
-/**
- * AUTO-SCAFFOLD Phase 108 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 108 §5.1 — Tenant Orchestration Module
+// Canonical: apps/backend/src/modules/tenant-orchestration/tenant-orchestration.module.ts
+// - Wires services, controllers, resolvers.
+// - PrismaService + RedisClusterService from global InfraModule.
+// - Zero new deps.
 import { Module } from '@nestjs/common';
-@Module({})
-export class TenantOrchestrationModuleModule {}
+import { TenantProvisioningService } from './services/tenant-provisioning.service';
+import { DomainVerificationService } from './services/domain-verification.service';
+import { TenantQuotaEnforcerService } from './services/tenant-quota-enforcer.service';
+import { TenantOrchestrationController } from './controllers/tenant-orchestration.controller';
+import { TenantOrchestrationResolver } from './resolvers/tenant-orchestration.resolver';
+
+@Module({
+  controllers: [TenantOrchestrationController],
+  providers: [
+    TenantProvisioningService,
+    DomainVerificationService,
+    TenantQuotaEnforcerService,
+    TenantOrchestrationResolver,
+  ],
+  exports: [
+    TenantProvisioningService,
+    DomainVerificationService,
+    TenantQuotaEnforcerService,
+  ],
+})
+export class TenantOrchestrationModule {}
