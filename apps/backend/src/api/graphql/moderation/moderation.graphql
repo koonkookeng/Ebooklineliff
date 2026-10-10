@@ -1,0 +1,60 @@
+# SSOT Phase 112 §3.2 — moderation GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/moderation/moderation.graphql
+# Runtime is code-first (modules/moderation/resolvers/moderation.resolver.ts).
+
+enum ModerationStatus {
+  PENDING_SCAN
+  SCANNING
+  PASSED
+  FLAGGED_NSFW
+  FLAGGED_COPYRIGHT
+  FLAGGED_PROFANITY
+  QUARANTINED
+  APPEAL_PENDING
+  REJECTED
+  MANUALLY_APPROVED
+}
+
+enum FlagCategory {
+  COPYRIGHT_VIOLATION
+  NUDITY_EXPLICIT
+  VIOLENCE_GORE
+  HATE_SPEECH_PROFANITY
+  SCAM_FRAUD
+  OTHER
+}
+
+type ModerationResultPayload {
+  id: ID!
+  productId: ID!
+  status: ModerationStatus!
+  confidenceScore: Float!
+  flaggedCategories: [FlagCategory!]!
+  violatingLocations: [String!]!
+  aiAnalysisSummary: String
+  scannedAt: String
+}
+
+type CreatorAppealPayload {
+  appealId: ID!
+  productId: ID!
+  status: String!
+}
+
+type ModerationQueueResponse {
+  items: [ModerationResultPayload!]!
+  totalCount: Int!
+  quarantinedCount: Int!
+  appealPendingCount: Int!
+}
+
+extend type Query {
+  getModerationQueue(status: ModerationStatus, limit: Int, offset: Int): ModerationQueueResponse!
+  getContentModerationStatus(productId: ID!): ModerationResultPayload!
+}
+
+extend type Mutation {
+  triggerContentRescan(productId: ID!): ModerationResultPayload!
+  submitCreatorAppeal(productId: ID!, appealReason: String!, proofUrls: [String!]): CreatorAppealPayload!
+  adminReviewModeration(productId: ID!, approve: Boolean!, adminNotes: String!): Boolean!
+}

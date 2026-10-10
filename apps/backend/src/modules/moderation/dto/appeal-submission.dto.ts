@@ -1,8 +1,14 @@
-/**
- * AUTO-SCAFFOLD Phase 112 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+// SSOT Phase 112 §3.1 — appeal transport DTOs (thin; Zod owns validation)
+// Canonical: apps/backend/src/modules/moderation/dto/appeal-submission.dto.ts
+// - Zero new deps.
+export interface AppealSubmissionDto {
+  productId: string;
+  appealReason: string;
+  proofDocumentUrls: string[];
+}
+
+export interface AppealDecisionDto {
+  productId: string;
+  approve: boolean;
+  adminNotes: string;
+}

@@ -154,6 +154,9 @@ model User {
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
+  // Atomic Phase 112: filed flag reports + creator appeals
+  contentFlagReports ContentFlagReport[]
+  creatorAppeals     CreatorAppeal[]
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
   scannedQrSessions QrSessionNonce[]         @relation("QrScannedBy")
@@ -1717,6 +1720,11 @@ model Product {
   offlineLicenses OfflineLicense[]
   // Atomic Phase 070: cross-device vector-clock rows per product
   crossDeviceStates CrossDeviceSyncState[]
+  // Atomic Phase 112: AI moderation logs + fingerprints + flag reports + appeals
+  contentModerationLogs ContentModerationLog[]
+  copyrightFingerprints CopyrightFingerprint[]
+  contentFlagReports    ContentFlagReport[]
+  creatorAppeals        CreatorAppeal[]
   createdAt      DateTime                    @default(now())
   updatedAt      DateTime                    @updatedAt
 
@@ -3199,6 +3207,101 @@ model KYCAuditLog {
 
   @@index([kycId])
   @@index([actorUserId])
+}
+
+// Atomic Phase 112 §4.1: global AI content moderation (schema.md canonical).
+enum ModerationStatus {
+  PENDING_SCAN
+  SCANNING
+  PASSED
+  FLAGGED_NSFW
+  FLAGGED_COPYRIGHT
+  FLAGGED_PROFANITY
+  QUARANTINED
+  APPEAL_PENDING
+  REJECTED
+  MANUALLY_APPROVED
+}
+
+// Atomic Phase 112 §4.1: moderation flag categories (schema.md canonical).
+enum FlagCategory {
+  COPYRIGHT_VIOLATION
+  NUDITY_EXPLICIT
+  VIOLENCE_GORE
+  HATE_SPEECH_PROFANITY
+  SCAM_FRAUD
+  OTHER
+}
+
+// Atomic Phase 112 §4.1: moderation severity ladder (schema.md canonical).
+enum ModerationSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model ContentModerationLog {
+  id                String             @id @default(uuid())
+  productId         String
+  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status            ModerationStatus   @default(PENDING_SCAN)
+  confidenceScore   Decimal            @default(0.00) @db.Decimal(5, 4)
+  severity          ModerationSeverity @default(LOW)
+  flaggedCategories FlagCategory[]
+  violatingPages    String[]
+  aiAnalysisJson    Json?
+  scannedAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([productId])
+  @@index([status])
+}
+
+model CopyrightFingerprint {
+  id                 String   @id @default(uuid())
+  productId          String   @unique
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  perceptualHash     String
+  textEmbeddingHash  String?
+  digitalWatermarkId String   @unique @default(uuid())
+  createdAt          DateTime @default(now())
+
+  @@index([perceptualHash])
+}
+
+model ContentFlagReport {
+  id           String       @id @default(uuid())
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User         @relation(fields: [reporterId], references: [id])
+  category     FlagCategory
+  description  String       @db.Text
+  evidenceUrls String[]
+  isResolved   Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+
+  @@index([productId])
+  @@index([reporterId])
+}
+
+model CreatorAppeal {
+  id             String   @id @default(uuid())
+  productId      String   @unique
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  creatorId      String
+  creator        User     @relation(fields: [creatorId], references: [id])
+  appealReason   String   @db.Text
+  proofDocuments String[]
+  status         String   @default("PENDING")
+  reviewedBy     String?
+  adminNotes     String?  @db.Text
+  reviewedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([creatorId])
+  @@index([status])
 }
 
 model AuditLog {

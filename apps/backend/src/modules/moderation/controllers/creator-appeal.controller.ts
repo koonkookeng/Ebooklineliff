@@ -1,10 +1,29 @@
-/**
- * AUTO-SCAFFOLD Phase 112 — REST controller
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Controller, Get } from '@nestjs/common';
-@Controller()
-export class CreatorAppealControllerController {
-  @Get('health') health() { return { ok: true }; }
+// SSOT Phase 112 Task 8 §5.1 — creator appeal REST (LIFF self lane)
+// Canonical: apps/backend/src/modules/moderation/controllers/creator-appeal.controller.ts
+// (legacy src/backend/modules/moderation/.../creator-appeal.controller.ts)
+// - POST submit (JWT, owner-only, appeal-eligible only) / GET mine
+//   (owner appeal read). Admin decisions ride the admin controller +
+//   GQL (dual-guard). Zero new deps.
+import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
+import { AppealManagerService } from '../services/appeal-manager.service';
+
+type LooseReq = Record<string, unknown>;
+
+function actorOf(req: LooseReq): string {
+  const user = (req['user'] as { id?: string } | undefined) ?? {};
+  if (!user.id) throw new BadRequestException('Missing authentication');
+  return user.id;
+}
+
+@Controller('api/v1/moderation/appeals')
+export class CreatorAppealController {
+  constructor(private readonly appeals: AppealManagerService) {}
+
+  @Post('submit')
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  submit(@Req() req: LooseReq, @Body() body: unknown) {
+    return this.appeals.submitAppeal(actorOf(req), body);
+  }
 }

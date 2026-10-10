@@ -8,10 +8,12 @@ import { BankPayoutCallbackController } from './bank-payout-callback.controller'
 import { LogisticsModule } from '../../modules/logistics/logistics.module';
 import { PayoutModule } from '../../modules/payout/payout.module';
 import { KycModule } from '../../modules/kyc/kyc.module';
+import { ModerationModule } from '../../modules/moderation/moderation.module';
 import { KycOcrCallbackController } from './kyc/kyc-ocr-callback.controller';
+import { ModerationEventController } from './moderation/moderation-event.controller';
 
 @Module({
-  imports: [LogisticsModule, PayoutModule, KycModule],
-  controllers: [EasySlipWebhookController, LogisticsWebhookController, LineMessagingWebhookController, LogisticsCarrierController, BankPayoutCallbackController, KycOcrCallbackController],
+  imports: [LogisticsModule, PayoutModule, KycModule, ModerationModule],
+  controllers: [EasySlipWebhookController, LogisticsWebhookController, LineMessagingWebhookController, LogisticsCarrierController, BankPayoutCallbackController, KycOcrCallbackController, ModerationEventController],
 })
 export class WebhooksModule {}
