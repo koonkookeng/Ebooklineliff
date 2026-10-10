@@ -1,0 +1,102 @@
+# SSOT Phase 110 §3.2 — Inspector GraphQL intent schema (contract record)
+# Canonical: apps/backend/src/api/graphql/inspector.graphql
+# Runtime is code-first
+# (apps/backend/src/modules/user-inspector/resolvers/user-inspector.resolver.ts);
+# this SDL is the Gate 1 SSOT-sync record. Intent names match spec §3.2 verbatim.
+
+enum InspectorRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InspectorActivityType {
+  LOGIN_LIFF
+  LOGIN_WEB
+  PURCHASE_COMPLETED
+  EBOOK_PAGE_READ
+  COURSE_VIDEO_WATCH
+  SLIP_UPLOADED
+  AFFILIATE_CLICK
+  SESSION_REVOKED
+}
+
+type RFMScorePayload {
+  recencyScore: Int!
+  frequencyScore: Int!
+  monetaryScore: Int!
+  segmentLabel: String!
+}
+
+type User360ProfilePayload {
+  userId: ID!
+  displayName: String!
+  email: String
+  lineUserId: String
+  walletBalance: Float!
+  rewardPoints: Int!
+  lifetimeValueAmount: Float!
+  totalOrdersCount: Int!
+  rfmScore: RFMScorePayload!
+  riskLevel: InspectorRiskLevel!
+  createdAt: String!
+}
+
+type EbookPageHeatmapPayload {
+  pageNumber: Int!
+  totalDwellTimeSec: Int!
+  readCount: Int!
+  lastReadAt: String!
+}
+
+type LessonWatchDetail {
+  lessonId: ID!
+  lessonTitle: String!
+  watchedSec: Int!
+  durationSec: Int!
+  isCompleted: Boolean!
+}
+
+type VideoWatchAnalyticsPayload {
+  courseId: ID!
+  totalWatchedSeconds: Int!
+  overallCompletionPercentage: Float!
+  lessonBreakdown: [LessonWatchDetail!]!
+}
+
+type SecurityAuditLogPayload {
+  id: ID!
+  activityType: InspectorActivityType!
+  ipAddress: String!
+  userAgent: String!
+  deviceFingerprint: String
+  lineSessionId: String
+  riskLevel: InspectorRiskLevel!
+  createdAt: String!
+}
+
+type SessionRevokePayload {
+  success: Boolean!
+  revokedSessionsCount: Int!
+  timestamp: String!
+}
+
+type RiskFlagPayload {
+  success: Boolean!
+  userId: ID!
+  updatedRiskLevel: InspectorRiskLevel!
+}
+
+type Query {
+  getUser360Profile(userId: ID!): User360ProfilePayload!
+  getUserReadingHeatmap(userId: ID!, ebookId: ID!): [EbookPageHeatmapPayload!]!
+  getUserVideoWatchAnalytics(userId: ID!, courseId: ID!): VideoWatchAnalyticsPayload!
+  getUserSecurityAuditLogs(userId: ID!, limit: Int, offset: Int): [SecurityAuditLogPayload!]!
+}
+
+type Mutation {
+  revokeUserActiveSessions(userId: ID!, reason: String!): SessionRevokePayload!
+  recalculateUserRFMScore(userId: ID!): RFMScorePayload!
+  flagUserRiskLevel(userId: ID!, riskLevel: String!, note: String!): RiskFlagPayload!
+}

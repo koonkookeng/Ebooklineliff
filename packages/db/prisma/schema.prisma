@@ -88,6 +88,13 @@ model User {
   targetedAdminActions AuditLog[]           @relation("TargetUser")
   // Atomic Phase 109: admin wallet-adjustment ledger (additive).
   walletAuditLedgers WalletAuditLedger[]
+  // Atomic Phase 110: 360 inspector ledger (RFM metrics + telemetry + security).
+  // NOTE: `securityAuditLogs` is owned by Phase 106 (SecurityAuditLog) —
+  // the 110 ledger rides `inspectorSecurityLogs`.
+  user360Metric       User360Metric?
+  ebookPageReadLogs   EbookPageReadLog[]
+  videoWatchTelemetries UserVideoWatchTelemetry[]
+  inspectorSecurityLogs UserSecurityAuditLog[]
   accounts          Account[]
   sessions          Session[]
   authAuditLogs     AuthAuditLog[]
@@ -4632,6 +4639,99 @@ model ContentHeatmapAggregate {
 
   @@unique([productId, contentType, segmentIndex])
   @@index([productId])
+}
+
+// ==========================================
+// ATOMIC PHASE 110: 360-DEGREE USER INSPECTOR & TELEMETRY
+// ==========================================
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActivityType {
+  LOGIN_LIFF
+  LOGIN_WEB
+  PURCHASE_COMPLETED
+  EBOOK_PAGE_READ
+  COURSE_VIDEO_WATCH
+  SLIP_UPLOADED
+  AFFILIATE_CLICK
+  SESSION_REVOKED
+}
+
+model User360Metric {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lifetimeValue        Decimal  @default(0.00) @db.Decimal(12, 2)
+  totalOrders          Int      @default(0)
+  totalEbooksRead      Int      @default(0)
+  totalCoursesEnrolled Int      @default(0)
+  recencyScore         Int      @default(1)
+  frequencyScore       Int      @default(1)
+  monetaryScore        Int      @default(1)
+  rfmSegment           String   @default("NEW_USER")
+  riskLevel            RiskLevel @default(LOW)
+  lastCalculatedAt     DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([userId])
+  @@index([riskLevel])
+  @@index([rfmSegment])
+}
+
+model EbookPageReadLog {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ebookId          String
+  pageNumber       Int
+  dwellTimeSeconds Int      @default(0)
+  sessionToken     String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, ebookId])
+  @@index([ebookId, pageNumber])
+  @@index([createdAt])
+}
+
+model UserVideoWatchTelemetry {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  lessonId      String
+  watchedSec    Int      @default(0)
+  maxPositionSec Int     @default(0)
+  isCompleted   Boolean  @default(false)
+  lastWatchedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+  @@index([userId, courseId])
+}
+
+model UserSecurityAuditLog {
+  id                String       @id @default(uuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType      ActivityType
+  ipAddress         String
+  userAgent         String
+  deviceFingerprint String?
+  lineSessionId     String?
+  geoCountry        String?
+  geoCity           String?
+  riskLevel         RiskLevel    @default(LOW)
+  metadata          Json?
+  createdAt         DateTime     @default(now())
+
+  @@index([userId, createdAt])
+  @@index([activityType])
+  @@index([ipAddress])
 }
 
 // Atomic Phase 055 Task 1/§4.1: low-bandwidth delivery telemetry + asset cache

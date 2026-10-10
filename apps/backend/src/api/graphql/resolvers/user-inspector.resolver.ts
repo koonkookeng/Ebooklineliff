@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 110 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class UserInspectorResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 110 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/resolvers/user-inspector.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/user-inspector.resolver.ts)
+export { UserInspectorResolver as UserInspectorResolverResolver } from '../../../modules/user-inspector/resolvers/user-inspector.resolver';

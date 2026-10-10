@@ -1,8 +1,19 @@
-/**
- * AUTO-SCAFFOLD Phase 110 — DTO
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 110 §5.1 — Session revoke / risk-flag DTOs
+// Canonical: apps/backend/src/modules/user-inspector/dto/session-revoke.dto.ts
+// - Body schemas for revoke + RFM recalculation + risk flagging.
+// - Zero new deps.
 import { z } from 'zod';
-export const DtoSchema = z.object({});
-export type Dto = z.infer<typeof DtoSchema>;
+import { RiskLevelEnum } from '@repo/shared';
+
+export { RiskLevelEnum };
+
+export const SessionRevokeBodySchema = z.object({
+  reason: z.string().min(5, 'กรุณาระบุเหตุผลในการยกเลิก session อย่างน้อย 5 ตัวอักษร').max(500),
+});
+export type SessionRevokeBody = z.infer<typeof SessionRevokeBodySchema>;
+
+export const RiskFlagBodySchema = z.object({
+  riskLevel: RiskLevelEnum,
+  note: z.string().min(5, 'กรุณาระบุหมายเหตุประกอบการ flag อย่างน้อย 5 ตัวอักษร').max(500),
+});
+export type RiskFlagBody = z.infer<typeof RiskFlagBodySchema>;
