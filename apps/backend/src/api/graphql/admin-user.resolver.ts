@@ -1,11 +1,4 @@
-/**
- * AUTO-SCAFFOLD Phase 109 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class AdminUserResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 109 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/admin-user.resolver.ts
+// (legacy src/backend/api/graphql/admin-user.resolver.ts)
+export { AdminUserResolver as AdminUserResolverResolver } from '../../modules/admin/user-management/resolvers/admin-user.resolver';

@@ -1,0 +1,130 @@
+# SSOT Phase 109 §3.2 — Admin user GraphQL intent schema (contract record)
+# Canonical: apps/backend/src/api/graphql/admin-user.graphql
+# Runtime is code-first
+# (apps/backend/src/modules/admin/user-management/resolvers/admin-user.resolver.ts);
+# this SDL is the Gate 1 SSOT-sync record. Intent names match spec §3.2 verbatim.
+
+enum AdminUserRole {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  CONTENT_MODERATOR
+  SUPPORT_STAFF
+  INSTRUCTOR
+  SELLER
+  MEMBER
+}
+
+enum AdminKycStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+  ACTION_REQUIRED
+}
+
+enum AdminUserAction {
+  UPDATE_ROLE
+  FREEZE_ACCOUNT
+  UNFREEZE_ACCOUNT
+  ADJUST_WALLET
+  APPROVE_KYC
+  REJECT_KYC
+  GENERATE_IMPERSONATION_TOKEN
+}
+
+input AdminUserFilterInput {
+  tenantId: String
+  searchKeyword: String
+  roles: [AdminUserRole!]
+  kycStatuses: [AdminKycStatus!]
+  minWalletBalance: Float
+  maxWalletBalance: Float
+  page: Int
+  pageSize: Int
+  sortBy: String
+  sortOrder: String
+}
+
+input AdminUserActionInput {
+  userId: ID!
+  action: AdminUserAction!
+  newRole: AdminUserRole
+  walletAdjustmentAmount: Float
+  reason: String!
+  rejectionReason: String
+}
+
+type AdminUserTableItem {
+  id: ID!
+  email: String
+  phone: String
+  displayName: String!
+  role: AdminUserRole!
+  kycStatus: AdminKycStatus!
+  walletBalance: Float!
+  rewardPoints: Int!
+  totalOrdersCount: Int!
+  totalSpentAmount: Float!
+  createdAt: String!
+}
+
+type UserSummaryStats {
+  totalUsers: Int!
+  totalSellers: Int!
+  totalInstructors: Int!
+  pendingKYCCount: Int!
+  totalWalletCirculation: Float!
+}
+
+type AdminUserTableResponse {
+  items: [AdminUserTableItem!]!
+  totalCount: Int!
+  page: Int!
+  pageSize: Int!
+  totalPages: Int!
+  summaryStats: UserSummaryStats!
+}
+
+type AdminUserDetailResponse {
+  id: ID!
+  displayName: String!
+  role: AdminUserRole!
+  kycStatus: AdminKycStatus!
+  isFrozen: Boolean!
+  walletBalance: Float!
+  totalOrdersCount: Int!
+  totalSpentAmount: String!
+}
+
+type AdminActionResultPayload {
+  success: Boolean!
+  message: String!
+  userId: ID!
+  impersonationToken: String
+  expiresIn: Int
+}
+
+type KYCOperationResultPayload {
+  success: Boolean!
+  message: String!
+  userId: ID!
+}
+
+type ImpersonationTokenPayload {
+  impersonationToken: String!
+  expiresIn: Int!
+  targetUserId: ID!
+}
+
+type Query {
+  adminGetUsersAndMerchants(filter: AdminUserFilterInput): AdminUserTableResponse!
+  adminGetUserDetail(userId: ID!): AdminUserDetailResponse!
+  adminGetKYCPendingList(page: Int, pageSize: Int): AdminUserTableResponse!
+}
+
+type Mutation {
+  adminExecuteUserAction(input: AdminUserActionInput!): AdminActionResultPayload!
+  adminApproveKYC(userId: ID!): KYCOperationResultPayload!
+  adminRejectKYC(userId: ID!, reason: String!): KYCOperationResultPayload!
+  adminGenerateImpersonationToken(userId: ID!, reason: String!): ImpersonationTokenPayload!
+}

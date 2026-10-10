@@ -69,10 +69,13 @@ model User {
   passwordHash      String?
   role              UserRole                 @default(MEMBER)
   kycStatus         KYCStatus                @default(NOT_SUBMITTED)
+  // Atomic Phase 109: central-admin freeze switch (additive; default unfrozen).
+  isFrozen          Boolean                  @default(false)
+  freezeReason      String?
   displayName       String
   avatarUrl         String?
   walletBalance     Decimal                  @default(0.00) @db.Decimal(12, 2)
-  rewardPoints      Int                      @default(0)
+  rewardPoints      Int                    @default(0)
   affiliateCode     String                   @unique @default(uuid())
   referredById      String?
   referredBy        User?                    @relation("AffiliateReferrals", fields: [referredById], references: [id])
@@ -80,6 +83,11 @@ model User {
   addresses         UserAddress[]
   kycDetail         CreatorKYC?
   auditLogs         AuditLog[]
+  // Atomic Phase 109: admin-action audit trail (executor/target views; additive).
+  executedAdminActions AuditLog[]            @relation("AdminExecutor")
+  targetedAdminActions AuditLog[]           @relation("TargetUser")
+  // Atomic Phase 109: admin wallet-adjustment ledger (additive).
+  walletAuditLedgers WalletAuditLedger[]
   accounts          Account[]
   sessions          Session[]
   authAuditLogs     AuthAuditLog[]
@@ -233,6 +241,11 @@ model User {
   @@index([phone])
   @@index([affiliateCode])
   @@index([tenantId])
+  // Atomic Phase 109: admin universal-query engine (filter/sort/page <200ms).
+  @@index([role, kycStatus])
+  @@index([createdAt])
+  @@index([walletBalance])
+  @@index([displayName])
   // Atomic Phase 034: friendship-segment queries (OA conversion funnel)
   @@index([isOAFriend])
 }
@@ -3104,6 +3117,8 @@ model CreatorKYC {
   taxId             String?
   verifiedAt        DateTime?
   rejectionReason   String?
+  // Atomic Phase 109: central-admin KYC reviewer (additive).
+  reviewedByAdminId String?
   // Atomic Phase 085 §4.1: e-KYC extension columns (additive; 003 rows stay valid).
   laserCodeEnc      String?   // AES-256-GCM encrypted laser code
   firstNameTh       String?
@@ -3168,10 +3183,37 @@ model AuditLog {
   action    String
   details   Json
   ipAddress String
+  // Atomic Phase 109: central-admin executor/target audit (additive; legacy
+  // rows keep userId/action semantics untouched).
+  executorId   String?
+  executor     User?    @relation("AdminExecutor", fields: [executorId], references: [id])
+  targetUserId String?
+  targetUser   User?    @relation("TargetUser", fields: [targetUserId], references: [id])
+  userAgent    String?
   createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([action])
+  @@index([executorId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}
+
+// Atomic Phase 109 §4.1: admin wallet-adjustment audit ledger (schema.md canonical).
+model WalletAuditLedger {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId       String?
+  amountDelta   Decimal  @db.Decimal(12, 2)
+  balanceBefore Decimal  @db.Decimal(12, 2)
+  balanceAfter  Decimal  @db.Decimal(12, 2)
+  reason        String
+  referenceId   String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // Atomic Phase 005: Unified Auth Middleware & JWT Session SSO
