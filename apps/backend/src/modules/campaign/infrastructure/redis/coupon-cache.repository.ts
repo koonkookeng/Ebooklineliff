@@ -1,6 +1,10 @@
-/**
- * AUTO-SCAFFOLD Phase 117 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 117 §5.1 — campaign-side alias (zero-duplication re-export).
+// Canonical: apps/backend/src/modules/campaign/infrastructure/redis/coupon-cache.repository.ts
+// The single Redis implementation lives in modules/coupon/infra/redis
+// (IN_SCOPE Task 3); this file only re-exports it for the spec tree.
+export {
+  CouponCacheRepository,
+  QUOTA_DECREMENT_LUA,
+  RESERVATION_RELEASE_LUA,
+  withCouponLock,
+} from '../../../coupon/infra/redis/coupon-cache.repository';

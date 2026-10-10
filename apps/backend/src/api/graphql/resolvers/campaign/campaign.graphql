@@ -1,0 +1,53 @@
+# SSOT Phase 117 Task 5 — campaign coupon GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/resolvers/campaign/campaign.graphql
+# Runtime is code-first (modules/campaign/presentation/graphql/coupon.resolver.ts).
+# (088 promotion intents live in their own SDL; this file is the 117 lane.)
+
+type CampaignDiscountLine {
+  couponCode: String!
+  couponType: String!
+  platformDiscount: Float!
+  sellerDiscount: Float!
+  shippingDiscount: Float!
+  appliedItemIds: [String!]!
+}
+
+type CouponValidationResult {
+  isValid: Boolean!
+  message: String!
+  totalDiscountAmount: Float!
+  netAmount: Float!
+  breakdown: [CampaignDiscountLine!]!
+}
+
+type UserCouponClaim {
+  id: ID!
+  couponId: ID!
+  claimedAt: String!
+  isUsed: Boolean!
+}
+
+input CouponCartItemInput {
+  productId: ID!
+  sellerId: ID!
+  productType: String!
+  price: Float!
+  quantity: Int!
+}
+
+input ValidateCouponInput {
+  couponCode: String!
+  cartItems: [CouponCartItemInput!]!
+  shippingFee: Float!
+  tenantId: String
+}
+
+extend type Query {
+  myCoupons: [UserCouponClaim!]!
+}
+
+extend type Mutation {
+  validateCoupon(input: ValidateCouponInput!): CouponValidationResult!
+  claimCoupon(couponCode: String!): Boolean!
+  applyCouponStack(codes: [String!]!, cartItems: [CouponCartItemInput!]!, shippingFee: Float): CouponValidationResult!
+}

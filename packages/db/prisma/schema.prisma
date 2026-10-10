@@ -234,6 +234,8 @@ model User {
   stockReservations    StockReservation[]
   // Atomic Phase 088: coupon redemptions
   couponRedemptions    CouponRedemption[]
+  // Atomic Phase 117: collected (claimed) coupons wallet
+  userCouponClaims     UserCouponClaim[]
   // Atomic Phase 089: sent/received gifts
   sentGifts            GiftOrder[] @relation("SentGifts")
   receivedGifts        GiftOrder[] @relation("ReceivedGifts")
@@ -1145,6 +1147,14 @@ enum CouponType {
   FIXED_AMOUNT
   PERCENTAGE
   FREE_SHIPPING
+  // Atomic Phase 117: platform-wide campaign vocabulary (canonical union).
+  PLATFORM_FIXED
+  PLATFORM_PERCENTAGE
+  STORE_FIXED
+  STORE_PERCENTAGE
+  CATEGORY_SPECIFIC
+  PRODUCT_SPECIFIC
+  AFFILIATE_BOOST
 }
 
 enum CouponScope {
@@ -1152,6 +1162,10 @@ enum CouponScope {
   TENANT_SPECIFIC
   PRODUCT_SPECIFIC
   CATEGORY_SPECIFIC
+  // Atomic Phase 117: campaign scope vocabulary (canonical union).
+  GLOBAL_PLATFORM
+  TENANT_STORE
+  CREATOR_SPECIFIC
 }
 
 model Coupon {
@@ -1170,10 +1184,29 @@ model Coupon {
   perUserLimit      Int                 @default(1)
   startAt           DateTime
   expireAt          DateTime
-  isActive          Boolean             @default(true)
+  isActive          Boolean            @default(true)
 
   targetProducts    CouponTargetProduct[]
   redemptions       CouponRedemption[]
+  // Atomic Phase 117: platform-wide campaign columns (additive; 088 columns
+  // keep their semantics — 117 rows populate both lanes: minPurchaseAmount
+  // mirrors minOrderAmount, start/endDate mirror startAt/expireAt, and the
+  // *Usage* quota trio mirrors total/used/perUser quota. Each engine reads
+  // its own lane; shared columns (code/discount/max/active) stay single.)
+  campaignId          String?
+  campaign            Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  sellerId            String?
+  minPurchaseAmount   Decimal            @default(0.00) @db.Decimal(10, 2)
+  globalUsageLimit    Int                @default(1000)
+  perUserUsageLimit   Int                @default(1)
+  currentUsageCount   Int                @default(0)
+  targetProductType   ProductType?
+  canStackWithPlatform Boolean           @default(true)
+  canStackWithStore    Boolean           @default(false)
+  canStackWithShipping Boolean           @default(true)
+  startDate           DateTime?
+  endDate             DateTime?
+  userClaims          UserCouponClaim[]
 
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
@@ -1181,6 +1214,8 @@ model Coupon {
   @@index([code])
   @@index([tenantId])
   @@index([isActive, startAt, expireAt])
+  @@index([campaignId])
+  @@index([sellerId])
 }
 
 model CouponTargetProduct {
@@ -1206,6 +1241,38 @@ model CouponRedemption {
 
   @@index([userId, couponId])
   @@index([orderId])
+}
+
+// Atomic Phase 117 §4.1: platform-wide campaign manager (schema.md canonical).
+model Campaign {
+  id             String   @id @default(uuid())
+  tenantId       String?
+  name           String
+  slug           String   @unique
+  description    String?  @db.Text
+  bannerImageUrl String?
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean  @default(true)
+  coupons        Coupon[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([startDate, endDate])
+}
+
+model UserCouponClaim {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  claimedAt DateTime @default(now())
+  isUsed    Boolean  @default(false)
+
+  @@unique([userId, couponId])
+  @@index([userId])
 }
 
 model PointRedemptionRule {
