@@ -15,9 +15,13 @@ import {
 import { AnalyticsStreamService, type AnalyticsStreamRedisPort } from './services/analytics-stream.service';
 import { HeatmapProcessorService, type HeatmapReaderDbPort } from './services/heatmap-processor.service';
 import { AnalyticsQueueProcessor } from './processors/analytics-queue.processor';
+import { ExecutiveAnalyticsService } from './services/executive-analytics.service';
+import { DailySnapshotWorker } from './workers/daily-snapshot.worker';
+import { ExecutiveAnalyticsController } from './controllers/executive-analytics.controller';
+import { ExecutiveAnalyticsResolver } from './resolvers/executive-analytics.resolver';
 
 @Module({
-  controllers: [AnalyticsIngestionController],
+  controllers: [AnalyticsIngestionController, ExecutiveAnalyticsController],
   providers: [
     {
       provide: AnalyticsStreamService,
@@ -43,9 +47,27 @@ import { AnalyticsQueueProcessor } from './processors/analytics-queue.processor'
         new AnalyticsQueueProcessor(writer),
       inject: [AnalyticsAggregationService],
     },
+    {
+      provide: ExecutiveAnalyticsService,
+      useFactory: (prisma: PrismaService, redis: RedisClusterService): ExecutiveAnalyticsService =>
+        new ExecutiveAnalyticsService(prisma, redis),
+      inject: [PrismaService, RedisClusterService],
+    },
+    {
+      provide: DailySnapshotWorker,
+      useFactory: (prisma: PrismaService, redis: RedisClusterService): DailySnapshotWorker =>
+        new DailySnapshotWorker(prisma, redis),
+      inject: [PrismaService, RedisClusterService],
+    },
+    {
+      provide: ExecutiveAnalyticsResolver,
+      useFactory: (bi: ExecutiveAnalyticsService, nightly: DailySnapshotWorker): ExecutiveAnalyticsResolver =>
+        new ExecutiveAnalyticsResolver(bi, nightly),
+      inject: [ExecutiveAnalyticsService, DailySnapshotWorker],
+    },
     AnalyticsResolver,
   ],
-  exports: [AnalyticsStreamService, AnalyticsAggregationService, HeatmapProcessorService, AnalyticsQueueProcessor],
+  exports: [AnalyticsStreamService, AnalyticsAggregationService, HeatmapProcessorService, AnalyticsQueueProcessor, ExecutiveAnalyticsService, DailySnapshotWorker],
 })
 export class AnalyticsModule implements OnModuleInit {
   constructor(private readonly queue: AnalyticsQueueProcessor) {}

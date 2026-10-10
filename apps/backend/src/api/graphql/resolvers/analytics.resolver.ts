@@ -1,11 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 116 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class AnalyticsResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 116 §3.2 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/resolvers/analytics.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/analytics.resolver.ts)
+export { AnalyticsResolver as AnalyticsModuleResolver } from '../../../modules/analytics/resolvers/analytics.resolver';
+export { ExecutiveAnalyticsResolver as ExecutiveAnalyticsModuleResolver } from '../../../modules/analytics/resolvers/executive-analytics.resolver';

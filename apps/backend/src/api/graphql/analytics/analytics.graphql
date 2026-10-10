@@ -1,0 +1,47 @@
+# SSOT Phase 116 §3.2 — executive BI GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/analytics/analytics.graphql
+# Runtime is code-first (modules/analytics/resolvers/executive-analytics.resolver.ts).
+# (052 telemetry intents live in their own SDL; this file is the 116 lane.)
+
+type ExecutiveKpiSummary {
+  gmv: Float!
+  netRevenue: Float!
+  totalOrders: Int!
+  averageOrderValue: Float!
+  customerAcquisitionCost: Float!
+  customerLifetimeValue: Float!
+  churnRatePercentage: Float!
+  activeUsersCount: Int!
+  gmvGrowthPercentage: Float!
+  ltvToCacRatio: Float!
+  calculatedAt: String!
+}
+
+type CohortRetentionPeriod {
+  periodIndex: Int!
+  activePercentage: Float!
+  retainedUsers: Int!
+}
+
+type CohortRetentionRow {
+  cohortDate: String!
+  totalUsers: Int!
+  retentionRates: [CohortRetentionPeriod!]!
+}
+
+type RevenueBreakdown {
+  physicalBook: Float!
+  ebook: Float!
+  course: Float!
+  bundle: Float!
+}
+
+extend type Query {
+  executiveSummary(tenantId: ID, timeRange: String!): ExecutiveKpiSummary!
+  cohortMatrix(tenantId: ID, months: Int): [CohortRetentionRow!]!
+  revenueBreakdown(tenantId: ID, timeRange: String!): RevenueBreakdown!
+}
+
+extend type Mutation {
+  runNightlySnapshot(tenantId: ID, date: String): Boolean!
+}

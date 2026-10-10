@@ -85,3 +85,141 @@ export function averageDwell(totalDwellSec: number, totalReads: number): number 
   if (totalReads <= 0) return 0;
   return totalDwellSec / totalReads;
 }
+
+// ---------------------------------------------------------------------------
+// SSOT Phase 116 §3.1 — executive BI contracts (GMV/LTV/CAC/churn/cohort)
+// (appended additively; the 052 telemetry section above is untouched.)
+// - Spec-verbatim shapes: AnalyticsTimeRangeEnum / ExecutiveKpiOverview /
+//   CohortRetentionData / ExecutiveBiDashboardPayload.
+// - RISK_CALL: ids accept min(1) edge vocabulary (023-031 precedent);
+//   calculatedAt accepts any datetime string (DB Date → ISO at the edge).
+// - Pure math (rounded, zero-guarded): averageOrderValue, cac, ltv,
+//   ltvToCac, churnRate, retentionPct, growthPct, rangeBounds,
+//   cohortMonthKey, biSummaryKey. Budgets: 500ms query, 15min cache,
+//   30-day churn window, 10M-row note (aggregates delegate to indexed
+//   columns / DailyAnalyticsSnapshot — no full scans in request path).
+export const AnalyticsTimeRangeEnum = z.enum([
+  'TODAY',
+  'YESTERDAY',
+  'LAST_7_DAYS',
+  'LAST_30_DAYS',
+  'THIS_MONTH',
+  'LAST_MONTH',
+  'CUSTOM',
+]);
+export type AnalyticsTimeRange = z.infer<typeof AnalyticsTimeRangeEnum>;
+
+export const ExecutiveKpiOverviewSchema = z.object({
+  gmv: z.number(),
+  netRevenue: z.number(),
+  totalOrders: z.number().int(),
+  averageOrderValue: z.number(),
+  customerAcquisitionCost: z.number(),
+  customerLifetimeValue: z.number(),
+  churnRatePercentage: z.number(),
+  activeUsersCount: z.number().int(),
+  gmvGrowthPercentage: z.number(),
+  ltvToCacRatio: z.number(),
+});
+export type ExecutiveKpiOverview = z.infer<typeof ExecutiveKpiOverviewSchema>;
+
+export const CohortRetentionPeriodSchema = z.object({
+  periodIndex: z.number().int(),
+  activePercentage: z.number(),
+  retainedUsers: z.number().int(),
+});
+export type CohortRetentionPeriod = z.infer<typeof CohortRetentionPeriodSchema>;
+
+export const CohortRetentionDataSchema = z.object({
+  cohortDate: z.string(),
+  totalUsers: z.number().int(),
+  retentionRates: z.array(CohortRetentionPeriodSchema),
+});
+export type CohortRetentionData = z.infer<typeof CohortRetentionDataSchema>;
+
+export const ExecutiveBiDashboardPayloadSchema = z.object({
+  kpiSummary: ExecutiveKpiOverviewSchema,
+  cohortMatrix: z.array(CohortRetentionDataSchema),
+  revenueBreakdownByProductType: z.object({
+    physicalBook: z.number(),
+    ebook: z.number(),
+    course: z.number(),
+    bundle: z.number(),
+  }),
+  calculatedAt: z.string(),
+});
+export type ExecutiveBiDashboardPayload = z.infer<typeof ExecutiveBiDashboardPayloadSchema>;
+
+/** BI summary SLA: exact aggregates in under 500ms (BDD-1). */
+export const BI_QUERY_SLA_MS = 500;
+/** Executive summary cache TTL: 15 minutes (spec §5.1). */
+export const BI_SUMMARY_CACHE_TTL_SEC = 900;
+/** Churn inactivity threshold: >30 days without activity (BDD-2). */
+export const CHURN_INACTIVITY_DAYS = 30;
+
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+/** Average order value (0 when no orders). */
+export function averageOrderValue(gmv: number, totalOrders: number): number {
+  if (totalOrders <= 0) return 0;
+  return round2(gmv / totalOrders);
+}
+
+/** Customer acquisition cost (0 when no customers). */
+export function customerAcquisitionCost(totalAdSpend: number, totalCustomers: number): number {
+  if (totalCustomers <= 0) return 0;
+  return round2(totalAdSpend / totalCustomers);
+}
+
+/** Customer lifetime value (0 when no customers). */
+export function customerLifetimeValue(gmv: number, totalCustomers: number): number {
+  if (totalCustomers <= 0) return 0;
+  return round2(gmv / totalCustomers);
+}
+
+/** LTV:CAC unit-economics ratio (0 when CAC is 0). */
+export function ltvToCacRatio(ltv: number, cac: number): number {
+  if (cac <= 0) return 0;
+  return round2(ltv / cac);
+}
+
+/** Monthly churn % (churned / cohort start, 0 when empty). */
+export function churnRatePercentage(churnedUsers: number, cohortStart: number): number {
+  if (cohortStart <= 0) return 0;
+  return round2((churnedUsers / cohortStart) * 100);
+}
+
+/** Cohort retention % for one period (0..100). */
+export function retentionPercentage(retainedUsers: number, totalUsers: number): number {
+  if (totalUsers <= 0) return 0;
+  return round2(Math.min(100, Math.max(0, (retainedUsers / totalUsers) * 100)));
+}
+
+/** Period-over-period growth % (0 when baseline is 0). */
+export function growthPercentage(current: number, previous: number): number {
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return round2(((current - previous) / Math.abs(previous)) * 100);
+}
+
+/** Cohort month key (UTC YYYY-MM) for acquisition grouping. */
+export function cohortMonthKey(at: Date | string): string {
+  const d = new Date(at);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Month offset between two dates (periodIndex for the matrix). */
+export function monthOffset(from: Date | string | number, to: Date | string | number): number {
+  const a = new Date(from);
+  const b = new Date(to);
+  return (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
+}
+
+/** Redis key for a pre-computed executive summary. */
+export function biSummaryKey(tenantId: string, timeRange: string): string {
+  return `bi:summary:${tenantId}:${timeRange}`;
+}
+
+/** Redis key for a cohort matrix snapshot. */
+export function biCohortKey(tenantId: string, asOf: string): string {
+  return `bi:cohort:${tenantId}:${asOf}`;
+}

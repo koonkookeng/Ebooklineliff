@@ -2601,3 +2601,31 @@ export type {
   BankStatementImportInput,
   ManualOverridePayload,
 } from './schemas/reconciliation-contract';
+export {
+  AnalyticsTimeRangeEnum,
+  ExecutiveKpiOverviewSchema,
+  CohortRetentionPeriodSchema,
+  CohortRetentionDataSchema,
+  ExecutiveBiDashboardPayloadSchema,
+  BI_QUERY_SLA_MS,
+  BI_SUMMARY_CACHE_TTL_SEC,
+  CHURN_INACTIVITY_DAYS,
+  averageOrderValue,
+  customerAcquisitionCost,
+  customerLifetimeValue,
+  ltvToCacRatio,
+  churnRatePercentage,
+  retentionPercentage,
+  growthPercentage,
+  cohortMonthKey,
+  monthOffset,
+  biSummaryKey,
+  biCohortKey,
+} from './schemas/analytics-contract';
+export type {
+  AnalyticsTimeRange,
+  ExecutiveKpiOverview,
+  CohortRetentionPeriod,
+  CohortRetentionData,
+  ExecutiveBiDashboardPayload,
+} from './schemas/analytics-contract';

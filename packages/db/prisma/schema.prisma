@@ -3594,6 +3594,58 @@ model FinancialManualOverride {
   @@index([initiatedBy])
 }
 
+// Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).
+// Order/PaymentSlip/User stay read-only context — no core-table edits.
+model MarketingCampaign {
+  id              String         @id @default(uuid())
+  tenantId        String
+  campaignName    String
+  channel         String
+  totalAdSpend    Decimal        @db.Decimal(12, 2)
+  startDate       DateTime
+  endDate         DateTime?
+  acquiredUsers   Int            @default(0)
+  analyticsLogs   CampaignAnalyticsLog[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([tenantId])
+  @@index([channel])
+}
+
+model CampaignAnalyticsLog {
+  id              String            @id @default(uuid())
+  campaignId      String
+  campaign        MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  date            DateTime          @db.Date
+  clicks          Int               @default(0)
+  conversions     Int               @default(0)
+  spend           Decimal           @db.Decimal(10, 2)
+  calculatedCac   Decimal           @db.Decimal(10, 2)
+
+  @@unique([campaignId, date])
+}
+
+model DailyAnalyticsSnapshot {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  snapshotDate         DateTime @db.Date
+  gmv                  Decimal  @db.Decimal(12, 2)
+  netRevenue           Decimal  @db.Decimal(12, 2)
+  totalOrders          Int
+  newUsersCount        Int
+  activeUsersCount     Int
+  churnedUsersCount    Int
+  avgOrderValue        Decimal  @db.Decimal(10, 2)
+  calculatedLtv        Decimal  @db.Decimal(10, 2)
+  calculatedCac        Decimal  @db.Decimal(10, 2)
+  churnRatePercentage  Float
+  createdAt            DateTime @default(now())
+
+  @@unique([tenantId, snapshotDate])
+  @@index([tenantId])
+}
+
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String?
