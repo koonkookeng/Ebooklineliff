@@ -85,7 +85,9 @@ model User {
   auditLogs         AuditLog[]
   // Atomic Phase 109: admin-action audit trail (executor/target views; additive).
   executedAdminActions AuditLog[]            @relation("AdminExecutor")
-  targetedAdminActions AuditLog[]           @relation("TargetUser")
+  targetedAdminActions AuditLog[]            @relation("TargetUser")
+  // Atomic Phase 118: hash-chained actor views (additive; Restrict on delete).
+  auditActorLogs     AuditLog[]            @relation("AuditActor")
   // Atomic Phase 109: admin wallet-adjustment ledger (additive).
   walletAuditLedgers WalletAuditLedger[]
   // Atomic Phase 110: 360 inspector ledger (RFM metrics + telemetry + security).
@@ -3727,6 +3729,26 @@ model AuditLog {
   targetUserId String?
   targetUser   User?    @relation("TargetUser", fields: [targetUserId], references: [id])
   userAgent    String?
+  // Atomic Phase 118: immutable hash-chain segment (additive; 109 columns
+  // untouched — both generations coexist. RISK_CALL: schema.md shows the
+  // 118-only shape, but replacing the model would break 109 writers, so
+  // the working schema unions both. New rows SHOULD populate both lanes:
+  // userId/action/details mirror actorId/actionName/payloadAfterJson.)
+  sequenceNumber    BigInt              ? @unique @default(autoincrement())
+  actorId           String?
+  actor             User?                @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  actorRole         AuditAdminRole?
+  actorEmail        String?
+  actionCategory    AuditActionCategory?
+  actionName        String?
+  targetEntity      String?
+  targetEntityId    String?
+  payloadBeforeJson Json?                @db.JsonB
+  payloadAfterJson  Json?                @db.JsonB
+  previousHash      String?              @db.VarChar(64)
+  currentHash       String?              @db.VarChar(64)
+  signature         String?              @db.Text
+  integrityStatus   AuditIntegrityStatus @default(PENDING_VAULT_SYNC)
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -3734,6 +3756,46 @@ model AuditLog {
   @@index([executorId])
   @@index([targetUserId])
   @@index([createdAt])
+  @@index([sequenceNumber])
+  @@index([actorId])
+  @@index([actionCategory])
+  @@index([currentHash])
+}
+
+// Atomic Phase 118 §4.1: hash-chain role vocabulary (schema.md canonical).
+enum AuditAdminRole {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  CONTENT_MODERATOR
+  SUPPORT_STAFF
+  INSTRUCTOR
+  SELLER
+}
+
+// Atomic Phase 118 §4.1: action category vocabulary (schema.md canonical).
+enum AuditActionCategory {
+  AUTHENTICATION
+  USER_MANAGEMENT
+  FINANCIAL_TRANSACTION
+  CONTENT_MUTATION
+  SYSTEM_CONFIGURATION
+  ENTITLEMENT_GRANT
+}
+
+// Atomic Phase 118 §4.1: integrity state vocabulary (schema.md canonical).
+enum AuditIntegrityStatus {
+  VERIFIED_VALID
+  PENDING_VAULT_SYNC
+  TAMPER_DETECTED
+  CORRUPTED_CHAIN
+}
+
+model AuditVaultSyncState {
+  id                 String   @id @default(uuid())
+  lastSyncedSequence BigInt   @unique
+  lastSyncedHash     String   @db.VarChar(64)
+  r2ObjectKey        String
+  syncedAt           DateTime @default(now())
 }
 
 // Atomic Phase 109 §4.1: admin wallet-adjustment audit ledger (schema.md canonical).

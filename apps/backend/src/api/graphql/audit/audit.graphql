@@ -1,0 +1,59 @@
+# SSOT Phase 118 §3.2 — audit GraphQL intents (SDL record)
+# Canonical: apps/backend/src/api/graphql/audit/audit.graphql
+# Runtime is code-first (modules/audit-log/presentation/audit-log.resolver.ts).
+
+enum AuditAdminRole {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  CONTENT_MODERATOR
+  SUPPORT_STAFF
+  INSTRUCTOR
+  SELLER
+}
+
+enum AuditActionCategory {
+  AUTHENTICATION
+  USER_MANAGEMENT
+  FINANCIAL_TRANSACTION
+  CONTENT_MUTATION
+  SYSTEM_CONFIGURATION
+  ENTITLEMENT_GRANT
+}
+
+enum AuditIntegrityStatus {
+  VERIFIED_VALID
+  PENDING_VAULT_SYNC
+  TAMPER_DETECTED
+  CORRUPTED_CHAIN
+}
+
+type AuditLogNode {
+  id: ID!
+  sequenceNumber: Int!
+  actorId: ID!
+  actorRole: AuditAdminRole!
+  actorEmail: String!
+  actionCategory: AuditActionCategory!
+  actionName: String!
+  targetEntity: String!
+  targetEntityId: String
+  previousHash: String!
+  currentHash: String!
+  integrityStatus: AuditIntegrityStatus!
+  createdAt: String!
+}
+
+type AuditVerifyResult {
+  valid: Boolean!
+  checked: Int!
+  tamperedBlockSequences: [Int!]!
+}
+
+extend type Query {
+  auditLogs(actorId: ID, actionCategory: AuditActionCategory, page: Int, limit: Int): [AuditLogNode!]!
+  verifyAuditChain(take: Int): AuditVerifyResult!
+}
+
+extend type Mutation {
+  appendAuditLog(actionCategory: AuditActionCategory!, actionName: String!, targetEntity: String!): AuditLogNode!
+}

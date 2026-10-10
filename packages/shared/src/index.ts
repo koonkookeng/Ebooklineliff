@@ -2664,3 +2664,28 @@ export type {
   ClaimCouponInput,
   StackLane,
 } from './schemas/coupon-contract';
+export {
+  AuditAdminRoleEnum,
+  AuditActionCategoryEnum,
+  AuditIntegrityStatusEnum,
+  AuditLogEntrySchema,
+  AuditIntegrityCheckResultSchema,
+  AUDIT_APPEND_BUDGET_MS,
+  AUDIT_WORM_BATCH_SIZE,
+  AUDIT_WORM_RETENTION_DAYS,
+  AUDIT_CRON_INTERVAL_MS,
+  AUDIT_EVENT_STREAM,
+  AUDIT_GENESIS_HASH,
+  auditBlockHash,
+  signAuditHash,
+  verifyAuditSignature,
+  auditVaultKey,
+  auditQueueKey,
+} from './schemas/audit-log.schema';
+export type {
+  AuditAdminRole,
+  AuditActionCategory,
+  AuditIntegrityStatus,
+  AuditLogEntry,
+  AuditIntegrityCheckResult,
+} from './schemas/audit-log.schema';
