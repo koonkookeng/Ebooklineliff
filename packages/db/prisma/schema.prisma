@@ -120,6 +120,9 @@ model User {
   drmViolationLogs  DrmViolationLog[]
   // Atomic Phase 062: offline PWA device sessions (bulk-sync ledger)
   offlineDeviceSessions OfflineDeviceSession[]
+  // Atomic Phase 119: fingerprint-bound trusted devices + live sessions
+  boundDevices        UserDevice[]
+  boundActiveSessions ActiveSession[]
   // Atomic Phase 063: offline sync audit + DRM lease grants
   offlineSyncAudits     OfflineSyncLog[]
   drmOfflineLeases      DrmOfflineLease[]
@@ -4417,6 +4420,63 @@ model UserDeviceMetric {
   @@index([userId])
 }
 
+// Atomic Phase 119 §4.1: device binding vocabulary (schema.md canonical
+// union — 070 rows keep LINE_LIFF_MOBILE/WEB_DESKTOP/TABLET_PWA/NATIVE_APP;
+// the 119 wire enum is the 4-value BoundDeviceTypeEnum subset).
+enum DeviceType {
+  LINE_LIFF_MOBILE
+  WEB_DESKTOP
+  TABLET_PWA
+  NATIVE_APP
+  LINE_LIFF_IOS
+  LINE_LIFF_ANDROID
+  WEB_MOBILE_BROWSER
+}
+
+// Atomic Phase 119 §4.1: stream session lifecycle (schema.md canonical).
+enum SessionStatus {
+  ACTIVE_STREAMING
+  IDLE
+  EVICTED_CONCURRENT
+  BLOCKED_FRAUD
+}
+
+model UserDevice {
+  id              String          @id @default(uuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprintHash String
+  deviceName      String
+  deviceType      DeviceType
+  isTrusted       Boolean         @default(true)
+  lastIpAddress   String
+  registeredAt    DateTime        @default(now())
+  lastActiveAt    DateTime        @updatedAt
+  activeSessions  ActiveSession[]
+
+  @@unique([userId, fingerprintHash])
+  @@index([userId])
+  @@index([fingerprintHash])
+}
+
+model ActiveSession {
+  id                   String        @id @default(uuid())
+  userId               String
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId             String
+  device               UserDevice    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  sessionToken         String        @unique @default(uuid())
+  activeStreamLessonId String?
+  sessionStatus        SessionStatus @default(ACTIVE_STREAMING)
+  ipAddress            String
+  lastHeartbeatAt      DateTime      @default(now())
+  createdAt            DateTime      @default(now())
+  expiresAt            DateTime
+
+  @@index([userId, sessionStatus])
+  @@index([sessionToken])
+}
+
 // Atomic Phase 023: dynamic header overrides per product + tenant branding fallback
 model HeaderConfig {
   id                 String   @id @default(uuid())
@@ -5530,9 +5590,15 @@ model SecurityAuditLog {
   ipAddress      String   @default("unknown")
   userAgent      String   @default("Unknown")
   timestamp      DateTime @default(now())
+  // Atomic Phase 119 §4.1: device/fraud signal columns (additive; 106
+  // readers keep working — all optional).
+  eventType       String?
+  fingerprintHash String?
+  metadata        Json?
 
   @@index([userId, timestamp])
   @@index([tenantId, action])
+  @@index([eventType])
 }
 
 // Atomic Phase 107 §4.1: PDPA Data Scope Control + Field-Level Encryption segment
