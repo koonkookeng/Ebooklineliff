@@ -228,7 +228,10 @@ function sectionFrontendParity(): void {
     assert.ok(router.includes(t), `router missing: ${t}`);
   }
   const reader = readFileSync('apps/frontend/components/reader/AdaptiveCanvasReader.tsx', 'utf8');
-  for (const t of ['AdaptiveCanvasReader', 'viewportSlidingWindowPages', 'revokeObjectURL', 'canvas.width = canvas.width', 'USER-VERIFIED', 'ก่อนหน้า', 'ถัดไป', 'ArrowLeft']) {
+  // Phase 059 retired the inline ArrowLeft keydown into the central
+  // useReaderNavigation engine (store-bus; Web never double-fires). Assert the
+  // bus wiring instead of the removed inline handler.
+  for (const t of ['AdaptiveCanvasReader', 'viewportSlidingWindowPages', 'revokeObjectURL', 'canvas.width = canvas.width', 'USER-VERIFIED', 'ก่อนหน้า', 'ถัดไป', 'useReaderStore']) {
     assert.ok(reader.includes(t), `reader missing: ${t}`);
   }
   const player = readFileSync('apps/frontend/components/player/AdaptiveHlsPlayer.tsx', 'utf8');
