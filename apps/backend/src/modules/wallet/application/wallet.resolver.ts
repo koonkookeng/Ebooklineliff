@@ -36,7 +36,10 @@ class OneClickBuyResultGql {
 }
 
 @ObjectType('WalletTopupResult')
-class WalletTopupResultGql {
+// Schema shape for the webhook-driven topup result (topup completes via the
+// EasySlip webhook REST lane; no GQL mutation returns it yet). Exported for
+// reuse so the code-first schema contract stays importable.
+export class WalletTopupResultGql {
   @Field() success!: boolean;
   @Field(() => ID) walletId!: string;
   @Field(() => Float) creditedAmount!: number;
@@ -57,13 +60,13 @@ export class WalletResolver {
 
   @Query('walletBalance')
   @UseGuards(JwtAuthGuard)
-  walletBalance(@Context() ctx: GraphQLContext) {
+  walletBalance(@Context() ctx: GraphQLContext): Promise<WalletBalanceGql> {
     return this.wallet.getBalance(actor(ctx).userId);
   }
 
   @Query('walletLedger')
   @UseGuards(JwtAuthGuard)
-  walletLedger(@Args('take', { type: () => Int, nullable: true }) take: number | undefined, @Context() ctx: GraphQLContext) {
+  walletLedger(@Args('take', { type: () => Int, nullable: true }) take: number | undefined, @Context() ctx: GraphQLContext): Promise<WalletLedgerItemGql[]> {
     return this.wallet.ledger(actor(ctx).userId, take ?? 20);
   }
 
@@ -73,7 +76,7 @@ export class WalletResolver {
     @Args('productId') productId: string,
     @Args('expectedPrice', { type: () => Float }) expectedPrice: number,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<OneClickBuyResultGql> {
     const { userId, tenantId } = actor(ctx);
     const parsed = OneClickBuyInputSchema.safeParse({ productId, tenantId, expectedPrice });
     if (!parsed.success) throw new BadRequestException('Invalid one-click payload');
