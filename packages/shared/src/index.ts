@@ -2897,3 +2897,30 @@ export type {
   EdgeRoutingConfig,
   EdgeNode,
 } from './schemas/edge-infrastructure.schema';
+export {
+  LoadTestScenarioEnum,
+  PerformanceMetricReportSchema,
+  SlipVerifyQueuePayloadSchema,
+  LOAD_P95_BUDGET_MS,
+  LOAD_P99_BUDGET_MS,
+  LOAD_ERROR_RATE_MAX,
+  SLIP_PROCESS_BUDGET_MS,
+  CHECKOUT_TPS_FLOOR,
+  LOAD_RAM_BUDGET_MB,
+  CACHE_HIT_FLOOR_PCT,
+  DB_POOL_CEILING_PCT,
+  SELF_HEAL_BUDGET_MS,
+  WAITING_ROOM_TRIP_MS,
+  LOAD_TARGET_CCU,
+  percentile,
+  errorRate,
+  cacheHitRatio,
+  evaluateLoadGates,
+  loadGatesPass,
+} from './schemas/loadtest.schema';
+export type {
+  LoadTestScenario,
+  PerformanceMetricReport,
+  SlipVerifyQueuePayload,
+  LoadGateVerdict,
+} from './schemas/loadtest.schema';
