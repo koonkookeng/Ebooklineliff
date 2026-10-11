@@ -1,6 +1,73 @@
-/**
- * AUTO-SCAFFOLD Phase 130 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-// placeholder
+# SSOT Phase 130 §5.1 — production compose (PostgreSQL 16 + Redis 7.2 + API)
+# Canonical: apps/backend/src/infra/docker/docker-compose.prod.yml
+# (legacy src/infra/docker/docker-compose.prod.yml)
+# - Secrets via env_file only (.env.production — never committed).
+#   PgBouncer transaction-pooling in front of Postgres (pool 50/10/200,
+#   §8.1). Blue/green cutover rides the k8s lane; compose owns staging
+#   parity + single-host fallback.
+name: omnichannel-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      POSTGRES_DB: omni_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "10000"
+      DEFAULT_POOL_SIZE: "50"
+      RESERVE_POOL_SIZE: "10"
+      MAX_DB_CONNECTIONS: "200"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--cluster-enabled", "yes", "--maxmemory", "2gb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    image: "${RELEASE_IMAGE:-omnichannel/api:local}"
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/healthz/readiness"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 10
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  pgdata:
+  redisdata:

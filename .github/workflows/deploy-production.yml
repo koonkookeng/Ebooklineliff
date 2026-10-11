@@ -1,0 +1,53 @@
+# SSOT Phase 130 §12 — production promotion (tag-gated blue/green cutover)
+# - RISK_CALL: distinct from cloudflare-deploy.yml (push-to-main continuous
+#   lane). This workflow ONLY runs on release tags app:v1.130.0-* or manual
+#   dispatch: contract suites are the quality gates (fail-closed — no tag
+#   deploys without 12/12), then the immutable image ships and the k8s
+#   service selector flips blue->green (BDD-1 100ms cutover).
+name: deploy-production
+
+on:
+  push:
+    tags: ["app:v1.130.0-*"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Immutable release tag (app:v1.130.0-<sha>)"
+        required: true
+
+jobs:
+  go-live-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile
+      - run: npx prisma validate --schema=packages/db/prisma/schema.prisma
+      - run: npx tsx scripts/test-phase130-contracts.ts
+      - run: npx tsx scripts/test-phase129-contracts.ts
+      - run: npx tsx scripts/test-phase128-contracts.ts
+      - run: npx tsc --noEmit -p apps/backend/tsconfig.json
+      - run: npx tsc --noEmit -p apps/frontend/tsconfig.json
+
+  promote-green:
+    runs-on: ubuntu-latest
+    needs: go-live-gates
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ship immutable image tag
+        run: |
+          TAG="${{ github.ref_name || inputs.release_tag }}"
+          echo "RELEASE_IMAGE=omnichannel/api:${TAG}" >> "$GITHUB_ENV"
+          echo "Promoting ${TAG} to green (blue/green cutover)"
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.toml --var RELEASE_TAG:${{ env.RELEASE_IMAGE }}
+          workingDirectory: apps/backend

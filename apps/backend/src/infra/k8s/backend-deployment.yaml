@@ -1,0 +1,58 @@
+# SSOT Phase 130 §5.1 — NestJS API green deployment (blue/green cutover)
+# Canonical: apps/backend/src/infra/k8s/backend-deployment.yaml
+# (legacy src/infra/k8s/*)
+# - RELEASE_IMAGE is pinned by CI (immutable tag app:v1.130.0-<sha>, §9.1).
+#   Readiness gates traffic (never serves before db+redis are up); resource
+#   caps protect node neighbors during flash-sale bursts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-green
+  labels:
+    app: omnichannel-api
+    slot: green
+spec:
+  replicas: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 5
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: omnichannel-api
+      slot: green
+  template:
+    metadata:
+      labels:
+        app: omnichannel-api
+        slot: green
+    spec:
+      containers:
+        - name: api
+          image: RELEASE_IMAGE
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - secretRef:
+                name: omnichannel-prod-secrets
+          readinessProbe:
+            httpGet:
+              path: /healthz/readiness
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
