@@ -184,7 +184,15 @@ export class R2StorageService {
       },
     });
     if (!res.ok) throw new Error(`R2 GET ${res.status} for ${objectKey}`);
-    return Buffer.from(await res.arrayBuffer());
+    // Binary-safe primary path; tolerate minimal fetch shims (tests/edge) that
+    // only implement text(). Real R2 responses always expose arrayBuffer().
+    const body = res as unknown as {
+      arrayBuffer?: () => Promise<ArrayBuffer>;
+      text?: () => Promise<string>;
+    };
+    if (typeof body.arrayBuffer === 'function') return Buffer.from(await body.arrayBuffer());
+    if (typeof body.text === 'function') return Buffer.from(await body.text(), 'utf-8');
+    throw new Error(`R2 GET unreadable body for ${objectKey}`);
   }
 
   /** Signed PUT object (chunk/segment upload, BDD Scenario 3). */
