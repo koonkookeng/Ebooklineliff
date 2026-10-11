@@ -3,7 +3,7 @@
 // (legacy src/backend/modules/auth/liff-auth.controller.ts)
 import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { LiffAuthService } from './liff-auth.service';
-import { LiffAuthHandshakeSchema, LiffAuthHandshake, LiffAuthResponse } from '@repo/shared';
+import { LiffAuthHandshakeSchema, LiffAuthResponse } from '@repo/shared';
 
 @Controller('api/v1/auth/liff')
 export class LiffAuthController {
