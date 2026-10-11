@@ -20,6 +20,7 @@ import { LogOnlyDeviceNotify, DeviceNotificationService } from './device-notify.
 import { DeviceFingerprintGuard } from './guards/device-fingerprint.guard';
 import { ConcurrentStreamGuard } from './guards/concurrent-stream.guard';
 import { SecurityFingerprintController } from './controllers/security-fingerprint.controller';
+import { SecurityWebhookController } from './controllers/security-webhook.controller';
 import { GeoipLookupService } from './services/geoip-lookup.service';
 import { VelocityCheckerService } from './services/velocity-checker.service';
 import { RiskCalculatorService } from './services/risk-calculator.service';
@@ -39,7 +40,7 @@ import { AuditLoggerService } from './services/audit-logger.service';
 import { LineVerifierService } from '../auth/services/line-verifier.service';
 
 @Module({
-  controllers: [SecurityFingerprintController],
+  controllers: [SecurityFingerprintController, SecurityWebhookController],
   providers: [
     {
       provide: ActiveSessionRedisRepository,
