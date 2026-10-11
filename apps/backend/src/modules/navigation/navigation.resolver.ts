@@ -17,7 +17,11 @@ class NavigationStackItemGql {
 }
 
 @ObjectType('NavigationStatePayload')
-class NavigationStatePayloadGql {
+// Code-first schema shape for the navigation state (the query returns the
+// restore envelope whose inner `payload` matches this type; annotating the
+// query with it would lie about the envelope, so the contract stays
+// exported/importable instead — 017/023 precedent).
+export class NavigationStatePayloadGql {
   @Field() tenantId!: string;
   @Field() currentRoute!: string;
   @Field() canGoBack!: boolean;
