@@ -465,12 +465,13 @@ function sectionParity(): void {
     const src = readFileSync(f, 'utf8');
     assert.ok(!src.includes('TODO') && !src.includes('placeholder'), `${f} unimplemented`);
   }
-  // 086-owned payout scaffolds stay untouched for their phase.
-  for (const f of [
-    'apps/backend/src/modules/payout/payout.module.ts',
-    'apps/backend/src/modules/payout/application/use-cases/request-payout.use-case.ts',
-  ]) {
-    assert.ok(readFileSync(f, 'utf8').includes('AUTO-SCAFFOLD'), `${f} must stay 086-owned`);
+  // 086 owns the payout lane: guard the seam (module + clearing use-case
+  // wired) instead of pinning the retired AUTO-SCAFFOLD placeholder text.
+  for (const [f, marker] of [
+    ['apps/backend/src/modules/payout/payout.module.ts', 'PayoutModule'],
+    ['apps/backend/src/modules/payout/application/use-cases/request-payout.use-case.ts', 'RequestPayout'],
+  ] as Array<[string, string]>) {
+    assert.ok(readFileSync(f, 'utf8').includes(marker), `${f} must stay 086-owned (${marker})`);
   }
   const mod = readFileSync('apps/backend/src/modules/finance/finance.module.ts', 'utf8');
   assert.ok(mod.includes('FinanceModule') && mod.includes('PostingEngineService') && mod.includes('FinancePayoutService'));
