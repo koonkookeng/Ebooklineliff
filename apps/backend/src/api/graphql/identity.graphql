@@ -1,0 +1,74 @@
+// SSOT Phase 003 §3.2 — identity SDL parity (code-first resolver is runtime truth)
+// Canonical: apps/backend/src/api/graphql/identity.graphql
+// (legacy src/backend/api/graphql/identity.graphql)
+// - Mirrors the IdentityResolver intents. submitCreatorKYC rides the 085
+//   submitKyc lane (canonical) and is intentionally absent here (no dupes).
+
+type UserProfile {
+  id: ID!
+  lineUserId: String
+  email: String
+  phone: String
+  displayName: String!
+  avatarUrl: String
+  role: UserRole!
+  kycStatus: KYCStatus!
+  walletBalance: Float!
+  rewardPoints: Int!
+  affiliateCode: String!
+  addresses: [UserAddress!]!
+}
+
+type UserAddress {
+  id: ID!
+  recipient: String!
+  phoneNumber: String!
+  addressLine1: String!
+  addressLine2: String
+  subdistrict: String!
+  district: String!
+  province: String!
+  postalCode: String!
+  isDefault: Boolean!
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  CONTENT_MODERATOR
+  SUPPORT_STAFF
+  INSTRUCTOR
+  SELLER
+  MEMBER
+}
+
+enum KYCStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+  ACTION_REQUIRED
+}
+
+extend type Query {
+  me: UserProfile!
+}
+
+extend type Mutation {
+  updateUserProfile(displayName: String!, avatarUrl: String, phone: String): UserProfile!
+  upsertUserAddress(input: UserAddressInput!): UserAddress!
+  deleteUserAddress(addressId: ID!): Boolean!
+}
+
+input UserAddressInput {
+  id: ID
+  recipient: String!
+  phoneNumber: String!
+  addressLine1: String!
+  addressLine2: String
+  subdistrict: String!
+  district: String!
+  province: String!
+  postalCode: String!
+  isDefault: Boolean
+}
