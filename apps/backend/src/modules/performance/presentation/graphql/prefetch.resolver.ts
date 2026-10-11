@@ -49,7 +49,7 @@ export class PrefetchResolver {
   ) {}
 
   @Query('getBundlePerformanceMetrics')
-  async getBundlePerformanceMetrics(@Args('tenantId') tenantId: string) {
+  async getBundlePerformanceMetrics(@Args('tenantId') tenantId: string): Promise<PerformanceReportGql> {
     if (!tenantId) throw new BadRequestException('Missing tenant id');
     const latest = await this.guard.latest();
     return {
@@ -65,7 +65,7 @@ export class PrefetchResolver {
   async triggerPredictivePrefetch(
     @Args('input') input: PrefetchInputGql,
     @Args('userId', { nullable: true }) userId?: string | null,
-  ) {
+  ): Promise<PrefetchPayloadGql> {
     if (!input?.productId) throw new BadRequestException('Missing product id');
     const out = await this.prefetch.processPredictivePrefetch({
       userId: userId ?? 'anonymous',
