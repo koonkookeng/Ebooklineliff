@@ -5816,7 +5816,7 @@ model RevocationBlacklist {
 }
 
 model SecurityAuditLog {
-  id             String   @id @default(uuid())
+  id             String         @id @default(uuid())
   tenantId       String?
   userId         String?
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -5827,6 +5827,13 @@ model SecurityAuditLog {
   ipAddress      String   @default("unknown")
   userAgent      String   @default("Unknown")
   timestamp      DateTime @default(now())
+  // Atomic Phase 127 §4.1: OWASP threat lanes (additive; 106/119 readers
+  // keep working — severity carries a backfill default, rest optional).
+  endpoint       String?
+  threatType     String?
+  severity       ThreatSeverity @default(LOW)
+  payloadSnippet String?        @db.Text
+  isBlocked      Boolean        @default(true)
   // Atomic Phase 119 §4.1: device/fraud signal columns (additive; 106
   // readers keep working — all optional).
   eventType       String?
@@ -5836,6 +5843,54 @@ model SecurityAuditLog {
   @@index([userId, timestamp])
   @@index([tenantId, action])
   @@index([eventType])
+  @@index([ipAddress])
+  @@index([severity])
+}
+
+// Atomic Phase 127 §4.1: OWASP threat vocabulary (schema.md canonical).
+enum ThreatSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Atomic Phase 127 §4.1: DR state machine (schema.md canonical).
+enum DRState {
+  NORMAL
+  FAILOVER_IN_PROGRESS
+  FAILOVER_COMPLETED
+  FAILBACK_IN_PROGRESS
+}
+
+// Atomic Phase 127 §4.1: DR snapshot ledger (schema.md canonical).
+model DisasterRecoverySnapshot {
+  id                  String    @id @default(uuid())
+  snapshotId          String    @unique
+  backupType          String
+  r2StoragePath       String
+  fileSizeBytes       BigInt
+  checksumSha256      String
+  verifiedAt          DateTime?
+  isRestorationTested Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  @@index([snapshotId])
+  @@index([createdAt])
+}
+
+// Atomic Phase 127 §4.1: node health ledger (schema.md canonical).
+model SystemHealthMetric {
+  id                   String   @id @default(uuid())
+  nodeName             String
+  cpuUsagePercent      Float
+  memoryUsagePercent   Float
+  dbConnectionPoolUsed Int
+  redisMemoryUsedMb    Float
+  drState              DRState  @default(NORMAL)
+  recordedAt           DateTime @default(now())
+
+  @@index([recordedAt])
 }
 
 // Atomic Phase 120 §4.1: IP anomaly vocabulary (schema.md canonical).

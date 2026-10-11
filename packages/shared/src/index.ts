@@ -2924,3 +2924,33 @@ export type {
   SlipVerifyQueuePayload,
   LoadGateVerdict,
 } from './schemas/loadtest.schema';
+export {
+  ThreatSeverityEnum,
+  DisasterTypeEnum,
+  SecurityIncidentLogSchema,
+  DisasterRecoveryStatusSchema,
+  SecurityRateLimitRuleSchema,
+  DR_RTO_BUDGET_MS,
+  DR_RPO_BUDGET_SEC,
+  DR_HEARTBEAT_MISSES,
+  DR_HEARTBEAT_INTERVAL_MS,
+  ATTACKER_BLOCK_TTL_SEC,
+  GQL_MAX_DEPTH,
+  AUDIT_SNIPPET_MAX,
+  WAL_ARCHIVE_SEC,
+  SECURITY_EVENT_STREAM,
+  severityRank,
+  drPostureOk,
+  securityRateLimitKey,
+  attackerBlockKey,
+  looksLikeSqlInjection,
+  looksLikeXss,
+  capSnippet,
+} from './schemas/security-dr.schema';
+export type {
+  ThreatSeverity,
+  DisasterType,
+  SecurityIncidentLog,
+  DisasterRecoveryStatus,
+  SecurityRateLimitRule,
+} from './schemas/security-dr.schema';
