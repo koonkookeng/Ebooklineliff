@@ -59,7 +59,7 @@ export class LibraryResolver {
     @Args('page', { type: () => Int, nullable: true }) page: number | null | undefined,
     @Args('limit', { type: () => Int, nullable: true }) limit: number | null | undefined,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<MyLibraryPayloadGql> {
     // Explicit nulls (GraphQL) coerce to undefined so Zod optionals stay valid.
     const parsed = MyLibraryQueryInputSchema.safeParse({
       ...(assetType ? { assetType } : {}),
@@ -74,7 +74,7 @@ export class LibraryResolver {
 
   @Query('libraryGate')
   @UseGuards(JwtAuthGuard)
-  libraryGate(@Args('productId') productId: string, @Context() ctx: GraphQLContext) {
+  libraryGate(@Args('productId') productId: string, @Context() ctx: GraphQLContext): Promise<LibraryGateResultGql> {
     if (!productId) throw new BadRequestException('Missing product id');
     return this.library.checkAccess(actor(ctx), productId);
   }
