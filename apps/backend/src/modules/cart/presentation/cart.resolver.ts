@@ -60,7 +60,7 @@ export class CartResolver {
 
   @Query('getSmartCart')
   @UseGuards(JwtAuthGuard)
-  getSmartCart(@Context() ctx: GraphQLContext) {
+  getSmartCart(@Context() ctx: GraphQLContext): Promise<HybridCartSplitSummaryGql> {
     const { userId, tenantId } = actor(ctx);
     return this.splitCalc.execute(userId, undefined, tenantId);
   }
@@ -71,7 +71,7 @@ export class CartResolver {
     @Args('productId') productId: string,
     @Args('quantity', { type: () => Int, nullable: true }) quantity: number | undefined,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<HybridCartSplitSummaryGql> {
     const { userId, tenantId } = actor(ctx);
     return this.addToCart.execute(userId, { productId, quantity: quantity ?? 1 }, tenantId);
   }
@@ -82,14 +82,14 @@ export class CartResolver {
     @Args('cartItemId') cartItemId: string,
     @Args('quantity', { type: () => Int }) quantity: number,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<HybridCartSplitSummaryGql> {
     const { userId, tenantId } = actor(ctx);
     return this.cart.updateQuantity(userId, cartItemId, quantity, tenantId);
   }
 
   @Mutation('removeFromSmartCart')
   @UseGuards(JwtAuthGuard)
-  removeFromSmartCart(@Args('cartItemId') cartItemId: string, @Context() ctx: GraphQLContext) {
+  removeFromSmartCart(@Args('cartItemId') cartItemId: string, @Context() ctx: GraphQLContext): Promise<HybridCartSplitSummaryGql> {
     const { userId, tenantId } = actor(ctx);
     return this.cart.removeItem(userId, cartItemId, tenantId);
   }
@@ -99,7 +99,7 @@ export class CartResolver {
   async calculateHybridShippingFee(
     @Args('input') input: CalculateShippingInputGql,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<HybridCartSplitSummaryGql> {
     const { userId, tenantId } = actor(ctx);
     const parsed = CalculateShippingInputSchema.safeParse({
       cartId: input.cartId,
