@@ -13,7 +13,11 @@ class HeaderActionIconGql {
 }
 
 @ObjectType('DynamicHeaderContext')
-class DynamicHeaderContextGql {
+// Code-first schema shape for the header context (service returns the Zod
+// payload whose optionals are `undefined`-shaped, so the query returns it
+// directly without a lossy cast; the decorator registers this type in the
+// schema. Exported to keep the contract importable).
+export class DynamicHeaderContextGql {
   @Field(() => ID) tenantId!: string;
   @Field() displayMode!: string;
   @Field() mainTitle!: string;
