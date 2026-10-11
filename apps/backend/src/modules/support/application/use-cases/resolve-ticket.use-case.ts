@@ -11,9 +11,19 @@ export interface ResolveTicketInput {
   resolutionNote: string;
 }
 
+export interface TicketEventBus {
+  xadd(stream: string, fields: Record<string, string | number>): Promise<unknown>;
+}
+
+// Support stream (same literal as SupportChatGateway).
+const SUPPORT_TICKET_STREAM = 'support:ticket:events';
+
 @Injectable()
 export class ResolveTicketUseCase {
-  constructor(private readonly repo: SupportRepository) {}
+  constructor(
+    private readonly repo: SupportRepository,
+    private readonly bus?: TicketEventBus,
+  ) {}
 
   async execute(input: ResolveTicketInput): Promise<void> {
     const ticket = await this.repo.findTicketById(input.ticketId);
@@ -27,6 +37,15 @@ export class ResolveTicketUseCase {
       messageText: `Resolved: ${input.resolutionNote}`,
     });
 
-    // TODO: notify user via SSE/push; schedule FCR silence check (5min)
+    // User notification + FCR baseline: fail-open stream event. The 5-min
+    // silence check is consumer-side (analytics lane owns event consumption).
+    await this.bus
+      ?.xadd(SUPPORT_TICKET_STREAM, {
+        event: 'ticket_resolved',
+        ticketId: input.ticketId,
+        agentId: input.agentId,
+        at: Date.now(),
+      })
+      .catch(() => undefined);
   }
 }

@@ -15,9 +15,20 @@ export interface CreateTicketInput {
   message: string;
 }
 
+export interface TicketEventBus {
+  xadd(stream: string, fields: Record<string, string | number>): Promise<unknown>;
+}
+
+// Support stream (same literal as SupportChatGateway — the agent-room SSE
+// fan-out consumes this stream; gateway also re-emits live to agents).
+const SUPPORT_TICKET_STREAM = 'support:ticket:events';
+
 @Injectable()
 export class CreateTicketUseCase {
-  constructor(private readonly repo: SupportRepository) {}
+  constructor(
+    private readonly repo: SupportRepository,
+    private readonly bus?: TicketEventBus,
+  ) {}
 
   async execute(input: CreateTicketInput): Promise<{
     ticketId: string;
@@ -46,7 +57,17 @@ export class CreateTicketUseCase {
 
     const slaMinutes = TICKET_SLA_MINUTES[input.priority.toUpperCase() as keyof typeof TICKET_SLA_MINUTES] ?? TICKET_SLA_MINUTES.MEDIUM;
 
-    // TODO: emit SSE event to agent room (SupportChatGateway)
+    // Agent-room notification: fail-open stream event (gateway fans out live SSE).
+    await this.bus
+      ?.xadd(SUPPORT_TICKET_STREAM, {
+        event: 'ticket_created',
+        ticketId: ticket.id,
+        ticketNo: ticket.ticketNo,
+        userId: input.userId,
+        priority: ticket.priority,
+        at: Date.now(),
+      })
+      .catch(() => undefined);
     return {
       ticketId: ticket.id,
       ticketNo: ticket.ticketNo,

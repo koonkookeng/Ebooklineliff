@@ -18,9 +18,23 @@ import { SupportController } from './support.controller';
   controllers: [SupportController],
   providers: [
     PrismaSupportRepository,
-    CreateTicketUseCase,
+    {
+      provide: CreateTicketUseCase,
+      useFactory: (repo: PrismaSupportRepository, redis: RedisClusterService) =>
+        new CreateTicketUseCase(repo, {
+          xadd: (s: string, f: Record<string, string | number>) => redis.xaddPipeline(s, [f]),
+        }),
+      inject: [PrismaSupportRepository, RedisClusterService],
+    },
     EscalateToAgentUseCase,
-    ResolveTicketUseCase,
+    {
+      provide: ResolveTicketUseCase,
+      useFactory: (repo: PrismaSupportRepository, redis: RedisClusterService) =>
+        new ResolveTicketUseCase(repo, {
+          xadd: (s: string, f: Record<string, string | number>) => redis.xaddPipeline(s, [f]),
+        }),
+      inject: [PrismaSupportRepository, RedisClusterService],
+    },
     {
       provide: SupportChatGateway,
       useFactory: (redis: RedisClusterService) =>
