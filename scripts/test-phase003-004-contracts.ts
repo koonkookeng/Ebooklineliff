@@ -1,5 +1,8 @@
 // SSOT Phase 003+004 — contract tests (happy + edge + failure)
 import assert from 'node:assert';
+import { UnauthorizedException } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { GqlAuthGuard } from '../apps/backend/src/modules/auth/guards/gql-auth.guard';
 import {
   UserRoleEnum,
   KYCStatusEnum,
@@ -106,6 +109,39 @@ assert.throws(() => EasySlipWebhookPayloadSchema.parse({ ...slip, amount: { valu
 
 // ---- Phase 003 REVIEW: address-book service (default-flip + ownership) ----
 import { IdentityService } from '../apps/backend/src/modules/identity/application/identity.service';
+
+// ---- Phase 004 REVIEW: GQL guard fails closed in production ----
+{
+  const guard = new GqlAuthGuard();
+  const origCreate = GqlExecutionContext.create;
+  const prevEnv = process.env.NODE_ENV;
+  const withReq = (req: Record<string, unknown>): boolean => {
+    (GqlExecutionContext as unknown as { create: (c: unknown) => unknown }).create =
+      () => ({ getContext: () => ({ req }) });
+    return guard.canActivate({} as never);
+  };
+  try {
+    process.env.NODE_ENV = 'test';
+    const devReq: Record<string, unknown> = { headers: { authorization: 'Bearer abcdefghij' } };
+    assert.equal(withReq(devReq), true);
+    assert.deepEqual(devReq['user'], { id: 'anonymous' });
+    assert.throws(() => withReq({ headers: {} }), UnauthorizedException);
+    process.env.NODE_ENV = 'production';
+    const authed: Record<string, unknown> = {
+      headers: { authorization: 'Bearer abcdefghij' },
+      user: { id: 'u1' },
+    };
+    assert.equal(withReq(authed), true);
+    assert.deepEqual(authed['user'], { id: 'u1' });
+    assert.throws(
+      () => withReq({ headers: { authorization: 'Bearer abcdefghij' } }),
+      UnauthorizedException,
+    );
+  } finally {
+    (GqlExecutionContext as unknown as { create: unknown }).create = origCreate;
+    process.env.NODE_ENV = prevEnv;
+  }
+}
 
 async function runAddressGroups(): Promise<void> {
 const A_OLD = '123e4567-e89b-12d3-a456-426614174001';

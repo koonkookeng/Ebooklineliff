@@ -12,7 +12,12 @@ export class GqlAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid Bearer token');
     }
     if (!req?.user) {
-      // Upstream Fastify JWT hook (Phase 005) populates req.user; allow pre-auth passthrough in dev/test
+      // Upstream Fastify JWT hook (Phase 005) populates req.user. Pre-auth
+      // passthrough is a dev/test convenience only — production fails closed
+      // (downstream entitlement lanes reject 'anonymous' regardless).
+      if (process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException('Missing authenticated user');
+      }
       req.user = { id: 'anonymous' };
     }
     return true;
