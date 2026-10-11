@@ -5,9 +5,10 @@
 //   Hash details gated to auditor roles (Gate 4, §2.1).
 // - Zero new deps.
 import { Args, Context, Field, Int, ObjectType, Query, Mutation, Resolver } from '@nestjs/graphql';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { assertAuditViewer } from '../domain/audit-log.entity';
 import { AuditLogService } from '../application/audit-log.service';
+import { actorOf, assertCanRead, canRevealHashes, maskRowHashes, type LooseCtx } from './audit-view';
 
 @ObjectType('AuditLogNode')
 class AuditLogNodeGql {
@@ -33,25 +34,6 @@ class AuditVerifyResultGql {
   @Field(() => [Int]) tamperedBlockSequences!: number[];
 }
 
-type LooseCtx = Record<string, unknown>;
-
-const READ_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN', 'CONTENT_MODERATOR', 'SUPPORT_STAFF']);
-
-function actorOf(ctx: LooseCtx): { id: string; role: string; email: string; ip: string; ua: string } {
-  const req = (ctx['req'] as Record<string, unknown> | undefined) ?? {};
-  const user = (req['user'] as { id?: string; role?: string; email?: string } | undefined) ?? {};
-  const headers = (req['headers'] as Record<string, string> | undefined) ?? {};
-  if (!user.id || !user.role) throw new ForbiddenException('Audit console requires an authenticated admin');
-  const fwd = headers['x-forwarded-for'] ?? '';
-  return {
-    id: user.id,
-    role: user.role,
-    email: user.email ?? 'unknown',
-    ip: ((req['ip'] as string | undefined) ?? fwd.split(',')[0]?.trim() ?? '0.0.0.0'),
-    ua: headers['user-agent'] ?? 'unknown',
-  };
-}
-
 function toNode(row: Record<string, unknown>, revealHashes: boolean): AuditLogNodeGql {
   const out = new AuditLogNodeGql();
   out.id = String(row['id'] ?? '');
@@ -64,8 +46,12 @@ function toNode(row: Record<string, unknown>, revealHashes: boolean): AuditLogNo
   out.targetEntity = String(row['targetEntity'] ?? '');
   out.targetEntityId = (row['targetEntityId'] as string | null | undefined) ?? null;
   // Gate 4 (§2.1): hash material only for auditor roles.
-  out.previousHash = revealHashes ? String(row['previousHash'] ?? '') : '••••';
-  out.currentHash = revealHashes ? String(row['currentHash'] ?? '') : '••••';
+  const masked = maskRowHashes(
+    { previousHash: String(row['previousHash'] ?? ''), currentHash: String(row['currentHash'] ?? '') },
+    revealHashes,
+  );
+  out.previousHash = masked.previousHash;
+  out.currentHash = masked.currentHash;
   out.integrityStatus = String(row['integrityStatus'] ?? '');
   out.createdAt = row['createdAt'] instanceof Date ? (row['createdAt'] as Date).toISOString() : String(row['createdAt'] ?? '');
   return out;
@@ -84,8 +70,8 @@ export class AuditLogResolver {
     @Context() ctx: LooseCtx,
   ) {
     const actor = actorOf(ctx);
-    if (!READ_ROLES.has(actor.role)) throw new ForbiddenException('Audit console requires an admin role');
-    const reveal = actor.role === 'SUPER_ADMIN' || actor.role === 'FINANCE_ADMIN';
+    assertCanRead(actor.role);
+    const reveal = canRevealHashes(actor.role);
     const rows = (await this.audit.list({
       ...(actorId ? { actorId } : {}),
       ...(actionCategory ? { actionCategory } : {}),

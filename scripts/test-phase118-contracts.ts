@@ -37,6 +37,10 @@ import { AuditLogRepository } from '../apps/backend/src/modules/audit-log/infras
 import { R2WormVaultAdapter } from '../apps/backend/src/modules/audit-log/infrastructure/r2-worm-vault.adapter';
 import { R2WormVaultService, AUDIT_WORM_PREFIX } from '../apps/backend/src/infra/cloudflare/r2-worm-vault.service';
 import { AuditContextGuard } from '../apps/backend/src/modules/auth/guards/audit-context.guard';
+// tsx-safe: the GQL resolver file carries parameter decorators (unparseable
+// under tsx/esbuild — 092/116 precedent), so Gate-4 behavior is exercised via
+// its extracted helper + static delegation asserts below.
+import { actorOf, assertCanRead, canRevealHashes, maskRowHashes } from '../apps/backend/src/modules/audit-log/presentation/audit-view';
 import { buildAuditFlex, auditFlexByteSize, AUDIT_FLEX_BUDGET_BYTES } from '../apps/backend/src/modules/audit-log/application/audit-flex.builder';
 
 let passed = 0;
@@ -305,21 +309,22 @@ async function main(): Promise<void> {
   assert.deepEqual((stampedReq['auditActor'] as Record<string, unknown>)['role'], 'SUPER_ADMIN');
   assert.throws(() => guard.canActivate(gctx(undefined) as never), /Missing authentication/);
   assert.throws(() => guard.canActivate(gctx({ id: 'a1', role: 'MEMBER' }) as never), /admin role/);
-  // Gate 4: hash masking by role (resolver lane).
-  const { AuditLogResolver: ALR } = await import('../apps/backend/src/modules/audit-log/presentation/audit-log.resolver');
-  const listRows = [{
-    id: 'r1', sequenceNumber: 9, actorId: 'a1', actorRole: 'FINANCE_ADMIN', actorEmail: 'f@x.co',
-    actionCategory: 'FINANCIAL_TRANSACTION', actionName: 'REFUND_ORDER', targetEntity: 'Order',
-    targetEntityId: null, previousHash: 'p'.repeat(64), currentHash: 'c'.repeat(64),
-    integrityStatus: 'PENDING_VAULT_SYNC', createdAt: new Date(TS),
-  }];
-  const alr = new ALR({ list: async () => listRows } as never);
-  const modCtx = { req: { user: { id: 'm1', role: 'CONTENT_MODERATOR' }, headers: {} } };
-  const supCtx = { req: { user: { id: 's1', role: 'SUPER_ADMIN' }, headers: {} } };
-  const masked = await alr.auditLogs(undefined, undefined, 1, 20, modCtx as never) as Array<{ currentHash: string }>;
-  const revealed = await alr.auditLogs(undefined, undefined, 1, 20, supCtx as never) as Array<{ currentHash: string }>;
-  assert.equal(masked[0]!.currentHash, '••••');
-  assert.equal(revealed[0]!.currentHash, 'c'.repeat(64));
+  // Gate 4: hash masking by role (tsx-safe helper; the resolver file itself
+  // cannot load under tsx — delegation asserted statically below).
+  assert.throws(() => actorOf({ req: { headers: {} } } as never), /authenticated admin/);
+  assert.throws(() => assertCanRead('MEMBER'), /admin role/);
+  assert.equal(canRevealHashes('CONTENT_MODERATOR'), false);
+  assert.equal(canRevealHashes('SUPER_ADMIN'), true);
+  assert.equal(canRevealHashes('FINANCE_ADMIN'), true);
+  const masked = maskRowHashes({ previousHash: 'p'.repeat(64), currentHash: 'c'.repeat(64) }, false);
+  const revealed = maskRowHashes({ previousHash: 'p'.repeat(64), currentHash: 'c'.repeat(64) }, true);
+  assert.equal(masked.currentHash, '••••');
+  assert.equal(masked.previousHash, '••••');
+  assert.equal(revealed.currentHash, 'c'.repeat(64));
+  assert.equal(revealed.previousHash, 'p'.repeat(64));
+  const resolverSrc = readFileSync('apps/backend/src/modules/audit-log/presentation/audit-log.resolver.ts', 'utf8');
+  assert.ok(resolverSrc.includes('auditLogs') && resolverSrc.includes("from './audit-view'"), 'resolver delegates Gate-4 via audit-view');
+  assert.ok(resolverSrc.includes('assertCanRead(') && resolverSrc.includes('canRevealHashes(') && resolverSrc.includes('maskRowHashes('), 'resolver calls all three guards');
   ok('7. @Audit metadata + post-success append + fail-open + context guard + hash masking');
 }
 
