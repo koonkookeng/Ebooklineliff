@@ -92,7 +92,7 @@ export class ProductSearchResolver {
   ) {}
 
   @Query('searchProducts')
-  async searchProducts(@Args('filter') filter: ProductFilterInputGql, @Context() ctx: GraphQLContext) {
+  async searchProducts(@Args('filter') filter: ProductFilterInputGql, @Context() ctx: GraphQLContext): Promise<ProductSearchResultGql> {
     const parsed = ProductFilterInputSchema.safeParse({
       tenantId: tenantFrom(ctx),
       query: filter.query,
@@ -116,7 +116,7 @@ export class ProductSearchResolver {
     @Args('query') query: string,
     @Args('limit', { type: () => Int, nullable: true }) limit: number | undefined,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<PredictiveSuggestionGql[]> {
     if (!query?.trim()) throw new BadRequestException('Missing search query');
     return this.predictiveHandler.execute(
       new PredictiveSearchQuery(query, limit ?? 5, tenantFrom(ctx), ctx.req.user?.id),
