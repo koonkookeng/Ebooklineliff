@@ -386,9 +386,10 @@ function sectionParity(): void {
     const src = readFileSync(f, 'utf8');
     assert.ok(!src.includes('TODO') && !src.includes('placeholder'), `${f} unimplemented`);
   }
-  // 086-owned payout scaffolds stay untouched for their phase.
+  // 086 owns the payout lane (implemented in Phase 086): guard the seam
+  // instead of pinning the retired AUTO-SCAFFOLD placeholder text.
   assert.ok(
-    readFileSync('apps/backend/src/modules/payout/payout.module.ts', 'utf8').includes('AUTO-SCAFFOLD'),
+    readFileSync('apps/backend/src/modules/payout/payout.module.ts', 'utf8').includes('PayoutModule'),
     'payout module stays 086-owned',
   );
   const fin = readFileSync('apps/backend/src/modules/finance/application/tax-calculator.service.ts', 'utf8');
