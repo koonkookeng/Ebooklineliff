@@ -3050,6 +3050,9 @@ model Entitlement {
   @@index([productId])
   @@index([userId, accessType])
   @@index([createdAt])
+  // Atomic Phase 128 §9.1: entitlement verification covering path
+  // (userId, productId, expiresAt) for sub-ms DRM gates (BDD-1).
+  @@index([userId, productId, expiresAt], map: "idx_entitlement_verification")
 }
 
 // Atomic Phase 012: order lifecycle + payment verification states (expand-contract)
@@ -3133,6 +3136,9 @@ model Order {
   @@index([tenantId])
   @@index([orderNumber])
   @@index([orderStatus, paymentStatus])
+  // Atomic Phase 128 §4.1: user order-history recency path for library
+  // tabs and DataLoader-batched resolution (BDD-2).
+  @@index([userId, createdAt], map: "idx_order_user_created")
 }
 
 model OrderItem {

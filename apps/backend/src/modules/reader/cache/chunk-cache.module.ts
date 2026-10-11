@@ -14,6 +14,9 @@ import { ReaderChunkController } from '../controllers/reader-chunk.controller';
 import type { EdgeCacheClient } from './interfaces/chunk-cache.interface';
 import { RedisEdgeService } from './services/redis-edge.service';
 import { ChunkWarmerService } from './services/chunk-warmer.service';
+// Phase 128 §6.1: cached-query lane (single-flight + stale fallback) over the
+// same global edge singleton (no new pool).
+import { CacheQueryService } from '../../../infra/redis/cache-query.service';
 
 @Module({
   imports: [R2StorageModule],
@@ -31,7 +34,13 @@ import { ChunkWarmerService } from './services/chunk-warmer.service';
         new ChunkWarmerService(edge, vault.getObjectText.bind(vault)),
       inject: [RedisEdgeService, R2StorageService],
     },
+    {
+      provide: CacheQueryService,
+      useFactory: (cluster: RedisClusterService): CacheQueryService =>
+        new CacheQueryService(cluster),
+      inject: [RedisClusterService],
+    },
   ],
-  exports: [RedisEdgeService, ChunkWarmerService],
+  exports: [RedisEdgeService, ChunkWarmerService, CacheQueryService],
 })
 export class ChunkCacheModule {}
