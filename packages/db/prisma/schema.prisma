@@ -3751,6 +3751,78 @@ model ExternalApiAuditLog {
   @@index([serviceName, createdAt])
 }
 
+// Atomic Phase 123 §4.1: storage lifecycle & budget alerting (schema.md canonical).
+enum StorageAlertStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  RESOLVED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model StorageBucketPolicy {
+  id                           String   @id @default(uuid())
+  tenantId                     String
+  bucketName                   String
+  ruleId                       String   @unique
+  prefix                       String
+  enabled                      Boolean  @default(true)
+  expireDays                   Int?
+  abortIncompleteMultipartDays Int      @default(1)
+  description                  String?  @db.Text
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([bucketName])
+}
+
+model StorageUsageMetric {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  bucketName           String
+  totalSizeBytes       BigInt   @default(0)
+  totalObjectsCount    Int      @default(0)
+  classAOperations     Int      @default(0)
+  classBOperations     Int      @default(0)
+  estimatedCostTHB     Decimal  @default(0.00) @db.Decimal(10, 2)
+  recordedAt           DateTime @default(now())
+
+  @@index([tenantId, recordedAt])
+}
+
+model StorageBudgetAlertConfig {
+  id                       String   @id @default(uuid())
+  tenantId                 String   @unique
+  monthlyBudgetLimitTHB    Decimal  @db.Decimal(10, 2)
+  warningThresholdPercent  Float    @default(70.0)
+  criticalThresholdPercent Float    @default(85.0)
+  notifyLineUserIds        String[]
+  autoPurgeTempOnExceed    Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model StorageCostAlertLog {
+  id               String             @id @default(uuid())
+  tenantId         String
+  severity         AlertSeverity
+  alertMessage     String             @db.Text
+  currentCostTHB   Decimal            @db.Decimal(10, 2)
+  budgetLimitTHB   Decimal            @db.Decimal(10, 2)
+  percentUsed      Float
+  deliveryStatus   StorageAlertStatus @default(PENDING)
+  lineLogResponse  Json?
+  triggeredAt      DateTime           @default(now())
+
+  @@index([tenantId, triggeredAt])
+}
+
 // Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).
 // Order/PaymentSlip/User stay read-only context — no core-table edits.
 model MarketingCampaign {

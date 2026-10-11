@@ -193,6 +193,45 @@ export class R2StorageService {
     return this.putObjectBuffer(objectKey, Buffer.from(payload, 'utf-8'), contentType);
   }
 
+  /**
+   * Phase 123 additive seam — signed PUT Bucket lifecycle (?lifecycle).
+   * Reuses this file's SigV4 helpers (no @aws-sdk; RISK_CALL deviation
+   * documented in the storage service). Subresource query participates
+   * in the canonical request per SigV4 (S3 lifecycle API).
+   */
+  async putBucketLifecycle(bucket: string, xml: string): Promise<void> {
+    const cfg = this.config();
+    const host = new URL(this.endpointFor(cfg.accountId)).host;
+    const { amzDate, dateStamp } = amzDates();
+    const payloadHash = sha256Hex(xml);
+    const contentType = 'application/xml';
+    const canonicalRequest = [
+      'PUT',
+      `/${bucket}/`,
+      'lifecycle=',
+      `content-type:${contentType}\nhost:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`,
+      'content-type;host;x-amz-content-sha256;x-amz-date',
+      payloadHash,
+    ].join('\n');
+    const scope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, sha256Hex(canonicalRequest)].join('\n');
+    const signature = hmacHex(this.signingKey(cfg.secretAccessKey, dateStamp), stringToSign).toString('hex');
+    const res = await fetch(`https://${host}/${bucket}/?lifecycle`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `AWS4-HMAC-SHA256 Credential=${cfg.accessKeyId}/${scope}, SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date, Signature=${signature}`,
+        'Content-Type': contentType,
+        'x-amz-date': amzDate,
+        'x-amz-content-sha256': payloadHash,
+      },
+      body: xml,
+    });
+    if (!res.ok) {
+      this.logger.warn(`R2 lifecycle PUT failed: ${res.status} for ${bucket}`);
+      throw new Error(`R2 LIFECYCLE ${res.status} for ${bucket}`);
+    }
+  }
+
   /** Binary-safe signed PUT (Phase 043: .ts segments / key files). */
   async putObjectBuffer(objectKey: string, body: Buffer, contentType: string): Promise<{ eTag: string }> {
     const cfg = this.config();

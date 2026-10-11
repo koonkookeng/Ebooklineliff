@@ -1,11 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 123 — GraphQL resolver
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Resolver, Query } from '@nestjs/graphql';
-@Resolver()
-export class StorageManagementResolverResolver {
-  @Query(() => String)
-  health(): string { return 'ok'; }
-}
+// SSOT Phase 123 Task 6 §3.2 — legacy api-layer alias (contract record lives in module).
+// Canonical: apps/backend/src/api/graphql/resolvers/storage-management.resolver.ts
+// (legacy src/backend/api/graphql/resolvers/storage-management.resolver.ts)
+export { StorageResolver as StorageManagementResolver } from '../../../modules/storage/resolvers/storage.resolver';
+/** Backward-compat alias for the Phase-000 auto-scaffold name. */
+export { StorageResolver as StorageManagementResolverResolver } from '../../../modules/storage/resolvers/storage.resolver';
