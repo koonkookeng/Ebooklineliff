@@ -139,8 +139,10 @@ export class KycQueueReviewService {
     } | null;
     const promoteToSeller = status === 'VERIFIED' && (!user || user.role === 'MEMBER');
 
-    await this.db.$transaction(async () => {
-      const tx = this.db;
+    await this.db.$transaction(async (t) => {
+      // Use the transaction handle (not the root client) so KYC + role +
+      // payout + audit commit atomically (Gate 7).
+      const tx = t as PrismaAny;
       await tx.creatorKYC.update({
         where: { id: kycId },
         data: {
