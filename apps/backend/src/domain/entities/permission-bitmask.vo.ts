@@ -55,12 +55,12 @@ export class PermissionBitmask {
     return new PermissionBitmask(req & ~this.value);
   }
 
-  grant(flag: bigint): PermissionBitmask {
-    return new PermissionBitmask(this.value | flag);
+  grant(flag: string | bigint): PermissionBitmask {
+    return new PermissionBitmask(this.value | toBigInt(flag));
   }
 
-  revoke(flag: bigint): PermissionBitmask {
-    return new PermissionBitmask(this.value & ~flag);
+  revoke(flag: string | bigint): PermissionBitmask {
+    return new PermissionBitmask(this.value & ~toBigInt(flag));
   }
 
   equals(other: PermissionBitmask): boolean {
