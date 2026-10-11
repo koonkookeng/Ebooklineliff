@@ -388,12 +388,13 @@ function sectionParity(): void {
     const src = readFileSync(f, 'utf8');
     assert.ok(!src.includes('TODO') && !src.includes('placeholder'), `${f} unimplemented`);
   }
-  // Coupon/promotion systems stay 088/117-owned.
-  for (const f of [
-    'apps/backend/src/modules/promotion/promotion.module.ts',
-    'apps/backend/src/modules/promotion/services/coupon.service.ts',
-  ]) {
-    assert.ok(readFileSync(f, 'utf8').includes('AUTO-SCAFFOLD'), `${f} must stay 088-owned`);
+  // Coupon/promotion systems are 088/117-owned (implemented in Phase 088):
+  // guard the seam instead of pinning the retired AUTO-SCAFFOLD placeholder.
+  for (const [f, marker] of [
+    ['apps/backend/src/modules/promotion/promotion.module.ts', 'CouponService'],
+    ['apps/backend/src/modules/promotion/services/coupon.service.ts', 'Coupon'],
+  ] as Array<[string, string]>) {
+    assert.ok(readFileSync(f, 'utf8').includes(marker), `${f} must stay 088-owned (${marker})`);
   }
   const dto = readFileSync('apps/backend/src/modules/messaging/dto/abandoned-cart.dto.ts', 'utf8');
   assert.ok(dto.includes('MarkAbandonedDto') && dto.includes('RecoverCartDto'));
