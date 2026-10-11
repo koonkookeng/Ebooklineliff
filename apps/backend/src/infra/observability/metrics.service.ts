@@ -71,6 +71,11 @@ export class MetricsService {
     return this.observe('liff_canvas_ram_usage_bytes', bytes, { tenant: tenantId });
   }
 
+  /** Phase 122 §7: circuit transition ledger (external_api_circuit_breaker_state). */
+  observeCircuitTransition(serviceName: string, from: string, to: string): boolean {
+    return this.increment('external_api_circuit_breaker_state', { service: serviceName, from, to });
+  }
+
   snapshot(): { counters: Record<string, number>; histograms: Record<string, HistogramPoint & { p50: number; p95: number; p99: number }> } {
     const counters: Record<string, number> = {};
     for (const [k, v] of this.counters) counters[k] = v;

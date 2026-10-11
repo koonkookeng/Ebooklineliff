@@ -3721,6 +3721,36 @@ model SentryErrorIncident {
   @@index([createdAt])
 }
 
+// Atomic Phase 122 §4.1: resilience & audit persistence (schema.md canonical).
+// Order/PaymentSlip/User stay read-only context — no core-table edits.
+model IdempotencyLog {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  requestHash  String
+  endpoint     String
+  statusCode   Int
+  responseJson Json
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([key])
+  @@index([expiresAt])
+}
+
+model ExternalApiAuditLog {
+  id           String   @id @default(uuid())
+  serviceName  String
+  endpoint     String
+  httpMethod   String
+  responseMs   Int
+  isSuccess    Boolean
+  circuitState String
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([serviceName, createdAt])
+}
+
 // Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).
 // Order/PaymentSlip/User stay read-only context — no core-table edits.
 model MarketingCampaign {

@@ -2782,3 +2782,30 @@ export type {
   StructuredLogPayload,
   SentryUserScope,
 } from './schemas/telemetry-contract';
+export {
+  CircuitStateEnum,
+  IdempotencyHeaderSchema,
+  CircuitBreakerConfigSchema,
+  IdempotencyRecordSchema,
+  IDEMPOTENCY_LOCK_BUDGET_MS,
+  IDEMPOTENCY_LOCK_TTL_MS,
+  IDEMPOTENCY_DATA_TTL_SEC,
+  CIRCUIT_WINDOW_SEC,
+  CIRCUIT_COOLDOWN_SEC,
+  EXTERNAL_CALL_TIMEOUT_MS,
+  IDEMPOTENCY_HEADER,
+  CIRCUIT_EVENT_STREAM,
+  idempotencyLockKey,
+  idempotencyDataKey,
+  circuitStateKey,
+  circuitFailureKey,
+  circuitOpenedAtKey,
+  circuitTripped,
+  cooldownElapsed,
+} from './schemas/resilience-circuit.schema';
+export type {
+  CircuitState,
+  IdempotencyHeader,
+  CircuitBreakerConfig,
+  IdempotencyRecord,
+} from './schemas/resilience-circuit.schema';

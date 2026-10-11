@@ -1,8 +1,11 @@
-/**
- * AUTO-SCAFFOLD Phase 122 — NestJS service
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-import { Injectable } from '@nestjs/common';
-@Injectable()
-export class CircuitBreakerServiceService {}
+// SSOT Phase 122 Task 4 §5.3 — canonical re-export (scaffold-duplicate alias)
+// Canonical: apps/backend/src/modules/resilience/circuit-breaker.service.ts
+// (legacy src/backend/modules/resilience/circuit-breaker.service.ts)
+// - Single implementation lives in services/circuit-breaker.service.ts
+//   (Zero Redundant Code); this file keeps the scaffold path importable.
+export {
+  CircuitBreakerService,
+  CircuitBreakerServiceService,
+  type CircuitRedisPort,
+  type CircuitTransition,
+} from './services/circuit-breaker.service';

@@ -1,6 +1,6 @@
-/**
- * AUTO-SCAFFOLD Phase 122 — NestJS interceptor
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 122 Task 3 §5.2 — canonical re-export (scaffold-duplicate alias)
+// Canonical: apps/backend/src/modules/resilience/idempotency.interceptor.ts
+// (legacy src/backend/modules/resilience/idempotency.interceptor.ts)
+// - Single implementation lives in interceptors/idempotency.interceptor.ts
+//   (Zero Redundant Code); this file keeps the scaffold path importable.
+export { IdempotencyInterceptor } from './interceptors/idempotency.interceptor';
