@@ -9,7 +9,11 @@ import { BadRequestException } from '@nestjs/common';
 import { TenantThemeService } from './tenant-theme.service';
 
 @ObjectType('TenantBranding')
-class TenantBrandingGql {
+// Code-first schema shape (query returns the Zod payload whose optionals are
+// `undefined`-shaped and the mutation returns boolean, so neither method can
+// honestly carry this type as its return annotation — 023 lesson. The
+// decorator registers it in the schema; export keeps it importable).
+export class TenantBrandingGql {
   @Field(() => ID) tenantId!: string;
   @Field() brandName!: string;
   @Field({ nullable: true }) logoUrl!: string | null;
