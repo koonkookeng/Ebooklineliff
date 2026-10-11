@@ -14,9 +14,15 @@ export class RedisClusterService implements OnModuleInit, OnModuleDestroy {
   private client!: Cluster;
 
   onModuleInit() {
-    const nodes = (process.env.REDIS_CLUSTER_NODES || '172.28.0.11:6379').split(',').map((node) => {
-      const [host, port] = node.split(':');
-      return { host, port: parseInt(port, 10) };
+    const rawNodes = (process.env.REDIS_CLUSTER_NODES || '172.28.0.11:6379')
+      .split(',')
+      .map((node) => node.trim())
+      .filter((node) => node.length > 0);
+    if (rawNodes.length === 0) rawNodes.push('172.28.0.11:6379');
+    const nodes = rawNodes.map((node) => {
+      const [host, portRaw] = node.split(':');
+      const port = Number.parseInt(portRaw ?? '6379', 10);
+      return { host, port: Number.isNaN(port) ? 6379 : port };
     });
 
     this.client = new Redis.Cluster(nodes, {

@@ -41,4 +41,14 @@ assert.throws(() => InfrastructureEnvSchema.parse({ ...base, DATABASE_URL: 'not-
 assert.throws(() => InfrastructureEnvSchema.parse({ ...base, R2_PUBLIC_DOMAIN: 'nope' }));
 assert.throws(() => InfrastructureEnvSchema.parse({ ...base, POSTGRES_HOST: '' }));
 
-console.log('infra contract tests: 3/3 groups passed');
+// 4. coherence: .env.example satisfies the strict schema (documents full shape)
+import fs from 'node:fs';
+const exampleVars: Record<string, string> = {};
+for (const line of fs.readFileSync('.env.example', 'utf8').split('\n')) {
+  const match = line.match(/^([A-Z0-9_]+)="(.*)"\s*$/);
+  if (match) exampleVars[match[1]] = match[2];
+}
+const exampleParsed = InfrastructureEnvSchema.safeParse(exampleVars);
+assert.equal(exampleParsed.success, true, '.env.example must satisfy InfrastructureEnvSchema');
+
+console.log('infra contract tests: 4/4 groups passed');
