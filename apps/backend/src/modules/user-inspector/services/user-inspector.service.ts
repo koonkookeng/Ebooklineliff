@@ -197,7 +197,8 @@ export class UserInspectorService {
     return { success: true, written };
   }
 
-  async revokeAllSessions(userId: string, reason: string, adminId: string) {    const header = await this.repo.getUserHeader(userId);
+  async revokeAllSessions(userId: string, reason: string, adminId: string) {
+    const header = await this.repo.getUserHeader(userId);
     if (!header) throw new NotFoundException(`User with ID ${userId} not found`);
     const { revokedDb, revokedKeys } = await this.repo.revokeUserSessions(userId);
     await this.repo.recordSecurityEvent({
