@@ -6,18 +6,25 @@
 // - Zero-dep (React only).
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAdaptiveQuiz } from '../../hooks/useAdaptiveQuiz';
 
 export function AdaptiveQuizRunner(props: { lessonId: string; onCompleted?: (mastery: number) => void }) {
-  const { status, error, question, completed, submit, retry } = useAdaptiveQuiz(props.lessonId);
+  const { lessonId, onCompleted } = props;
+  const { status, error, question, completed, submit, retry } = useAdaptiveQuiz(lessonId);
   const [selected, setSelected] = useState<string | null>(null);
+
+  // Fire completion callback from state (not post-await closure — React
+  // state updates are async, so `completed` read after `await submit()`
+  // would still hold the pre-submit value and the callback never fires).
+  useEffect(() => {
+    if (completed) onCompleted?.(completed.mastery);
+  }, [completed, onCompleted]);
 
   async function onSubmit() {
     if (!selected) return;
     setSelected(null);
     await submit(selected);
-    if (completed) props.onCompleted?.(completed.mastery);
   }
 
   if (status === 'LIFF_INIT' || (status === 'LOADING' && !question)) {
