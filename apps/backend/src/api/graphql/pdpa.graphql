@@ -1,0 +1,32 @@
+// SSOT Phase 129 §3.2 — PDPA SDL parity (code-first resolver is runtime truth)
+// Canonical: apps/backend/src/api/graphql/pdpa.graphql
+// (SDL mirrors the PdpaResolver intents for Gate 1 review.)
+
+type PdpaConsentStatusPayload {
+  isNecessaryAccepted: Boolean!
+  isMarketingAccepted: Boolean!
+  isAnalyticsAccepted: Boolean!
+  consentVersion: String!
+  updatedAt: String!
+}
+
+type DataExportPayload {
+  downloadUrl: String!
+  expiresAt: String!
+}
+
+type DSRResponsePayload {
+  requestId: ID!
+  status: String!
+  estimatedCompletion: String!
+}
+
+extend type Query {
+  getPdpaConsentStatus: PdpaConsentStatusPayload!
+  exportMyPersonalData: DataExportPayload!
+}
+
+extend type Mutation {
+  updatePdpaConsent(consentVersion: String!, necessary: Boolean!, marketing: Boolean!, analytics: Boolean!): Boolean!
+  submitDataSubjectRequest(requestType: String!, reason: String): DSRResponsePayload!
+}

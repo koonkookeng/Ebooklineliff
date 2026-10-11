@@ -30,6 +30,13 @@ import { SecurityAuditLoggerService } from './services/security-audit-logger.ser
 import { GraphQLSecurityGuard } from './guards/graphql-depth-limit.guard';
 import { RateLimiterGuard } from './guards/rate-limiter.guard';
 import { DrmEntitlementGuard } from './guards/drm-entitlement.guard';
+// Phase 129 additive lane: LINE + PDPA compliance guards (providers below).
+import { LineSignatureGuard } from './guards/line-signature.guard';
+import { LineLiffAuthGuard } from './guards/line-liff-auth.guard';
+import { PdpaConsentGuard } from './guards/pdpa-consent.guard';
+import { PiiCryptoService } from './services/pii-crypto.service';
+import { AuditLoggerService } from './services/audit-logger.service';
+import { LineVerifierService } from '../auth/services/line-verifier.service';
 
 @Module({
   controllers: [SecurityFingerprintController],
@@ -122,7 +129,29 @@ import { DrmEntitlementGuard } from './guards/drm-entitlement.guard';
         new DrmEntitlementGuard(redis as never, audit),
       inject: [RedisClusterService, SecurityAuditLoggerService],
     },
+    // ---- Phase 129 additive lane (119/120/127 providers above untouched) ----
+    {
+      provide: AuditLoggerService,
+      useFactory: (prisma: PrismaService) => new AuditLoggerService(prisma as never),
+      inject: [PrismaService],
+    },
+    {
+      provide: PiiCryptoService,
+      useFactory: () => new PiiCryptoService(),
+      inject: [],
+    },
+    {
+      provide: LineSignatureGuard,
+      useFactory: (audit: AuditLoggerService) => new LineSignatureGuard(audit),
+      inject: [AuditLoggerService],
+    },
+    {
+      provide: LineLiffAuthGuard,
+      useFactory: (redis: RedisClusterService, audit: AuditLoggerService) =>
+        new LineLiffAuthGuard(new LineVerifierService(redis), audit),
+      inject: [RedisClusterService, AuditLoggerService],
+    },
   ],
-  exports: [FingerprintVerifierService, SessionEvictionService, HlsTokenSignerService, ActiveSessionRedisRepository, DeviceFingerprintGuard, ConcurrentStreamGuard, GeoipLookupService, VelocityCheckerService, RiskCalculatorService, IpAnomalyService, LineFlexAlertService, SecurityResolver, SecurityAuditLoggerService, GraphQLSecurityGuard, RateLimiterGuard, DrmEntitlementGuard],
+  exports: [FingerprintVerifierService, SessionEvictionService, HlsTokenSignerService, ActiveSessionRedisRepository, DeviceFingerprintGuard, ConcurrentStreamGuard, GeoipLookupService, VelocityCheckerService, RiskCalculatorService, IpAnomalyService, LineFlexAlertService, SecurityResolver, SecurityAuditLoggerService, GraphQLSecurityGuard, RateLimiterGuard, DrmEntitlementGuard, AuditLoggerService, PiiCryptoService, LineSignatureGuard, LineLiffAuthGuard],
 })
 export class DeviceSecurityModule {}

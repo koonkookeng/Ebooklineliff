@@ -2990,3 +2990,31 @@ export type {
   DatabaseHealthStatus,
   EbookChunkQueryInput,
 } from './schemas/query-performance.schema';
+export {
+  ConsentPurposeEnum,
+  DSRTypeEnum,
+  DSRStatusEnum,
+  PDPAConsentPayloadSchema,
+  DataSubjectRequestSchema,
+  LineWebhookHeaderSchema,
+  LINE_SIGNATURE_BUDGET_MS,
+  REVOKE_ALL_BUDGET_MS,
+  PDPA_CONSENT_VERSION,
+  DSR_REASON_MAX,
+  DATA_EXPORT_TTL_SEC,
+  MANDATORY_PURPOSES,
+  hasMandatoryConsent,
+  newlyGrantedPurposes,
+  withdrawnPurposes,
+  isDsrTerminal,
+  consentLedgerKey,
+  dsrIdempotencyKey,
+} from './schemas/pdpa-compliance.schema';
+export type {
+  ConsentPurpose,
+  DSRType,
+  DSRStatus,
+  PDPAConsentPayload,
+  DataSubjectRequestInput,
+  LineWebhookHeader,
+} from './schemas/pdpa-compliance.schema';

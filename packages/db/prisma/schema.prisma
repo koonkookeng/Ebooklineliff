@@ -160,6 +160,10 @@ model User {
   securityAuditLogs     SecurityAuditLog[]
   // Atomic Phase 107: field-level encrypted PII vault (1:1, blind-index search)
   piiVault              UserPII?
+  // Atomic Phase 129: PDPA consent ledger + DSR queue + encrypted PII envelope
+  consentHistory        UserConsentHistory[]
+  dataSubjectRequests   DataSubjectRequest[]
+  encryptedPii          EncryptedUserPII?
   // Atomic Phase 100: room entitlements + active (kickable) sessions
   liveEntitlements  LiveEntitlement[]
   liveActiveSessions LiveActiveSession[]
@@ -6039,6 +6043,90 @@ model DataScopePolicy {
   updatedAt       DateTime      @updatedAt
 
   @@unique([tenantId, role])
+}
+
+// Atomic Phase 129 §4.1: LINE + PDPA compliance ledger (schema.md canonical).
+enum ConsentPurpose {
+  NECESSARY_TERMS
+  MARKETING_PROMOTION
+  ANALYTICS_BEHAVIOR
+  THIRD_PARTY_TRANSFER
+}
+
+enum DSRType {
+  RIGHT_TO_ACCESS
+  RIGHT_TO_ERASURE
+  RIGHT_TO_RECTIFY
+  RIGHT_TO_PORTABILITY
+  RIGHT_TO_OBJECT
+}
+
+enum DSRStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+model UserConsentHistory {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose        ConsentPurpose
+  isGranted      Boolean
+  consentVersion String
+  ipAddress      String
+  userAgent      String
+  createdAt      DateTime       @default(now())
+
+  @@index([userId])
+  @@index([purpose])
+}
+
+model DataSubjectRequest {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestType  DSRType
+  status       DSRStatus @default(PENDING)
+  reason       String?   @db.Text
+  processedBy  String?
+  processedAt  DateTime?
+  rejectedNote String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ImmutableAuditLog {
+  id           String   @id @default(uuid())
+  actorId      String?
+  action       String
+  resource     String
+  ipAddress    String
+  userAgent    String
+  previousData Json?
+  newData      Json?
+  hashChain    String
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model EncryptedUserPII {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  encryptedPhone   String? @db.Text
+  encryptedAddress String? @db.Text
+  encryptedTaxId   String? @db.Text
+  encryptionIv     String
+  authTag          String
+  updatedAt        DateTime @updatedAt
 }
 
 // Atomic Phase 108 §4.1: Multi-Tenant Orchestration Console
