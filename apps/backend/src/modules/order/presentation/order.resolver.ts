@@ -76,7 +76,7 @@ export class OrderResolver {
 
   @Mutation('createSmartOrder')
   @UseGuards(JwtAuthGuard)
-  createSmartOrder(@Args('input') input: CreateSmartOrderInputGql, @Context() ctx: GraphQLContext) {
+  createSmartOrder(@Args('input') input: CreateSmartOrderInputGql, @Context() ctx: GraphQLContext): Promise<CreateSmartOrderPayloadGql> {
     const parsed = CreateOrderInputSchema.safeParse({
       tenantId: input.tenantId,
       shippingAddressId: input.shippingAddressId,
@@ -99,7 +99,7 @@ export class OrderResolver {
     @Args('orderId') orderId: string,
     @Args('slipImageUrl') slipImageUrl: string,
     @Context() ctx: GraphQLContext,
-  ) {
+  ): Promise<SlipVerificationResultGql> {
     const parsed = VerifySlipInputSchema.safeParse({ orderId, slipImageUrl });
     if (!parsed.success) throw new BadRequestException('Invalid slip verification payload');
     const { userId } = actor(ctx);
