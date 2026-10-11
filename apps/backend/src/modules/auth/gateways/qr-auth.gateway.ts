@@ -1,6 +1,5 @@
-/**
- * AUTO-SCAFFOLD Phase 007 — —
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
-export const placeholder = true;
+// SSOT Phase 007 §5.2 — legacy IN_SCOPE alias (spec path src/backend/modules/auth/gateways/qr-auth.gateway.ts).
+// Canonical implementation lives at ../qr-sync/infrastructure/gateways/qr-auth.gateway.ts
+// (SSE+Redis fan-out, zero socket.io deps per ADR-007). This alias keeps the spec-listed
+// import path valid without duplicating logic.
+export { QrAuthGateway } from '../qr-sync/infrastructure/gateways/qr-auth.gateway';
