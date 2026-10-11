@@ -2871,3 +2871,29 @@ export type {
   OutboxPaymentStatus,
   OutboxPaymentQueue,
 } from './schemas/chaos.schema';
+export {
+  RegionZoneEnum,
+  ReplicaHealthStatusEnum,
+  InfraNodeMetricSchema,
+  EdgeRoutingConfigSchema,
+  EDGE_READ_BUDGET_MS,
+  EDGE_FAILOVER_BUDGET_MS,
+  EDGE_UNHEALTHY_AFTER_MS,
+  EDGE_RESOLVE_BUDGET_MS,
+  EDGE_HEALTH_PROBE_SEC,
+  REPLICA_LAG_TRIP_MS,
+  EDGE_FAILOVER_STRIKES,
+  INFRA_ALERT_STREAM,
+  nodeIsReadable,
+  nearestReadableNode,
+  failoverOrder,
+  regionForCountry,
+  edgeCacheKey,
+} from './schemas/edge-infrastructure.schema';
+export type {
+  RegionZone,
+  ReplicaHealthStatus,
+  InfraNodeMetric,
+  EdgeRoutingConfig,
+  EdgeNode,
+} from './schemas/edge-infrastructure.schema';

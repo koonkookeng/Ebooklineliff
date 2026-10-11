@@ -3886,6 +3886,23 @@ model PaymentOutboxQueue {
   @@index([retryCount])
 }
 
+// Atomic Phase 125 §4.1: multi-region read replica registry (schema.md canonical).
+// RISK_CALL: datasource/generator untouched (no directUrl/driverAdapters;
+// additive model only — the existing client generation stays intact).
+model DatabaseReplicaNode {
+  id               String    @id @default(uuid())
+  regionZone       String    @unique
+  connectionString String
+  isPrimary        Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  maxConnections   Int       @default(100)
+  currentLagMs     Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([regionZone])
+}
+
 // Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).
 // Order/PaymentSlip/User stay read-only context — no core-table edits.
 model MarketingCampaign {

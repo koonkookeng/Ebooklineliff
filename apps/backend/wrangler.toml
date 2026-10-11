@@ -5,3 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 APP_NAME = "ebook-liff-backend"
+# Phase 125 §5.1/§8.2 — edge routing hints (secrets stay in the dashboard).
+# Serving region of this worker (ASIA_SOUTHEAST_BANGKOK | ASIA_SOUTHEAST_SINGAPORE | ASIA_EAST_TOKYO | US_WEST_OREGON).
+EDGE_REGION = "ASIA_SOUTHEAST_SINGAPORE"
+# Comma-separated read-replica origins for edge failover (health-checked).
+EDGE_REPLICA_ORIGINS = ""
