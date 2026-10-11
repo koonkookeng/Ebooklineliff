@@ -37,7 +37,6 @@ export class OrderExpiryService {
    */
   async expireOrder(orderId: string, reason = 'QR_EXPIRED'): Promise<{ expired: boolean; orderId: string }> {
     if (!orderId) return { expired: false, orderId };
-    const db = this.prisma as unknown as TxDb;
     const result = await this.prisma.$transaction(async (tx) => {
       const t = tx as unknown as TxDb;
       const order = await t.order.findUnique({ where: { id: orderId } }).catch(() => null);
