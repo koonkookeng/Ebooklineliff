@@ -1,8 +1,18 @@
-/**
- * AUTO-SCAFFOLD Phase 121 — NestJS module
- * SSOT: schema.md + filefolder.md | RAM<30MB | slip<1s | R2 zero-egress
- * TODO: implement per Phases/phase_*.md (schema-first, zod-validated)
- */
+// SSOT Phase 121 Task 2 §5.1 — NestJS Sentry integration module
+// Canonical: apps/backend/src/infra/sentry/sentry.module.ts
+// (legacy src/backend/infra/sentry/sentry.module.ts)
+// - Provides + exports SentryService (lazy zero-dep wrapper). Imported by
+//   ObservabilityModule; the global SentryExceptionFilter stays constructor-
+//   injected with Prisma/Redis (no cycle: this module owns no persistence).
+// - Zero new deps.
 import { Module } from '@nestjs/common';
-@Module({})
-export class SentryModuleModule {}
+import { SentryService } from './sentry.service';
+
+@Module({
+  providers: [SentryService],
+  exports: [SentryService],
+})
+export class SentryModule {}
+
+/** Backward-compat alias for the Phase-000 auto-scaffold name. */
+export { SentryModule as SentryModuleModule };

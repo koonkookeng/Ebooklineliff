@@ -168,6 +168,8 @@ model User {
   creatorAppeals     CreatorAppeal[]
   // Atomic Phase 113: buyer-filed dispute claims
   buyerDisputes      DisputeClaim[] @relation("BuyerDisputes")
+  // Atomic Phase 121: trace-tagged system audit rows (async, non-blocking)
+  systemAuditLogs    SystemAuditLog[]
   // Atomic Phase 114: automated revenue payouts received
   sellerPayouts      SellerPayout[]
   createdAt         DateTime                 @default(now())
@@ -3668,6 +3670,55 @@ model FinancialManualOverride {
   @@index([bankStatementId])
   @@index([orderId])
   @@index([initiatedBy])
+}
+
+// Atomic Phase 121 §4.1: observability log level (schema.md canonical).
+enum LogLevel {
+  TRACE
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+model SystemAuditLog {
+  id          String   @id @default(uuid())
+  traceId     String
+  spanId      String?
+  tenantId    String?
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  resource    String
+  statusCode  Int
+  ipAddress   String   @default("[REDACTED]")
+  userAgent   String?
+  payloadJson Json?
+  createdAt   DateTime @default(now())
+
+  @@index([traceId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+model SentryErrorIncident {
+  id             String   @id @default(uuid())
+  sentryId       String   @unique
+  traceId        String?
+  environment    String
+  serviceName    String
+  exceptionClass String
+  errorMessage   String   @db.Text
+  stackTrace     String?  @db.Text
+  handled        Boolean  @default(false)
+  tenantId       String?
+  createdAt      DateTime @default(now())
+
+  @@index([traceId])
+  @@index([sentryId])
+  @@index([createdAt])
 }
 
 // Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).

@@ -9,6 +9,13 @@ import cors from '@fastify/cors';
 
 async function bootstrap() {
   const logger = new Logger('NestJS-Fastify-Core');
+  // Phase 121 Task 1: bootstrap-owned OTel init (fail-open, idempotent).
+  try {
+    const { initTelemetry } = await import('./infra/observability/open-telemetry.sdk');
+    await initTelemetry('ebook-liff-backend', process.env['NODE_ENV'] ?? 'development');
+  } catch (err) {
+    logger.warn(`Telemetry bootstrap fail-open: ${(err as Error).message}`);
+  }
   const envConfig = AppConfigSchema.parse(process.env);
   const adapter = new FastifyAdapter({ logger: false, trustProxy: true });
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter);

@@ -2756,3 +2756,29 @@ export type {
   SecurityAlertPayload,
   AnomalySignals,
 } from './schemas/ip-anomaly.schema';
+export {
+  TelemetryLogLevelEnum,
+  ObservabilityEnvironmentEnum,
+  StructuredLogPayloadSchema,
+  SentryUserScopeSchema,
+  TRACE_EXPORT_BUDGET_MS,
+  LIFF_LOG_BUFFER_BYTES,
+  INCIDENT_ALERT_BUDGET_MS,
+  ERROR_RATE_TRIP_PCT,
+  ERROR_RATE_WINDOW_SEC,
+  LIFF_RAM_TRIP_BYTES,
+  TRACEPARENT_VERSION,
+  PII_DENY_KEYS,
+  REDACTED,
+  parseTraceparent,
+  buildTraceparent,
+  newTraceIds,
+  scrubPii,
+  telemetryStreamKey,
+} from './schemas/telemetry-contract';
+export type {
+  TelemetryLogLevel,
+  ObservabilityEnvironment,
+  StructuredLogPayload,
+  SentryUserScope,
+} from './schemas/telemetry-contract';
