@@ -3124,6 +3124,8 @@ model Order {
   // Atomic Phase 115: matched bank statements + manual override links
   matchedStatements    BankStatement[]
   manualOverrides      FinancialManualOverride[]
+  // Atomic Phase 124: chaos outbox retry lane (1:1 pending slip)
+  paymentOutbox        PaymentOutboxQueue?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
@@ -3821,6 +3823,67 @@ model StorageCostAlertLog {
   triggeredAt      DateTime           @default(now())
 
   @@index([tenantId, triggeredAt])
+}
+
+// Atomic Phase 124 §4.1: chaos suite & outbox resilience (schema.md canonical).
+enum ChaosFaultType {
+  REDIS_DOWN
+  EASYSLIP_TIMEOUT
+  EASYSLIP_500_ERROR
+  DB_POOL_EXHAUSTION
+  R2_STORAGE_LATENCY
+}
+
+enum CircuitState {
+  CLOSED
+  OPEN
+  HALF_OPEN
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  FAILED
+  RESOLVED
+}
+
+model ChaosTestRun {
+  id            String         @id @default(uuid())
+  faultType     ChaosFaultType
+  targetService String
+  durationMs    Int
+  failureRate   Float          @default(1.0)
+  isActive      Boolean        @default(true)
+  triggeredBy   String
+  startedAt     DateTime       @default(now())
+  endedAt       DateTime?
+
+  @@index([faultType, isActive])
+}
+
+model CircuitBreakerMetric {
+  id              String       @id @default(uuid())
+  serviceName     String       @unique
+  state           CircuitState @default(CLOSED)
+  failureCount    Int          @default(0)
+  successCount    Int          @default(0)
+  lastStateChange DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model PaymentOutboxQueue {
+  id           String       @id @default(uuid())
+  orderId      String       @unique
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  slipImageUrl String
+  retryCount   Int          @default(0)
+  lastError    String?      @db.Text
+  status       OutboxStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status])
+  @@index([retryCount])
 }
 
 // Atomic Phase 116 §4.1: executive BI persistence (schema.md canonical).

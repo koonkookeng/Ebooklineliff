@@ -76,6 +76,17 @@ export class MetricsService {
     return this.increment('external_api_circuit_breaker_state', { service: serviceName, from, to });
   }
 
+  /** Phase 124 §7.1: chaos fault injection counter. */
+  incrementChaosFault(faultType: string, serviceName: string): boolean {
+    return this.increment('chaos_fault_injected_total', { fault_type: faultType, service: serviceName });
+  }
+
+  /** Phase 124 §7.1: payment outbox queue depth gauge (last-write-wins). */
+  observeOutboxDepth(depth: number, status = 'PENDING'): boolean {
+    this.counters.set(`payment_outbox_queue_depth{status="${status}"}`, depth);
+    return true;
+  }
+
   snapshot(): { counters: Record<string, number>; histograms: Record<string, HistogramPoint & { p50: number; p95: number; p99: number }> } {
     const counters: Record<string, number> = {};
     for (const [k, v] of this.counters) counters[k] = v;

@@ -2841,3 +2841,33 @@ export type {
   StorageCostBudgetConfig,
   StorageUsageMetric,
 } from './schemas/r2-lifecycle.schema';
+export {
+  CircuitBreakerStateEnum,
+  ChaosFaultTypeEnum,
+  ChaosInjectionPayloadSchema,
+  OutboxPaymentStatusEnum,
+  OutboxPaymentQueueSchema,
+  CHAOS_READER_FALLBACK_MS,
+  CHAOS_EASYSLIP_LATENCY_MS,
+  CHAOS_SLIP_TIMEOUT_MS,
+  CHAOS_DRAIN_SLA_MS,
+  OUTBOX_MAX_RETRIES,
+  OUTBOX_BACKOFF_BASE_MS,
+  OUTBOX_BACKOFF_CAP_MS,
+  CHAOS_FAULT_TTL_SEC,
+  CHAOS_EVENT_STREAM,
+  OUTBOX_EVENT_STREAM,
+  SLIP_QUEUED_MESSAGE,
+  chaosFaultKey,
+  outboxClaimKey,
+  outboxBackoffMs,
+  shouldInjectFault,
+  faultIsLive,
+} from './schemas/chaos.schema';
+export type {
+  CircuitBreakerState,
+  ChaosFaultType,
+  ChaosInjectionPayload,
+  OutboxPaymentStatus,
+  OutboxPaymentQueue,
+} from './schemas/chaos.schema';
