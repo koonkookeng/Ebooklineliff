@@ -4,11 +4,9 @@
 //   Mutation.runNightlySnapshot. Finance roles only (defense in depth with
 //   the REST guards). Zero new deps.
 import { Args, Context, Field, Float, Int, ObjectType, Query, Mutation, Resolver } from '@nestjs/graphql';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ExecutiveAnalyticsService } from '../services/executive-analytics.service';
 import { DailySnapshotWorker } from '../workers/daily-snapshot.worker';
-
-const FINANCE_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN']);
+import { financeOf, type LooseCtx } from './finance-guard';
 
 @ObjectType('ExecutiveKpiSummary')
 class ExecutiveKpiSummaryGql {
@@ -45,17 +43,6 @@ class RevenueBreakdownGql {
   @Field(() => Float) ebook!: number;
   @Field(() => Float) course!: number;
   @Field(() => Float) bundle!: number;
-}
-
-type LooseCtx = Record<string, unknown>;
-
-function financeOf(ctx: LooseCtx): { tenant: string } {
-  const req = (ctx['req'] as Record<string, unknown> | undefined) ?? {};
-  const user = (req['user'] as { id?: string; role?: string } | undefined) ?? {};
-  const headers = (req['headers'] as Record<string, string> | undefined) ?? {};
-  if (!user.id) throw new BadRequestException('Missing authentication');
-  if (!user.role || !FINANCE_ROLES.has(user.role)) throw new ForbiddenException('Executive BI requires a finance admin role');
-  return { tenant: headers['x-tenant-slug'] ?? headers['x-tenant-identifier'] ?? 'default' };
 }
 
 @Resolver('ExecutiveAnalytics')
