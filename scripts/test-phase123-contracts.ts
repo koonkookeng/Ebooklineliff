@@ -482,7 +482,10 @@ async function main(): Promise<void> {
 }
 
 main()
-  .then(() => console.log(`\nPhase 123 contracts: ${passed}/12 groups passed`))
+  .then(() => {
+    console.log(`\nPhase 123 contracts: ${passed}/12 groups passed`);
+    process.exit(0);
+  })
   .catch((err) => {
     console.error('\nPhase 123 contracts FAILED:', err);
     process.exit(1);
