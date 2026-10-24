@@ -437,7 +437,10 @@ const prevChaos = process.env['CHAOS_ENABLED'];
 }
 
 main()
-  .then(() => console.log(`\nPhase 124 contracts: ${passed}/12 groups passed`))
+  .then(() => {
+    console.log(`\nPhase 124 contracts: ${passed}/12 groups passed`);
+    process.exit(0);
+  })
   .catch((err) => {
     console.error('\nPhase 124 contracts FAILED:', err);
     process.exit(1);
