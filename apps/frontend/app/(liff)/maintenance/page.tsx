@@ -1,7 +1,8 @@
 // SSOT Phase 127 §2 — maintenance / DR failover page (5-state, offline-first)
 // Canonical: apps/frontend/app/(liff)/maintenance/page.tsx
 // (legacy src/frontend/app/(liff)/maintenance/page.tsx)
-// - LIFF_INIT (splash) -> IDLE (healthy) / DR_FAILOVER_MODE (Lightweight
+// - LIFF_INIT (splash) -> IDLE (healthy) / SECURITY_ALERT (gateway denied
+//   401/403 — session or entitlement blocked) / DR_FAILOVER_MODE (Lightweight
 //   Read-Only from IndexedDB cache) / ERROR (unreachable + retry).
 // - Never white-screens: cached ebook pages stay readable during failover
 //   (BDD-2: no lost reading progress). Text-only, <30MB. Zero new deps.
@@ -9,7 +10,7 @@
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
-type MaintenanceState = 'LIFF_INIT' | 'IDLE' | 'DR_FAILOVER_MODE' | 'LOADING' | 'ERROR';
+type MaintenanceState = 'LIFF_INIT' | 'IDLE' | 'SECURITY_ALERT' | 'DR_FAILOVER_MODE' | 'LOADING' | 'ERROR';
 
 interface CachedPage {
   productId: string;
@@ -73,15 +74,19 @@ function MaintenanceInner() {
   const check = useCallback(async () => {
     setState((s) => (s === 'LIFF_INIT' ? s : 'LOADING'));
     let healthy = false;
+    let denied = false;
     try {
       const res = await fetch('/api/v1/infra/health', { cache: 'no-store' });
       healthy = res.ok;
+      denied = res.status === 401 || res.status === 403;
     } catch {
       healthy = false;
     }
     const pages = await readCachedPages();
     setCached(pages);
-    if (healthy) {
+    if (denied) {
+      setState('SECURITY_ALERT');
+    } else if (healthy) {
       setState('IDLE');
     } else if (pages.length > 0 || typeof indexedDB !== 'undefined') {
       setState('DR_FAILOVER_MODE');
@@ -105,6 +110,18 @@ function MaintenanceInner() {
     return (
       <main aria-busy="true" style={{ padding: 24 }}>
         <p>กำลังตรวจสอบสถานะระบบ…</p>
+      </main>
+    );
+  }
+
+  if (state === 'SECURITY_ALERT') {
+    return (
+      <main role="alert" style={{ padding: 24 }}>
+        <h1>ตรวจพบการเข้าถึงที่ผิดปกติ</h1>
+        <p>ระบบระงับการแสดงเนื้อหาชั่วคราวเพื่อความปลอดภัยของบัญชี และบันทึกเหตุการณ์ไว้ในบันทึกความปลอดภัยแล้ว</p>
+        <a href="/login" style={{ display: 'inline-block', minHeight: 44, lineHeight: '44px' }}>
+          ยืนยันตัวตนอีกครั้ง
+        </a>
       </main>
     );
   }

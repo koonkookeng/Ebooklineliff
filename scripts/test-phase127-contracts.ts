@@ -413,6 +413,9 @@ async function main(): Promise<void> {
   }
   const maint = readFileSync('apps/frontend/app/(liff)/maintenance/page.tsx', 'utf8');
   assert.ok(maint.includes('DR_FAILOVER_MODE') && maint.includes('indexedDB'), 'offline-first failover UI');
+  for (const st of ['LIFF_INIT', 'IDLE', 'SECURITY_ALERT', 'DR_FAILOVER_MODE', 'ERROR']) {
+    assert.ok(maint.includes(st), `Gate 3 state ${st}`);
+  }
   // Cores untouched: payment slip lane, canvas reader engine.
   const slipCore = readFileSync('apps/backend/src/modules/payment/services/slip-verification.service.ts', 'utf8');
   assert.ok(!slipCore.includes('failover') && !slipCore.includes('DisasterRecovery'), 'payment core untouched');
@@ -423,7 +426,10 @@ async function main(): Promise<void> {
 }
 
 main()
-  .then(() => console.log(`\nPhase 127 contracts: ${passed}/12 groups passed`))
+  .then(() => {
+    console.log(`\nPhase 127 contracts: ${passed}/12 groups passed`);
+    process.exit(0);
+  })
   .catch((err) => {
     console.error('\nPhase 127 contracts FAILED:', err);
     process.exit(1);
