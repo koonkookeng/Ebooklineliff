@@ -1,0 +1,18 @@
+# SSOT Phase 130 §5.1/BDD-1 — disruption budget for blue/green cutover
+# Canonical: apps/backend/src/infra/k8s/backend-pdb.yaml
+# - With 10 replicas and minAvailable 8, a node drain or rolling green
+#   rollout can never drop the serving set below 80% during the 100ms
+#   cutover window (50k CCU flash-sale safety).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-green-pdb
+  labels:
+    app: omnichannel-api
+    slot: green
+spec:
+  minAvailable: 8
+  selector:
+    matchLabels:
+      app: omnichannel-api
+      slot: green

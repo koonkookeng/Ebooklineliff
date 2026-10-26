@@ -1,19 +1,33 @@
 # SSOT Phase 130 §12 — production promotion (tag-gated blue/green cutover)
 # - RISK_CALL: distinct from cloudflare-deploy.yml (push-to-main continuous
-#   lane). This workflow ONLY runs on release tags app:v1.130.0-* or manual
+#   lane). This workflow ONLY runs on release tags v1.130.0-<sha> or manual
 #   dispatch: contract suites are the quality gates (fail-closed — no tag
-#   deploys without 12/12), then the immutable image ships and the k8s
-#   service selector flips blue->green (BDD-1 100ms cutover).
+#   deploys without 12/12), then the immutable image is pinned and the k8s
+#   service selector flips blue->green (BDD-1 100ms cutover) when cluster
+#   credentials exist; the edge Worker is promoted either way.
+# - Git refs cannot contain ':' — the image tag app:v1.130.0-<sha> is derived
+#   from the git tag, never used as the ref itself (previous shape was
+#   uncreatable by git, so this workflow could never trigger).
 name: deploy-production
 
 on:
   push:
-    tags: ["app:v1.130.0-*"]
+    tags: ["v1.130.0-*"]
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Immutable release tag (app:v1.130.0-<sha>)"
+        description: "Immutable release tag (v1.130.0-<sha>)"
         required: true
+
+concurrency:
+  group: production-rollout
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
 
 jobs:
   go-live-gates:
@@ -25,9 +39,10 @@ jobs:
           version: 9.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
+      # Frozen lockfile: a promotion must build exactly the reviewed tree.
+      - run: pnpm install --frozen-lockfile
       - run: npx prisma validate --schema=packages/db/prisma/schema.prisma
       - run: npx tsx scripts/test-phase130-contracts.ts
       - run: npx tsx scripts/test-phase129-contracts.ts
@@ -38,14 +53,42 @@ jobs:
   promote-green:
     runs-on: ubuntu-latest
     needs: go-live-gates
+    environment: production
+    env:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
     steps:
       - uses: actions/checkout@v4
-      - name: Ship immutable image tag
+      - name: Resolve + validate immutable release tag
+        env:
+          # Push: GITHUB_REF_NAME is the tag. Dispatch: the input wins
+          # (github.ref_name would be the branch, never a release tag).
+          RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
         run: |
-          TAG="${{ github.ref_name || inputs.release_tag }}"
-          echo "RELEASE_IMAGE=omnichannel/api:${TAG}" >> "$GITHUB_ENV"
-          echo "Promoting ${TAG} to green (blue/green cutover)"
-      - uses: cloudflare/wrangler-action@v3
+          TAG="${RELEASE_TAG_INPUT:-${GITHUB_REF_NAME}}"
+          IMAGE="$(node -e '
+            const tag = process.argv[1];
+            if (!/^v1\.130\.0-[0-9a-f]{7,40}$/.test(tag)) {
+              console.error(`REJECTED: invalid release tag ${tag} (expected v1.130.0-<sha>)`);
+              process.exit(1);
+            }
+            process.stdout.write(`app:${tag}`);
+          ' "$TAG")"
+          echo "RELEASE_IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+          echo "Promoting ${IMAGE} to green (blue/green cutover)"
+      - name: Kubernetes blue/green cutover (guarded)
+        if: env.KUBE_CONFIG != ''
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "$KUBE_CONFIG" | base64 -d > "$HOME/.kube/config"
+          sed -i "s|image: RELEASE_IMAGE|image: ${RELEASE_IMAGE}|" apps/backend/src/infra/k8s/backend-deployment.yaml
+          kubectl apply -f apps/backend/src/infra/k8s/backend-deployment.yaml
+          kubectl apply -f apps/backend/src/infra/k8s/backend-pdb.yaml
+          kubectl rollout status deployment/api-green --timeout=300s
+          # Single atomic selector flip blue->green (BDD-1).
+          kubectl apply -f apps/backend/src/infra/k8s/backend-service-ingress.yaml
+          kubectl apply -f apps/backend/src/infra/k8s/backend-hpa.yaml
+      - name: Promote edge Worker
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

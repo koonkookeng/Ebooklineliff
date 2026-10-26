@@ -32,3 +32,11 @@ spec:
         - type: Pods
           value: 5
           periodSeconds: 60
+    scaleDown:
+      # Flash-sale traffic decays slower than CPU: hold capacity for 5m to
+      # avoid flapping and cold-start storms during the cutover window.
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60

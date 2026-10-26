@@ -26,6 +26,8 @@ import { KeepAliveProvider } from '../../components/keep-alive/KeepAliveProvider
 import { AutoUpdateChecker } from '../../components/updater/AutoUpdateChecker';
 // Phase 069 Task 7: network monitor banner (null-render when stable).
 import { NetworkMonitorProvider } from '../../providers/NetworkMonitorProvider';
+// Phase 130 §2.2: 5-state production UI gate (boot/degraded/circuit/critical).
+import { ProductionStateGate } from '../../components/go-live/ProductionStateGate';
 
 const CLIENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0-dev';
 const CLIENT_BUILD_HASH = process.env.NEXT_PUBLIC_BUILD_HASH ?? 'dev-local';
@@ -57,7 +59,7 @@ function LiffSegmentInner({ children }: { children: React.ReactNode }) {
             <PrefetchObserver />
             <RumReporter />
             <AutoUpdateChecker currentVersion={CLIENT_VERSION} currentBuildHash={CLIENT_BUILD_HASH} />
-            {children}
+            <ProductionStateGate>{children}</ProductionStateGate>
           </KeepAliveProvider>
           </ThemeProvider>
           </DynamicCompanyThemeProvider>

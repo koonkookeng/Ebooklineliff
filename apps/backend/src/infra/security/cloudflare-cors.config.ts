@@ -29,7 +29,6 @@ export const R2_CORS_RULES: R2CorsRule[] = [
     AllowedOrigins: [
       'https://liff.omnichannel.com',
       'https://app.omnichannel.com',
-      'https://*.line-scdn.net',
       'https://liff.line.me',
     ],
     AllowedMethods: ['GET', 'HEAD'],

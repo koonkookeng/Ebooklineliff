@@ -13,11 +13,14 @@ import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
     HealthService,
     {
       provide: GoLiveAuditService,
-      useFactory: (prisma: PrismaService, redis: RedisClusterService) =>
-        new GoLiveAuditService(
-          { queryRaw: (args: unknown) => (prisma as unknown as { $queryRawUnsafe(q: unknown): Promise<unknown> }).$queryRawUnsafe(args) },
-          redis,
-        ),
+      useFactory: (prisma: PrismaService, redis: RedisClusterService) => {
+        // Tagged-template $queryRaw keeps the probe parameterised (no
+        // $queryRawUnsafe in the production path even for a constant).
+        const db = prisma as unknown as {
+          $queryRaw<T = unknown>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T>;
+        };
+        return new GoLiveAuditService({ queryRaw: () => db.$queryRaw`SELECT 1` }, redis);
+      },
       inject: [PrismaService, RedisClusterService],
     },
   ],

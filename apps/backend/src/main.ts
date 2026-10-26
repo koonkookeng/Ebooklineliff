@@ -4,8 +4,20 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AppConfigSchema } from '@repo/shared';
+import { R2_CORS_RULES } from './infra/security/cloudflare-cors.config';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
+
+const IS_PRODUCTION = process.env['NODE_ENV'] === 'production';
+
+/** §8.2: browser CORS is the LINE LIFF + official web origins only. */
+function allowedOrigins(): Set<string> {
+  const extra = (process.env['CORS_ALLOWED_ORIGINS'] ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  return new Set([...R2_CORS_RULES[0].AllowedOrigins, ...extra]);
+}
 
 async function bootstrap() {
   const logger = new Logger('NestJS-Fastify-Core');
@@ -20,7 +32,19 @@ async function bootstrap() {
   const adapter = new FastifyAdapter({ logger: false, trustProxy: true });
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter);
   await app.register(helmet, { contentSecurityPolicy: false });
-  await app.register(cors, { origin: true, credentials: true });
+  const origins = allowedOrigins();
+  await app.register(cors, {
+    credentials: true,
+    // Never reflect arbitrary origins with credentials (the previous
+    // `origin: true` let any site read authenticated responses). Requests
+    // without Origin (server-to-server, webhooks, health) stay allowed.
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (origins.has(origin)) return cb(null, true);
+      if (!IS_PRODUCTION && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
+      cb(new Error('CORS origin denied'), false);
+    },
+  });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
   );

@@ -12,7 +12,6 @@ import {
   GoLiveAuditReportSchema,
   gatekeepersPass,
   overallScoreFor,
-  productionState,
   type GoLiveAuditReport,
   type ProductionHealthStatus,
 } from '@repo/shared';
@@ -66,15 +65,15 @@ export class GoLiveAuditService {
       timed(() => this.db.queryRaw('SELECT 1')),
       timed(() => this.edge.get('golive:readiness:probe')),
     ]);
-    const dbReachable = database.up;
-    const status = productionState({
-      dbReachable,
-      apiP95Ms: 0,
-      redisLoadPct: 0,
-      paymentUpstreamUp: true,
-    });
+    // A DB outage is unrecoverable (CRITICAL_FAILURE); a Redis outage still
+    // serves cached reads (DEGRADED). Never report HEALTHY on a failed ping.
+    const status: ProductionHealthStatus = !database.up
+      ? 'CRITICAL_FAILURE'
+      : redis.up
+        ? 'HEALTHY'
+        : 'DEGRADED';
     return {
-      status: dbReachable && redis.up ? status : dbReachable ? 'DEGRADED' : 'CRITICAL_FAILURE',
+      status,
       database,
       redis,
       elapsedMs: Date.now() - started,

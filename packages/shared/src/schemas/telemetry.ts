@@ -61,6 +61,8 @@ export const K6_TARGET_VUS = 50000;
 export const K6_SUCCESS_RATE_FLOOR = 0.9999;
 export const K6_CHUNK_P99_BUDGET_MS = 120;
 export const K6_SLIP_P95_BUDGET_MS = 750;
+/** §8.2: GraphQL resolver budget per client IP (100 requests/minute). */
+export const GQL_RATE_LIMIT_PER_MINUTE = 100;
 /** §10.2 self-healing tripwires: RAM 28MB, slip queue 1000ms, pool 85%. */
 export const HEAL_RAM_TRIP_MB = 28;
 export const HEAL_SLIP_QUEUE_TRIP_MS = 1000;
@@ -68,9 +70,18 @@ export const HEAL_POOL_TRIP_PCT = 85;
 /** §5.1 rollout: HPA 10-50 pods, release-tag convention. */
 export const HPA_MIN_PODS = 10;
 export const HPA_MAX_PODS = 50;
+/**
+ * Docker image tag prefix (§9.1: app:v1.130.0-<sha>).
+ * NOTE: a colon is illegal in a git ref, so this is the IMAGE reference —
+ * git release tags use RELEASE_GIT_TAG_PREFIX below and are mapped through
+ * releaseImageTag(). Conflating the two makes the tag-triggered workflow
+ * unreachable (git refuses to create `app:v1.130.0-*`).
+ */
 export const RELEASE_TAG_PREFIX = 'app:v1.130.0-';
+/** Git release tag prefix (valid ref: no colon, [A-Za-z0-9._-] only). */
+export const RELEASE_GIT_TAG_PREFIX = 'v1.130.0-';
 
-/** The nine gatekeeper keys (§11, fixed order for reports). */
+/** The go-live evidence keys (§3.1, fixed order for reports). */
 export const GATEKEEPER_KEYS = [
   'schemaSync',
   'typeSafety',
@@ -130,12 +141,88 @@ export function productionState(input: {
   return 'HEALTHY';
 }
 
-/** Release-tag gate (§9.1 immutable artifacts). */
+/** Release IMAGE tag gate (§9.1 immutable artifacts). */
 export function isReleaseTag(tag: string): boolean {
   return tag.startsWith(RELEASE_TAG_PREFIX) && tag.length > RELEASE_TAG_PREFIX.length;
+}
+
+/**
+ * Git release tag gate. Git refs cannot contain ':' and the phase pins the
+ * 7-40 char hex commit suffix, so `v1.130.0-a8f3b2e` is the only accepted
+ * shape (no spaces, slashes, or uppercase).
+ */
+export function isReleaseGitTag(tag: string): boolean {
+  return /^v1\.130\.0-[0-9a-f]{7,40}$/.test(tag);
+}
+
+/** Map a git release tag to its immutable image reference. */
+export function releaseImageTag(gitTag: string): string {
+  if (!isReleaseGitTag(gitTag)) throw new Error(`REJECTED: invalid release tag ${gitTag}`);
+  return `app:${gitTag}`;
 }
 
 /** Go-live report cache key (per deployment). */
 export function goLiveReportKey(deploymentId: string): string {
   return `golive:report:{${deploymentId}}`;
+}
+
+// ---------------------------------------------------------------------------
+// §2.2 UI state machine (5 production states, client-side)
+// ---------------------------------------------------------------------------
+/**
+ * PRODUCTION_BOOT is the pre-probe state (branded splash + warm-up check);
+ * the remaining four are derived from a readiness envelope. Kept separate
+ * from ProductionHealthStatusEnum because the UI distinguishes a payment/
+ * external-service circuit (CIRCUIT_OPEN) from a DB outage (CRITICAL_ERROR),
+ * while the k8s probe only needs HEALTHY/DEGRADED/MAINTENANCE/CRITICAL_FAILURE.
+ */
+export const ProductionUiStateEnum = z.enum([
+  'PRODUCTION_BOOT',
+  'LIVE_IDLE',
+  'DEGRADED_PERF',
+  'CIRCUIT_OPEN',
+  'CRITICAL_ERROR',
+]);
+export type ProductionUiState = z.infer<typeof ProductionUiStateEnum>;
+
+export interface ProductionUiSignals {
+  /** False until the first readiness response lands (splash gate). */
+  probed: boolean;
+  dbReachable: boolean;
+  apiP95Ms: number;
+  redisLoadPct: number;
+  paymentUpstreamUp: boolean;
+}
+
+/** Derive the 5-state UI from live signals (§2.2 matrix). */
+export function deriveProductionUiState(input: ProductionUiSignals): ProductionUiState {
+  if (!input.probed) return 'PRODUCTION_BOOT';
+  if (!input.dbReachable) return 'CRITICAL_ERROR';
+  if (!input.paymentUpstreamUp) return 'CIRCUIT_OPEN';
+  if (input.apiP95Ms > DEGRADED_API_BUDGET_MS || input.redisLoadPct > DEGRADED_REDIS_LOAD_PCT) {
+    return 'DEGRADED_PERF';
+  }
+  return 'LIVE_IDLE';
+}
+
+/**
+ * Map the redacted `/healthz/readiness` envelope onto the UI machine.
+ * `null` means "no probe yet" (splash), never a false healthy screen.
+ */
+export function productionUiStateFromHealth(
+  envelope: { status: ProductionHealthStatus } | null | undefined,
+): ProductionUiState {
+  if (!envelope) return 'PRODUCTION_BOOT';
+  switch (envelope.status) {
+    case 'HEALTHY':
+      return 'LIVE_IDLE';
+    case 'DEGRADED':
+      return 'DEGRADED_PERF';
+    case 'MAINTENANCE':
+      return 'CIRCUIT_OPEN';
+    case 'CRITICAL_FAILURE':
+      return 'CRITICAL_ERROR';
+    default:
+      return 'CRITICAL_ERROR';
+  }
 }

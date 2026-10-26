@@ -22,15 +22,26 @@ import {
   HPA_MIN_PODS,
   HPA_MAX_PODS,
   RELEASE_TAG_PREFIX,
+  RELEASE_GIT_TAG_PREFIX,
   GATEKEEPER_KEYS,
   gatekeepersPass,
   overallScoreFor,
   telemetryPass,
   productionState,
   isReleaseTag,
+  isReleaseGitTag,
+  releaseImageTag,
   goLiveReportKey,
+  ProductionUiStateEnum,
+  deriveProductionUiState,
+  productionUiStateFromHealth,
+  GQL_RATE_LIMIT_PER_MINUTE,
 } from '../packages/shared/src/schemas/telemetry';
 import { GoLiveAuditService } from '../apps/backend/src/modules/health/go-live-audit.service';
+import {
+  evaluateGraphqlRateLimit,
+  graphqlRateLimitKey,
+} from '../apps/backend/src/modules/security/guards/graphql-rate-limit.guard';
 
 let passed = 0;
 function ok(name: string): void {
@@ -105,6 +116,35 @@ async function main(): Promise<void> {
   assert.equal(isReleaseTag('app:v1.130.0-a8f3b2e'), true);
   assert.equal(isReleaseTag('app:v1.129.0-abc'), false);
   assert.equal(isReleaseTag('app:v1.130.0-'), false);
+  // Git refs cannot contain ':' — the workflow trigger and helper must use
+  // the colon-free git tag and map it to the image reference.
+  assert.equal(RELEASE_GIT_TAG_PREFIX, 'v1.130.0-');
+  assert.equal(isReleaseGitTag('v1.130.0-a8f3b2e'), true);
+  assert.equal(isReleaseGitTag('app:v1.130.0-a8f3b2e'), false);
+  assert.equal(isReleaseGitTag('v1.130.0-ABC'), false);
+  assert.equal(isReleaseGitTag('v1.130.0-123'), false);
+  assert.equal(releaseImageTag('v1.130.0-a8f3b2e'), 'app:v1.130.0-a8f3b2e');
+  assert.throws(() => releaseImageTag('app:v1.130.0-a8f3b2e'), /REJECTED/);
+  // 5-state UI machine (§2.2): boot is pre-probe, then db > payment > perf.
+  assert.equal(ProductionUiStateEnum.safeParse('PRODUCTION_BOOT').success, true);
+  assert.equal(ProductionUiStateEnum.safeParse('LIVE_IDLE').success, true);
+  assert.equal(ProductionUiStateEnum.safeParse('DEGRADED_PERF').success, true);
+  assert.equal(ProductionUiStateEnum.safeParse('CIRCUIT_OPEN').success, true);
+  assert.equal(ProductionUiStateEnum.safeParse('CRITICAL_ERROR').success, true);
+  assert.equal(ProductionUiStateEnum.safeParse('HEALTHY').success, false);
+  const ui = (over: Partial<Parameters<typeof deriveProductionUiState>[0]>) =>
+    deriveProductionUiState({ probed: true, dbReachable: true, apiP95Ms: 100, redisLoadPct: 10, paymentUpstreamUp: true, ...over });
+  assert.equal(ui({ probed: false }), 'PRODUCTION_BOOT');
+  assert.equal(ui({}), 'LIVE_IDLE');
+  assert.equal(ui({ apiP95Ms: 801 }), 'DEGRADED_PERF');
+  assert.equal(ui({ redisLoadPct: 81 }), 'DEGRADED_PERF');
+  assert.equal(ui({ paymentUpstreamUp: false }), 'CIRCUIT_OPEN');
+  assert.equal(ui({ dbReachable: false }), 'CRITICAL_ERROR');
+  assert.equal(productionUiStateFromHealth(null), 'PRODUCTION_BOOT');
+  assert.equal(productionUiStateFromHealth({ status: 'HEALTHY' }), 'LIVE_IDLE');
+  assert.equal(productionUiStateFromHealth({ status: 'DEGRADED' }), 'DEGRADED_PERF');
+  assert.equal(productionUiStateFromHealth({ status: 'MAINTENANCE' }), 'CIRCUIT_OPEN');
+  assert.equal(productionUiStateFromHealth({ status: 'CRITICAL_FAILURE' }), 'CRITICAL_ERROR');
   assert.equal(goLiveReportKey('d1'), 'golive:report:{d1}');
   assert.deepEqual([...GATEKEEPER_KEYS], ['schemaSync', 'typeSafety', 'liffRamCheck', 'zeroEgressCheck', 'slipVerifyLatencyMs', 'securityPenTestPassed']);
   assert.equal(DNS_CUTOVER_BUDGET_MS, 100);
@@ -122,6 +162,12 @@ async function main(): Promise<void> {
   assert.equal(HPA_MIN_PODS, 10);
   assert.equal(HPA_MAX_PODS, 50);
   assert.equal(RELEASE_TAG_PREFIX, 'app:v1.130.0-');
+  // §8.2: GraphQL budget is 100/min per IP, 429 after that, cluster-safe key.
+  assert.equal(GQL_RATE_LIMIT_PER_MINUTE, 100);
+  assert.equal(evaluateGraphqlRateLimit(100).allowed, true);
+  assert.equal(evaluateGraphqlRateLimit(101).allowed, false);
+  assert.equal(evaluateGraphqlRateLimit(101).retryAfterSec, 60);
+  assert.equal(graphqlRateLimitKey('1.2.3.4'), 'gql:rl:{1.2.3.4}');
   ok('2. gate rollup/state machine/tag/budget helpers');
 }
 // ---------- 3. Readiness probe (redacted, fast) ----------
@@ -146,7 +192,23 @@ async function main(): Promise<void> {
     { get: async () => { throw new Error('cluster down'); } },
   );
   assert.equal((await redisDown.readiness()).status, 'DEGRADED');
-  ok('3. readiness (healthy/degraded/critical + redaction)');
+  // 5-state client machine (§2.2) is a real gate, not a claim: the gate
+  // covers every state, polls the readiness BFF, and cleans up its timers.
+  const gate = readFileSync('apps/frontend/components/go-live/ProductionStateGate.tsx', 'utf8');
+  for (const s of ['PRODUCTION_BOOT', 'LIVE_IDLE', 'DEGRADED_PERF', 'CIRCUIT_OPEN', 'CRITICAL_ERROR']) {
+    assert.ok(gate.includes(s), `UI state ${s}`);
+  }
+  assert.ok(gate.includes('/api/v1/infra/golive'), 'gate uses readiness BFF');
+  assert.ok(gate.includes('clearInterval') && gate.includes('removeEventListener'), 'timer/listener cleanup');
+  assert.ok(gate.includes('golive:circuit-open'), 'circuit-open bridge');
+  assert.ok(gate.includes('slip-fallback-queue'), 'local fallback queue');
+  assert.ok(!/lucide-react|recharts|framer-motion|chart\\.js/.test(gate), 'zero heavy UI deps');
+  const bff = readFileSync('apps/frontend/app/api/v1/infra/golive/route.ts', 'utf8');
+  assert.ok(bff.includes('/healthz/readiness') && bff.includes('no-store') && bff.includes('AbortController'));
+  for (const layout of ['apps/frontend/app/(liff)/layout.tsx', 'apps/frontend/app/(web)/layout.tsx']) {
+    assert.ok(readFileSync(layout, 'utf8').includes('ProductionStateGate'), `${layout} mounts gate`);
+  }
+  ok('3. 5-state UI machine + readiness (healthy/degraded/critical + redaction)');
 }
 // ---------- 4. Fail-closed audit report (§11 100-or-nothing) ----------
 {
@@ -170,6 +232,7 @@ async function main(): Promise<void> {
   assert.ok(src.includes("@Get('live')"), 'liveness probe');
   assert.ok(src.includes("@Get('readiness')"), 'readiness probe');
   assert.ok(src.includes('this.audit.readiness()'), 'delegates to audit service');
+  assert.ok(src.includes('res.status(503)') && src.includes('CRITICAL_FAILURE'), 'critical -> 503 (k8s honours status code)');
   assert.ok(!src.includes('terminus'), 'zero-dep probes');
   // Behavior already proven in group 3 (same service instance shape).
   const svc = new GoLiveAuditService(
@@ -188,7 +251,16 @@ async function main(): Promise<void> {
   for (const keep of ['model UserConsentHistory', 'model DataSubjectRequest', '@@index([userId, productId, expiresAt], map: "idx_entitlement_verification")']) {
     assert.ok(schema.includes(keep), `prior-phase model intact: ${keep}`);
   }
-  ok('6. schema read-only (no 130 models, priors intact)');
+  // §4.2 indexes are DBA-run (schema read-only): the companion must build the
+  // missing order-recency index CONCURRENTLY and audit the rest by column.
+  const idx = readFileSync('apps/backend/src/infra/postgres/go-live-130.sql', 'utf8');
+  assert.ok(idx.includes('CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_order_status_created"'), 'concurrent order index');
+  assert.ok(idx.includes('"orderStatus", "createdAt" DESC'), 'order recency shape');
+  for (const col of ['"lineUserId"', '"userId"', '"transRef"']) {
+    assert.ok(idx.includes(col), `index audit ${col}`);
+  }
+  assert.ok(!idx.includes('DROP INDEX'), 'no destructive index ops');
+  ok('6. schema read-only + DBA index companion (no 130 models, priors intact)');
 }
 // ---------- 7. Barrel ----------
 {
@@ -216,24 +288,69 @@ async function main(): Promise<void> {
   const svc = readFileSync('apps/backend/src/infra/k8s/backend-service-ingress.yaml', 'utf8');
   assert.ok(svc.includes('slot: green') && svc.includes('api.omnichannel.com'));
   assert.ok(svc.includes('letsencrypt-prod'));
-  ok('8. k8s green deployment + HPA 10-50 + cutover service');
+  const pdb = readFileSync('apps/backend/src/infra/k8s/backend-pdb.yaml', 'utf8');
+  assert.ok(pdb.includes('minAvailable: 8') && pdb.includes('slot: green'), 'PDB protects cutover');
+  for (const hardening of [
+    'startupProbe', 'runAsNonRoot: true', 'readOnlyRootFilesystem: true',
+    'allowPrivilegeEscalation: false', 'topologySpreadConstraints',
+    'minReadySeconds: 10', 'seccompProfile',
+  ]) {
+    assert.ok(deploy.includes(hardening), `deployment hardening ${hardening}`);
+  }
+  assert.ok(hpa.includes('stabilizationWindowSeconds: 300'), 'scale-down damping');
+  ok('8. k8s green deployment + HPA 10-50 + PDB + hardening + cutover service');
 }
 // ---------- 9. Compose + promotion workflow ----------
 {
   const compose = readFileSync('apps/backend/src/infra/docker/docker-compose.prod.yml', 'utf8');
-  for (const needle of ['postgres:16-alpine', 'redis:7.2-alpine', 'POOL_MODE: transaction', 'DEFAULT_POOL_SIZE: "50"', 'RESERVE_POOL_SIZE: "10"', 'MAX_DB_CONNECTIONS: "200"', '/healthz/readiness', 'replicas: 10']) {
+  for (const needle of ['postgres:16-alpine', 'redis:7.2-alpine', 'POOL_MODE: transaction', 'DEFAULT_POOL_SIZE: "50"', 'RESERVE_POOL_SIZE: "10"', 'MAX_DB_CONNECTIONS: "200"', 'max_connections=300', '/healthz/readiness', 'replicas: 10']) {
     assert.ok(compose.includes(needle), `compose ${needle}`);
   }
   assert.ok(compose.includes('env_file: .env.production'), 'secrets via env_file');
   assert.ok(!compose.includes('POSTGRES_PASSWORD:') && !compose.includes('SECRET_KEY:'), 'no hardcoded secrets');
+  // A one-node --cluster-enabled Redis returns CLUSTERDOWN until slots are
+  // assigned; the fallback must be standalone (cluster lives in k8s/managed).
+  assert.ok(!compose.includes('--cluster-enabled'), 'no uninitialized cluster mode');
   const flow = readFileSync('.github/workflows/deploy-production.yml', 'utf8');
-  assert.ok(flow.includes('app:v1.130.0-*'), 'tag-gated');
+  // Git tags cannot contain ':' — trigger on the colon-free git tag and
+  // derive app:v1.130.0-<sha> inside the job.
+  assert.ok(flow.includes('v1.130.0-*'), 'git-tag-gated');
+  assert.ok(!flow.includes('app:v1.130.0-*'), 'no uncreatable colon tag');
+  assert.ok(flow.includes('--frozen-lockfile'), 'reproducible install');
+  assert.ok(flow.includes('concurrency:'), 'single-flight rollout');
+  assert.ok(flow.includes('kubectl rollout status') && flow.includes('s|image: RELEASE_IMAGE|'), 'guarded k8s cutover');
   assert.ok(!flow.includes('branches: [main]'), 'not a push-main duplicate');
   for (const gate of ['test-phase130-contracts', 'test-phase129-contracts', 'test-phase128-contracts', 'apps/backend/tsconfig.json', 'apps/frontend/tsconfig.json', 'prisma validate']) {
     assert.ok(flow.includes(gate), `promotion gate ${gate}`);
   }
   assert.ok(flow.includes('wrangler'), 'cloudflare handoff');
-  ok('9. prod compose (pool 50/10/200) + tag-gated promotion');
+  // §8.2 CORS: explicit official origins only (no wildcard subdomains — a
+  // browser never matches them, and line-scdn.net is not our trust domain).
+  const cors = JSON.parse(readFileSync('apps/backend/src/infra/cloudflare/r2-cors-policy.json', 'utf8')) as Array<{ AllowedOrigins: string[]; AllowedMethods: string[] }>;
+  const origins = cors[0]?.AllowedOrigins ?? [];
+  assert.ok(origins.includes('https://liff.line.me') && origins.includes('https://liff.omnichannel.com'));
+  assert.ok(origins.every((o) => !o.includes('*')), 'no wildcard origin');
+  assert.deepEqual(cors[0]?.AllowedMethods, ['GET', 'HEAD'], 'read-only edge');
+  // §8.1 zero-egress: R2 stays on the CDN lane with short-lived signed URLs.
+  const r2 = readFileSync('apps/backend/src/infra/cloudflare/r2-storage.service.ts', 'utf8');
+  assert.ok(r2.includes('presignedGetUrl') && r2.includes('X-Amz-Expires'), 'signed R2 reads');
+  // JSON and compiled rule builder must stay byte-identical in intent.
+  const corsModule = readFileSync('apps/backend/src/infra/security/cloudflare-cors.config.ts', 'utf8');
+  for (const origin of origins) assert.ok(corsModule.includes(`'${origin}'`), `R2 module parity ${origin}`);
+  assert.ok(!corsModule.includes('*.line-scdn.net'), 'no wildcard in compiled CORS');
+  // §8.2 API hardening: explicit CORS allowlist + GraphQL budget + no
+  // production introspection (schema disclosure is an A05 recon vector).
+  const mainSrc = readFileSync('apps/backend/src/main.ts', 'utf8');
+  assert.ok(!mainSrc.includes('origin: true,'), 'no reflected CORS origin');
+  assert.ok(mainSrc.includes('CORS origin denied') && mainSrc.includes('credentials: true'), 'CORS allowlist wired');
+  assert.ok(mainSrc.includes('R2_CORS_RULES'), 'single origin SSOT');
+  const apollo = readFileSync('apps/backend/src/infra/apollo/apollo-server.module.ts', 'utf8');
+  assert.ok(apollo.includes('GraphqlRateLimitGuard') && apollo.includes('APP_GUARD'), 'GraphQL budget registered');
+  assert.ok(apollo.includes('introspection: !IS_PRODUCTION') && apollo.includes('playground: !IS_PRODUCTION'), 'prod introspection off');
+  const gqlGuard = readFileSync('apps/backend/src/modules/security/guards/graphql-rate-limit.guard.ts', 'utf8');
+  assert.ok(gqlGuard.includes('TOO_MANY_REQUESTS') && gqlGuard.includes('retryAfterSec'), '429 + retryAfter');
+  assert.ok(gqlGuard.includes('return true; // fail-open on cache outage'), 'fail-open on Redis outage');
+  ok('9. prod compose (pool 50/10/200) + CORS/GraphQL hardening + tag-gated promotion');
 }
 // ---------- 10. Module wiring + 001 lane intact ----------
 {
@@ -281,12 +398,22 @@ async function main(): Promise<void> {
   assert.ok(HEAL_RAM_TRIP_MB < 30 && HEAL_SLIP_QUEUE_TRIP_MS === 1000 && HEAL_POOL_TRIP_PCT === 85, '§10.2 tripwires');
   assert.ok(TENANT_HYDRATION_BUDGET_MS < 100, 'hydration inside cutover window');
   assert.ok(isReleaseTag(`${RELEASE_TAG_PREFIX}a8f3b2e`), 'tag gate coherent');
+  assert.equal(releaseImageTag('v1.130.0-a8f3b2e'), `${RELEASE_TAG_PREFIX}a8f3b2e`);
+  // §10.1: the benchmark script must exist and encode the same budgets.
+  const k6 = readFileSync('test/k6/phase130-go-live.js', 'utf8');
+  for (const needle of ['50000', 'p(95)<750', 'p(99)<120', 'rate<0.0001', 'slip_verify', 'canvas_chunk']) {
+    assert.ok(k6.includes(needle), `k6 ${needle}`);
+  }
+  assert.ok(k6.includes('PROFILE') && k6.includes('smoke'), 'smoke + full profiles');
   ok('12. BDD/SLA/k6/HPA coherence');
 }
 }
 
 main()
-  .then(() => console.log(`\nPhase 130 contracts: ${passed}/12 groups passed`))
+  .then(() => {
+    console.log(`\nPhase 130 contracts: ${passed}/12 groups passed`);
+    process.exit(0);
+  })
   .catch((err) => {
     console.error('\nPhase 130 contracts FAILED:', err);
     process.exit(1);

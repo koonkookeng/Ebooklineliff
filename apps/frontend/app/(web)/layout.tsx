@@ -9,11 +9,17 @@
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DynamicCompanyThemeProvider } from '../../components/theme/DynamicThemeProvider';
+// Phase 130 §2.2: 5-state production UI gate (boot/degraded/circuit/critical).
+import { ProductionStateGate } from '../../components/go-live/ProductionStateGate';
 
 function WebThemeInner({ children }: { children: React.ReactNode }) {
   const params = useSearchParams();
   const slug = params.get('tenant') ?? 'default';
-  return <DynamicCompanyThemeProvider slug={slug}>{children}</DynamicCompanyThemeProvider>;
+  return (
+    <DynamicCompanyThemeProvider slug={slug}>
+      <ProductionStateGate>{children}</ProductionStateGate>
+    </DynamicCompanyThemeProvider>
+  );
 }
 
 export default function WebSegmentLayout({ children }: { children: React.ReactNode }) {
