@@ -9,6 +9,7 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { PDPA_CONSENT_VERSION } from '@repo/shared';
 import { PdpaConsentModal } from '@/components/security/PdpaConsentModal';
 import { useLineLiffAuth } from '@/hooks/useLineLiffAuth';
 
@@ -42,7 +43,7 @@ function ConsentInner() {
     return (
       <main style={{ padding: 24 }}>
         <h1>ขอความยินยอมการใช้ข้อมูล</h1>
-        <p>กรุณาอ่านและเลือกความยินยอมก่อนเข้าใช้งาน (version {status?.consentVersion ?? '2026-10-01'})</p>
+        <p>กรุณาอ่านและเลือกความยินยอมก่อนเข้าใช้งาน (version {status?.consentVersion ?? PDPA_CONSENT_VERSION})</p>
         <PdpaConsentModal isOpen tenantName={tenantName} onAccept={(purposes) => void submitConsent(purposes)} />
       </main>
     );

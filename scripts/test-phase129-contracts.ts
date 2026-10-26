@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import {
   ConsentPurposeEnum,
   DSRTypeEnum,
@@ -199,9 +199,16 @@ async function main(): Promise<void> {
   const row = svc.encryptVaultRow({ phone: '081-234-5678', address: 'Bangkok', taxId: '1234567890123' });
   assert.ok(row.encryptedPhone && row.encryptedAddress && row.encryptedTaxId);
   assert.ok(row.encryptionIv.length > 0 && row.authTag.length > 0);
+  // Every column is self-describing: address/taxId must decrypt with their
+  // own IV/authTag, not the anchor row's pair (regression guard).
+  assert.ok(row.encryptedAddress!.startsWith('v1:') && row.encryptedTaxId!.startsWith('v1:'));
+  assert.equal(svc.decryptVaultField(row, 'phone'), '081-234-5678');
+  assert.equal(svc.decryptVaultField(row, 'address'), 'Bangkok');
+  assert.equal(svc.decryptVaultField(row, 'taxId'), '1234567890123');
   assert.equal(svc.decrypt({ encryptedData: row.encryptedPhone!, iv: row.encryptionIv, authTag: row.authTag }), '081-234-5678');
   const empty = svc.encryptVaultRow({});
   assert.equal(empty.encryptionIv, '');
+  assert.equal(svc.decryptVaultField(empty, 'phone'), null);
   assert.equal(svc.encrypt('same').encryptedData === svc.encrypt('same').encryptedData, false);
   ok('6. AES-256-GCM facade (round-trip/tamper/vault/IV-randomness)');
 }
@@ -283,6 +290,13 @@ async function main(): Promise<void> {
     ipAddress: '1.1.1.1', userAgent: 'liff', acceptedAt: '2026-01-02T00:00:00.000Z',
   });
   assert.deepEqual(second.withdrawn, ['ANALYTICS_BEHAVIOR']);
+  await assert.rejects(
+    svc.recordConsent('u1', {
+      consentVersion: '2024-01-01', acceptedPurposes: ['NECESSARY_TERMS'],
+      ipAddress: '1.1.1.1', userAgent: 'liff', acceptedAt: '2026-01-03T00:00:00.000Z',
+    }),
+    BadRequestException,
+  );
   const status = await svc.statusPayload('u1');
   assert.equal(status.isNecessaryAccepted, true);
   assert.equal(status.isAnalyticsAccepted, false);
@@ -384,6 +398,11 @@ async function main(): Promise<void> {
   assert.ok(String(clean['email']).includes('[REDACTED_EMAIL]'));
   assert.ok(String(clean['thaiId']).includes('[REDACTED_ID]'));
   assert.equal(clean['count'], 3);
+  const multi = sanitizeForAi({
+    blob: 'a@b.com and c@d.com / 081-111-1111 then 089-222-2222',
+  }) as Record<string, unknown>;
+  assert.equal((String(multi['blob']).match(/\[REDACTED_EMAIL\]/g) ?? []).length, 2);
+  assert.equal((String(multi['blob']).match(/\[REDACTED_PHONE\]/g) ?? []).length, 2);
   assert.equal(pseudonymize('a'), pseudonymize('a'));
   assert.equal(pseudonymize('a') === pseudonymize('b'), false);
   const deep = sanitizeForAi({ deep: { deep: { deep: { deep: { deep: { deep: { deep: 'x' } } } } } } }) as Record<string, unknown>;
@@ -484,6 +503,15 @@ async function main(): Promise<void> {
   }
   const modal = readFileSync('apps/frontend/components/security/PdpaConsentModal.tsx', 'utf8');
   assert.ok(!modal.includes('lucide-react'), 'zero-dep modal (inline SVG)');
+  // Compliance: non-essential purposes must default OFF (explicit opt-in).
+  assert.ok(/analyticsAccepted[^;]*useState\(false\)/.test(modal), 'analytics opt-in default');
+  assert.ok(/marketingAccepted[^;]*useState\(false\)/.test(modal), 'marketing opt-in default');
+  const hook = readFileSync('apps/frontend/hooks/useLineLiffAuth.ts', 'utf8');
+  // The BFF serves GET/PUT on /api/v1/pdpa/consent; /consent/status is not a
+  // frontend route (would 404 and trap every user in ERROR_NON_COMPLIANT).
+  assert.ok(hook.includes('/api/v1/pdpa/consent?tenant='), 'hook hits the real BFF route');
+  assert.ok(!hook.includes('/api/v1/pdpa/consent/status'), 'hook avoids the 404 route');
+  assert.ok(hook.includes('PDPA_CONSENT_VERSION') && !hook.includes("'2026-10-01'"), 'hook uses shared consent version');
   for (const s of ['CONSENT_REQUIRED', 'IDLE_COMPLIANT', 'PROCESSING_RIGHTS', 'ERROR_NON_COMPLIANT']) {
     assert.ok(readFileSync('apps/frontend/hooks/useLineLiffAuth.ts', 'utf8').includes(s), `hook ${s}`);
   }
@@ -503,7 +531,10 @@ async function main(): Promise<void> {
 }
 
 main()
-  .then(() => console.log(`\nPhase 129 contracts: ${passed}/12 groups passed`))
+  .then(() => {
+    console.log(`\nPhase 129 contracts: ${passed}/12 groups passed`);
+    process.exit(0);
+  })
   .catch((err) => {
     console.error('\nPhase 129 contracts FAILED:', err);
     process.exit(1);

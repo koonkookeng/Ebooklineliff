@@ -6,6 +6,11 @@
 //   authTag, keyVersion). This facade only adapts its envelope to the 129
 //   spec shape { encryptedData, iv, authTag } and adds batch helpers for
 //   the EncryptedUserPII vault row (phone/address/taxId).
+// - Vault rows hold three independent ciphertexts. Each column therefore
+//   carries its own self-describing envelope (`v1:<iv>:<authTag>:<ct>`);
+//   the row-level encryptionIv/authTag mirror the first present field for
+//   the spec's single-IV column contract and legacy anchor reads.
+//   decryptVaultField() is the only correct way to read a non-anchor column.
 // - Zero new deps (node:crypto rides the 107 lane).
 import { Injectable } from '@nestjs/common';
 import { FieldEncryptionService } from '../../../common/crypto/field-encryption.service';
@@ -24,6 +29,29 @@ export interface PiiVaultRow {
   authTag: string;
 }
 
+export type PiiVaultField = 'phone' | 'address' | 'taxId';
+
+const VAULT_PREFIX = 'v1:';
+
+/** Pack a bundle into a self-describing vault column value. */
+export function packVaultField(bundle: PiiEncryptedBundle): string {
+  return `${VAULT_PREFIX}${bundle.iv}:${bundle.authTag}:${bundle.encryptedData}`;
+}
+
+/** Unpack a self-describing column value (null for legacy raw ciphertext). */
+export function unpackVaultField(packed: string): PiiEncryptedBundle | null {
+  if (!packed.startsWith(VAULT_PREFIX)) return null;
+  const [iv, authTag, ...ciphertext] = packed.slice(VAULT_PREFIX.length).split(':');
+  if (!iv || !authTag || ciphertext.length === 0) return null;
+  return { iv, authTag, encryptedData: ciphertext.join(':') };
+}
+
+const VAULT_COLUMN: Record<PiiVaultField, 'encryptedPhone' | 'encryptedAddress' | 'encryptedTaxId'> = {
+  phone: 'encryptedPhone',
+  address: 'encryptedAddress',
+  taxId: 'encryptedTaxId',
+};
+
 @Injectable()
 export class PiiCryptoService {
   constructor(private readonly fields: FieldEncryptionService = new FieldEncryptionService()) {}
@@ -34,28 +62,43 @@ export class PiiCryptoService {
   }
 
   decrypt(bundle: PiiEncryptedBundle): string {
+    // Accept both a raw {ciphertext,iv,authTag} bundle and a packed vault
+    // column (its embedded IV/authTag win: each field has its own pair).
+    const inner = unpackVaultField(bundle.encryptedData) ?? bundle;
     return this.fields.decrypt({
-      ciphertext: bundle.encryptedData,
-      iv: bundle.iv,
-      authTag: bundle.authTag,
+      ciphertext: inner.encryptedData,
+      iv: inner.iv,
+      authTag: inner.authTag,
       keyVersion: 1,
     });
   }
 
-  /** Encrypt the three vault columns; one shared IV/authTag per row write. */
+  /** Encrypt the three vault columns; every column gets its own envelope. */
   encryptVaultRow(input: { phone?: string; address?: string; taxId?: string }): PiiVaultRow {
-    const pick = (v?: string): PiiEncryptedBundle | null => (v ? this.encrypt(v) : null);
-    const phone = pick(input.phone);
-    const address = pick(input.address);
-    const taxId = pick(input.taxId);
+    const packed = (v?: string): string | undefined => (v ? packVaultField(this.encrypt(v)) : undefined);
+    const phone = packed(input.phone);
+    const address = packed(input.address);
+    const taxId = packed(input.taxId);
     const anchor = phone ?? address ?? taxId;
+    const anchorBundle = anchor ? unpackVaultField(anchor) : null;
     return {
-      ...(phone ? { encryptedPhone: phone.encryptedData } : {}),
-      ...(address ? { encryptedAddress: address.encryptedData } : {}),
-      ...(taxId ? { encryptedTaxId: taxId.encryptedData } : {}),
-      encryptionIv: anchor?.iv ?? '',
-      authTag: anchor?.authTag ?? '',
+      ...(phone ? { encryptedPhone: phone } : {}),
+      ...(address ? { encryptedAddress: address } : {}),
+      ...(taxId ? { encryptedTaxId: taxId } : {}),
+      encryptionIv: anchorBundle?.iv ?? '',
+      authTag: anchorBundle?.authTag ?? '',
     };
+  }
+
+  /** Decrypt one vault column (null when the column is absent). */
+  decryptVaultField(row: PiiVaultRow, field: PiiVaultField): string | null {
+    const packed = row[VAULT_COLUMN[field]];
+    if (!packed) return null;
+    return this.decrypt({
+      encryptedData: packed,
+      iv: row.encryptionIv,
+      authTag: row.authTag,
+    });
   }
 }
 

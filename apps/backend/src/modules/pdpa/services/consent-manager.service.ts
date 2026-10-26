@@ -97,6 +97,12 @@ export class ConsentManagerService {
     if (!hasMandatoryConsent(input.acceptedPurposes)) {
       throw new BadRequestException('NECESSARY_TERMS consent is mandatory');
     }
+    // Only the currently published notice can be recorded. Accepting a
+    // stale version would write a grant the strict guard then rejects,
+    // locking the user out until they somehow re-consent again.
+    if (input.consentVersion !== PDPA_CONSENT_VERSION) {
+      throw new BadRequestException('PDPA_CONSENT_VERSION_STALE');
+    }
     const before = (await this.acceptedPurposes(userId).catch(() => null))?.purposes ?? [];
     const granted = newlyGrantedPurposes(before, input.acceptedPurposes);
     const withdrawn = withdrawnPurposes(before, input.acceptedPurposes).filter(

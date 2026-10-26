@@ -8,6 +8,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { PDPA_CONSENT_VERSION } from '@repo/shared';
 
 export type LineLiffAuthState =
   | 'LIFF_INIT'
@@ -39,7 +40,11 @@ export function useLineLiffAuth(tenant: string) {
   const refresh = useCallback(async () => {
     try {
       const view = await getJson<ConsentStatusView>(
-        `/api/v1/pdpa/consent/status?tenant=${encodeURIComponent(tenant)}`,
+        // The BFF route serves GET (status passthrough) and PUT (update) on
+        // `/api/v1/pdpa/consent`; it forwards to the backend status endpoint.
+        // A frontend `/consent/status` route does not exist, so calling it
+        // here would 404 and trap every user in ERROR_NON_COMPLIANT.
+        `/api/v1/pdpa/consent?tenant=${encodeURIComponent(tenant)}`,
       );
       setStatus(view);
       setState(view.isNecessaryAccepted ? 'IDLE_COMPLIANT' : 'CONSENT_REQUIRED');
@@ -62,7 +67,7 @@ export function useLineLiffAuth(tenant: string) {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            consentVersion: '2026-10-01',
+            consentVersion: PDPA_CONSENT_VERSION,
             acceptedPurposes: purposes,
           }),
         });

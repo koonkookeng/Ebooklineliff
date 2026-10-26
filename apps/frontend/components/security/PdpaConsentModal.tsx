@@ -52,7 +52,10 @@ function LockIcon() {
 
 export const PdpaConsentModal: React.FC<PdpaConsentModalProps> = ({ isOpen, onAccept, tenantName }) => {
   const [marketingAccepted, setMarketingAccepted] = useState(false);
-  const [analyticsAccepted, setAnalyticsAccepted] = useState(true);
+  // COMPLIANCE DEVIATION from the §6.1 illustrative snippet: non-essential
+  // purposes default OFF. Pre-ticked analytics is not valid PDPA consent
+  // (consent must be freely given, specific and informed).
+  const [analyticsAccepted, setAnalyticsAccepted] = useState(false);
 
   if (!isOpen) return null;
 

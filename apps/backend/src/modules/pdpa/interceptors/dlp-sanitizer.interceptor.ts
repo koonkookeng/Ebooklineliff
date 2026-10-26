@@ -13,10 +13,10 @@ import { createHash } from 'node:crypto';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-const PHONE_RE = /(^|[^0-9+])(?:\+66|0)(\d[\s-]?){8,9}(?![0-9])/;
-const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
-const THAI_ID_RE = /(?<![0-9])[1-8]\d{12}(?![0-9])/;
-const LINE_UID_RE = /\bU[0-9a-f]{32}\b/;
+const PHONE_RE = /(^|[^0-9+])(?:\+66|0)(\d[\s-]?){8,9}(?![0-9])/g;
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const THAI_ID_RE = /(?<![0-9])[1-8]\d{12}(?![0-9])/g;
+const LINE_UID_RE = /\bU[0-9a-f]{32}\b/g;
 
 const IDENTIFIER_KEYS = new Set([
   'userId', 'user_id', 'lineUserId', 'line_user_id', 'customerId', 'memberId',
@@ -28,12 +28,13 @@ export function pseudonymize(value: string): string {
 }
 
 function scrubString(value: string): string {
-  let out = value;
-  if (PHONE_RE.test(out)) out = out.replace(PHONE_RE, '$1[REDACTED_PHONE]');
-  if (EMAIL_RE.test(out)) out = out.replace(EMAIL_RE, '[REDACTED_EMAIL]');
-  if (THAI_ID_RE.test(out)) out = out.replace(THAI_ID_RE, '[REDACTED_ID]');
-  if (LINE_UID_RE.test(out)) out = out.replace(LINE_UID_RE, '[REDACTED_LINE_UID]');
-  return out;
+  // Global replace: a payload may carry many PII occurrences (e.g. a
+  // stringified conversation). Only replacing the first would leak the rest.
+  return value
+    .replace(PHONE_RE, '$1[REDACTED_PHONE]')
+    .replace(EMAIL_RE, '[REDACTED_EMAIL]')
+    .replace(THAI_ID_RE, '[REDACTED_ID]')
+    .replace(LINE_UID_RE, '[REDACTED_LINE_UID]');
 }
 
 /** Deep-scrub any JSON-safe value for AI/analytics egress. */
