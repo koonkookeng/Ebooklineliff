@@ -12,13 +12,14 @@ import { EntitlementGrantService } from '../entitlement/services/entitlement-gra
 import { EmbeddingGeneratorService } from '../vector-search/services/embedding-generator.service';
 import { PgVectorRepositoryService } from '../vector-search/services/pgvector-repository.service';
 import { AiSummarizerService } from '../ai-rag/services/ai-summarizer.service';
+import { RagContextBuilderService } from '../ai-rag/services/rag-context-builder.service';
 import { RagRetrievalService } from './services/rag-retrieval.service';
 import { LlmOrchestratorService } from './services/llm-orchestrator.service';
 import { CompanionSummarizerService } from './services/summarizer.service';
 import { AdaptiveQuizService } from './services/adaptive-quiz.service';
 import type { QuizLevel } from '@repo/shared';
 import { AiChatController } from './controllers/ai-chat.controller';
-import { AiQuizController } from './controllers/ai-quiz.controller';
+import { AiQuizController, QUIZ_ANSWER_STORE } from './controllers/ai-quiz.controller';
 import { AiCompanionResolver } from './resolvers/ai-companion.resolver';
 
 type Db = {
@@ -44,6 +45,7 @@ const asLevel = (v: unknown): QuizLevel =>
     PrismaService,
     EmbeddingGeneratorService,
     PgVectorRepositoryService,
+    RagContextBuilderService,
     AiSummarizerService,
     EntitlementGrantService,
     RagRetrievalService,
@@ -96,7 +98,7 @@ const asLevel = (v: unknown): QuizLevel =>
       inject: [RagRetrievalService, LlmOrchestratorService, PrismaService, RedisClusterService],
     },
     {
-      provide: 'QuizAnswerStore',
+      provide: QUIZ_ANSWER_STORE,
       useFactory: (redis: RedisClusterService) => ({
         saveAnswers: async (quizId: string, correctIndexes: number[], ttlSec: number) => {
           await redis.set(`quiz:${quizId}`, JSON.stringify(correctIndexes), 'EX', ttlSec);

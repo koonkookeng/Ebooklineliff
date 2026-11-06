@@ -12,11 +12,13 @@
     "db:push": "turbo run db:push",
     "scaffold": "node scripts/scaffold-from-inventory.mjs",
     "scaffold:full-schema": "node scripts/scaffold-from-inventory.mjs --full-schema",
+    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
     "typecheck": "turbo run typecheck",
     "verify:phase000": "tsx scripts/verify-phase000.ts",
     "check:bundle": "tsx scripts/check-bundle-size.ts"
   },
   "devDependencies": {
+    "@prisma/client": "^5.22.0",
     "@types/node": "^20.0.0",
     "prettier": "^3.2.5",
     "prisma": "^5.22.0",

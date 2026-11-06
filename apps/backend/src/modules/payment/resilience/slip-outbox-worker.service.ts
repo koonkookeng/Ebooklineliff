@@ -9,7 +9,7 @@
 //   flip FAILED past OUTBOX_MAX_RETRIES. Zero data loss: rows only leave
 //   PENDING/PROCESSING via RESOLVED or FAILED.
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   OUTBOX_EVENT_STREAM,
   OUTBOX_MAX_RETRIES,
@@ -59,7 +59,7 @@ export class SlipOutboxWorkerService {
     private readonly prisma: OutboxPrismaPort,
     private readonly locks: OutboxLockPort,
     private readonly easyslip: OutboxVerifyPort,
-    private readonly onVerified?: (row: OutboxRow, slip: { transRef: string; amount: number; receiverAccount: string }) => Promise<void>,
+    @Optional() private readonly onVerified?: (row: OutboxRow, slip: { transRef: string; amount: number; receiverAccount: string }) => Promise<void>,
   ) {}
 
   /** Idempotent enqueue (duplicate orderId returns the existing row). */

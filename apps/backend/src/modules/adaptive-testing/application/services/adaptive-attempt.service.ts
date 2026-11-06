@@ -5,7 +5,7 @@
 //   response row + profile upsert (Gate 7) → max-info next item → stream.
 //   Pure calc stays <200ms (Gate 10).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   ADAPTIVE_STREAM,
   AdaptiveSubmitAnswerSchema,
@@ -40,7 +40,7 @@ export class AdaptiveAttemptService {
   constructor(
     private readonly repo: AdaptiveRepository,
     private readonly tx: AdaptiveTx,
-    private readonly bus?: AdaptiveBus,
+    @Optional() private readonly bus?: AdaptiveBus,
   ) {}
 
   async start(args: { userId: string; lessonId: string }): Promise<NextQuestionOut> {

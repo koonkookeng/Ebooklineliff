@@ -24,7 +24,7 @@ function ctxUserOf(req: LooseReq): string | null {
   return (req['user'] as { id?: string } | undefined)?.id ?? null;
 }
 
-@Controller('api/v1/gifts')
+@Controller('gifts')
 export class GiftClaimController {
   constructor(
     private readonly create: CreateGiftOrderService,

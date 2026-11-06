@@ -137,10 +137,26 @@ export class EmailAuthService {
 
   private resolvePublicBaseUrl(requestAppUrl: string): string {
     const configured = (process.env.WEB_APP_URL ?? '').trim();
-    const candidate = configured || requestAppUrl;
+    if (configured) {
+      let url: URL;
+      try {
+        url = new URL(configured);
+      } catch {
+        throw new BadRequestException('Invalid application URL');
+      }
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+        throw new BadRequestException('Invalid application URL');
+      }
+      return url.origin;
+    }
+    // Without a pinned origin, only local development may fall back to the
+    // request origin. In production this prevents phishing via `appUrl`.
+    if (process.env.NODE_ENV === 'production') {
+      throw new BadRequestException('WEB_APP_URL must be configured');
+    }
     let url: URL;
     try {
-      url = new URL(candidate);
+      url = new URL(requestAppUrl);
     } catch {
       throw new BadRequestException('Invalid application URL');
     }

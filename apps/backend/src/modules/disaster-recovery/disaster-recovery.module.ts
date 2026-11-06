@@ -10,6 +10,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
 import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
 import { HealthCheckerService } from './services/health-checker.service';
 import { AutomatedFailoverService } from './services/automated-failover.service';
@@ -17,6 +18,7 @@ import { R2PitrBackupService } from './services/r2-pitr-backup.service';
 import { BackupVerifierJob } from './cron/backup-verifier.job';
 
 @Module({
+  imports: [R2StorageModule],
   providers: [
     {
       provide: HealthCheckerService,

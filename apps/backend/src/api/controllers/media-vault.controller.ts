@@ -76,7 +76,7 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 200) || 'upload.bin';
 }
 
-@Controller('api/v1/media-vault')
+@Controller('media-vault')
 export class MediaVaultController {
   constructor(
     private readonly r2: R2StorageService,

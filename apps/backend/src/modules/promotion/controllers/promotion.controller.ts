@@ -27,7 +27,7 @@ function actorOf(req: LooseReq): { id: string; role?: string } {
   return { id: user.id, ...(user.role ? { role: user.role } : {}) };
 }
 
-@Controller('api/v1/promotion')
+@Controller('promotion')
 export class PromotionController {
   constructor(
     private readonly calc: DiscountCalculatorService,

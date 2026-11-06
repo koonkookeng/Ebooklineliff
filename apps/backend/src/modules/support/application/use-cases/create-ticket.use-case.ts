@@ -3,7 +3,7 @@
 // - Zod gate → category check → ticket row + initial message → agent
 //   notification (SSE/push) → stream event (<500ms, BDD §1.3).
 // - Port-based for DB-free tests. Zero new deps.
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Optional } from '@nestjs/common';
 import { TICKET_SLA_MINUTES, ticketNumber } from '@repo/shared';
 import type { SupportRepository } from '../../repositories/support.repository';
 
@@ -27,7 +27,7 @@ const SUPPORT_TICKET_STREAM = 'support:ticket:events';
 export class CreateTicketUseCase {
   constructor(
     private readonly repo: SupportRepository,
-    private readonly bus?: TicketEventBus,
+    @Optional() private readonly bus?: TicketEventBus,
   ) {}
 
   async execute(input: CreateTicketInput): Promise<{

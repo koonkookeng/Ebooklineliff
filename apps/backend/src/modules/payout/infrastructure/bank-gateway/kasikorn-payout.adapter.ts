@@ -5,7 +5,7 @@
 //   and the payout stays PROCESSING_BANK until the real bank callback
 //   webhook arrives. SUCCESS is never fabricated. Transport plugs in here.
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { signBankPayload } from '@repo/shared';
 import type { BankGatewayPort } from '../../application/use-cases/process-batch-clearing.use-case';
 
@@ -14,7 +14,7 @@ export class KasikornPayoutAdapter implements BankGatewayPort {
   readonly bankCode = 'KBANK';
   private readonly logger = new Logger(KasikornPayoutAdapter.name);
 
-  constructor(private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
+  constructor(@Optional() private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
 
   async stageBatch(args: {
     batchNo: string;

@@ -15,7 +15,7 @@ interface PdfReply {
   send: (body: unknown) => unknown;
 }
 
-@Controller('api/v1/b2b-hr')
+@Controller('b2b-hr')
 export class B2bExportController {
   constructor(
     private readonly seats: B2bHrSeatService,

@@ -5,7 +5,7 @@
 //   floor on degraded links, §1.3 Scenario 2: 1080p → 360p within 1 cycle).
 // - Rewrites media URIs with the short-lived segment token (zero egress).
 // - Constructor takes ports — no Nest param decorators (tsx-importable).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   filterVariantsByBudget,
   hlsSignedSegmentUrl,
@@ -23,7 +23,7 @@ export interface ManifestR2Port {
 
 @Injectable()
 export class HlsManifestService {
-  constructor(private readonly r2?: ManifestR2Port) {}
+  constructor(@Optional() private readonly r2?: ManifestR2Port) {}
 
   /** Keep affordable variants; always retain the lowest rung (never strand). */
   filterVariantsForTier(variants: HlsVariant[], tier: NetworkQualityTier): HlsVariant[] {

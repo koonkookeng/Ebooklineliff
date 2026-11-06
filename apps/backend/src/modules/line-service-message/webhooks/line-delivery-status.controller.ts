@@ -18,7 +18,7 @@ const CallbackSchema = z.object({
   sig: z.string().min(1),
 });
 
-@Controller('api/v1/service-message/delivery')
+@Controller('service-message/delivery')
 export class LineDeliveryStatusController {
   constructor(private readonly prisma: PrismaService) {}
 

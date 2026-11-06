@@ -7,7 +7,7 @@
 // - buildWebVtt: pure WebVTT index mapping timestamps → CSS spatial coords.
 // - persistSpriteSheets: atomic Prisma $transaction ledger (Gate 7).
 // - Zero new deps (BullMQ doctrine: in-process FIFO, Phase 038 precedent).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { cueCoordsForFrame, toVttTimestamp, totalTilesFor } from '@repo/shared';
 
 export interface VttGeneratorJob {
@@ -103,9 +103,9 @@ export function buildWebVtt(job: VttGeneratorJob, sheetUrls: string[]): string {
 @Injectable()
 export class VttGeneratorProcessor {
   constructor(
-    private readonly tables?: VttPersistTables,
-    private readonly vault?: VttVault,
-    private readonly exec?: (cmd: string) => Promise<void>,
+    @Optional() private readonly tables?: VttPersistTables,
+    @Optional() private readonly vault?: VttVault,
+    @Optional() private readonly exec?: (cmd: string) => Promise<void>,
   ) {}
 
   /** Full pipeline: plan → FFmpeg → R2 → atomic ledger. Idempotent per sheet. */

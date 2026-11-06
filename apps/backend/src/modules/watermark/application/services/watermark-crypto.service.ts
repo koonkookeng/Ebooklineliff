@@ -8,7 +8,7 @@
 //   tsx-importable (no Nest parameter decorators; module wires via useFactory).
 // - Verification is timing-safe through the HmacSignature VO.
 // - Zero new deps (node:crypto only). Never logs ids or secrets.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { watermarkHmacMessage } from '@repo/shared';
 import { HmacSignature } from '../../domain/value-objects/hmac-signature.vo';
@@ -18,7 +18,7 @@ export const WATERMARK_DEV_SECRET = 'AHONG_EMERALD_SECRET_KEY_999';
 @Injectable()
 export class WatermarkCryptoService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly hmacSecret: string = process.env.WATERMARK_HMAC_SECRET || WATERMARK_DEV_SECRET) {}
+  constructor(@Optional() private readonly hmacSecret: string = process.env.WATERMARK_HMAC_SECRET || WATERMARK_DEV_SECRET) {}
 
   newSeedId(): string {
     return randomUUID();

@@ -27,7 +27,7 @@ function actor(req: AuthedReq, bodyLineUserId?: unknown): { userId: string; line
   };
 }
 
-@Controller('api/v1/line-oa')
+@Controller('line-oa')
 export class LineOAController {
   constructor(
     private readonly lineOA: LineOAService,

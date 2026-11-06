@@ -7,7 +7,7 @@
 //   note_created fanned to Redis Stream for heatmap (§7.1, best-effort).
 // - Offline sync: client-generated UUIDs → idempotent create + LWW update.
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   CreateLessonNoteSchema,
   UpdateLessonNoteSchema,
@@ -72,9 +72,9 @@ export function toNotePayload(row: Record<string, unknown>): NoteRow & { timesta
 @Injectable()
 export class NoteService {
   constructor(
-    private readonly tables?: NoteTables,
-    private readonly cache?: NoteCache,
-    private readonly onNoteCreated?: (event: { userId: string; lessonId: string }) => void,
+    @Optional() private readonly tables?: NoteTables,
+    @Optional() private readonly cache?: NoteCache,
+    @Optional() private readonly onNoteCreated?: (event: { userId: string; lessonId: string }) => void,
   ) {}
 
   private async resolveCourseId(lessonId: string): Promise<{ courseId: string; gated: boolean } | null> {

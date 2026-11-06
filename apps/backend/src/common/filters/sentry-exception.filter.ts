@@ -6,7 +6,7 @@
 //   incident stream with a caller-facing reference id. Real @sentry/*
 //   delivery swaps behind the port (documented seam, zero dep in repo).
 // - Zero new deps.
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { scrubPii } from '@repo/shared';
 import { PrismaService } from '../../infra/database/prisma.service';
@@ -30,7 +30,7 @@ export class SentryExceptionFilter implements ExceptionFilter {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisClusterService,
-    private readonly port?: SentryPort,
+    @Optional() private readonly port?: SentryPort,
   ) {}
 
   async catch(exception: unknown, host: ArgumentsHost): Promise<void> {

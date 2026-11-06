@@ -6,7 +6,7 @@
 // - Thin orchestration over R2StorageService.putObjectBuffer (single S3
 //   client per §9) + caller-supplied buffers (the worker stages tmp files).
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 export interface R2UploadFile {
   key: string;
@@ -38,7 +38,7 @@ async function eachLimit<T>(items: T[], limit: number, run: (item: T) => Promise
 @Injectable()
 export class R2UploaderService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly putter?: R2PutPort) {}
+  constructor(@Optional() private readonly putter?: R2PutPort) {}
 
   async uploadAll(files: R2UploadFile[], concurrency: number = DEFAULT_CONCURRENCY): Promise<number> {
     if (!this.putter) throw new Error('R2 uploader unavailable');

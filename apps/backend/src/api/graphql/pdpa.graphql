@@ -1,6 +1,6 @@
-// SSOT Phase 129 §3.2 — PDPA SDL parity (code-first resolver is runtime truth)
-// Canonical: apps/backend/src/api/graphql/pdpa.graphql
-// (SDL mirrors the PdpaResolver intents for Gate 1 review.)
+# SSOT Phase 129 §3.2 — PDPA SDL parity (code-first resolver is runtime truth)
+# Canonical: apps/backend/src/api/graphql/pdpa.graphql
+# (SDL mirrors the PdpaResolver intents for Gate 1 review.)
 
 type PdpaConsentStatusPayload {
   isNecessaryAccepted: Boolean!

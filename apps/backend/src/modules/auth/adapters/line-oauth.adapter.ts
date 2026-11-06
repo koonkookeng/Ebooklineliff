@@ -13,7 +13,10 @@ const VERIFY_URL = 'https://api.line.me/oauth2/v2.1/verify';
 
 @Injectable()
 export class LineOAuthAdapter {
-  constructor(private readonly channelId: string = process.env.LINE_LOGIN_CHANNEL_ID ?? '') {}
+  // Read from env at construction time. Note: a constructor parameter typed
+  // `string` would be emitted as design:paramtypes=String and Nest would try
+  // to inject a "String" provider (UnknownDependenciesException).
+  private readonly channelId: string = process.env.LINE_LOGIN_CHANNEL_ID ?? '';
 
   async verifyIdToken(idToken: string): Promise<LineProfile> {
     if (!idToken || idToken.length < 10) {

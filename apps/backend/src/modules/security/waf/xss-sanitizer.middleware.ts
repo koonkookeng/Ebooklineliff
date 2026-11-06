@@ -5,7 +5,7 @@
 //   the cheap edge tripwire: scans body/query/params strings with the shared
 //   looksLikeXss() signals, 403s on hit, audit-logs fail-open.
 // - Pure scanXssInput() exported for contract tests. Zero new deps.
-import { ForbiddenException, Injectable, NestMiddleware } from '@nestjs/common';
+import { ForbiddenException, Injectable, NestMiddleware, Optional } from '@nestjs/common';
 import { capSnippet, looksLikeXss } from '@repo/shared';
 import type { WafAuditPort } from './sql-injection-filter.middleware';
 
@@ -31,7 +31,7 @@ export function scanXssInput(input: unknown, depth = 0): string | null {
 
 @Injectable()
 export class XssSanitizerMiddleware implements NestMiddleware {
-  constructor(private readonly audit?: WafAuditPort) {}
+  constructor(@Optional() private readonly audit?: WafAuditPort) {}
 
   async use(
     req: Record<string, unknown>,

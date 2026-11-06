@@ -17,7 +17,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/moderation/appeals')
+@Controller('moderation/appeals')
 export class CreatorAppealController {
   constructor(private readonly appeals: AppealManagerService) {}
 

@@ -3,7 +3,7 @@
 // - Deterministic 3-question picker from transcript sentences (zero new
 //   deps); persists AiGeneratedQuiz rows in ONE $transaction (Gate 7).
 // - Port-based for DB-free tests.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { COPILOT_STREAM, GeneratedQuizQuestionSchema } from '@repo/shared';
 
 export interface QuizPersistTx {
@@ -35,7 +35,7 @@ export class AutoQuizBuilderService {
   constructor(
     private readonly store: QuizPersistStore,
     private readonly tx: QuizPersistTx,
-    private readonly bus?: QuizBus,
+    @Optional() private readonly bus?: QuizBus,
   ) {}
 
   async buildFromTranscript(args: { lessonId: string; transcriptText: string }): Promise<{

@@ -26,7 +26,7 @@ function tenantOf(req: LooseReq): string {
   return headers['x-tenant-slug'] ?? headers['x-tenant-identifier'] ?? 'default';
 }
 
-@Controller('api/v1/admin/moderation')
+@Controller('admin/moderation')
 export class ModerationAdminController {
   constructor(
     private readonly engine: ModerationEngineService,

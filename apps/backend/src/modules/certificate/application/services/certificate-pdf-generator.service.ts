@@ -6,7 +6,7 @@
 //   adapters (lazy-require at call time; unit-tested with fakes).
 // - Idempotent: @@unique(userId, courseId) — duplicate issue maps to 400.
 // - Zero new deps.
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../../infra/database/prisma.service';
 import { R2StorageService } from '../../../../infra/cloudflare/r2-storage.service';
 import {
@@ -41,7 +41,7 @@ export class CertificatePdfGeneratorService {
     private readonly r2: R2StorageService,
     private readonly pdfRenderer: ChromiumPdfRendererAdapter,
     private readonly qrGenerator: QrCodeGeneratorAdapter,
-    private readonly hmacSecret: string = process.env.CERTIFICATE_HMAC_SECRET ||
+    @Optional() private readonly hmacSecret: string = process.env.CERTIFICATE_HMAC_SECRET ||
       'AHONG_EMERALD_SECRET_KEY_999',
   ) {}
 

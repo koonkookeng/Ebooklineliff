@@ -26,7 +26,12 @@ import { SupportController } from './support.controller';
         }),
       inject: [PrismaSupportRepository, RedisClusterService],
     },
-    EscalateToAgentUseCase,
+    {
+      // SupportRepository is a TS interface — bind the Prisma implementation.
+      provide: EscalateToAgentUseCase,
+      useFactory: (repo: PrismaSupportRepository) => new EscalateToAgentUseCase(repo),
+      inject: [PrismaSupportRepository],
+    },
     {
       provide: ResolveTicketUseCase,
       useFactory: (repo: PrismaSupportRepository, redis: RedisClusterService) =>

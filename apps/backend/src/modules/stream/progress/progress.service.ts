@@ -8,7 +8,7 @@
 // - §4.2 flush: buffer ⨯ DB max → atomic upsert; flushAllDue sweeps the
 //   buffer keyspace for the 30s scheduler.
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus, Optional } from '@nestjs/common';
 import {
   PROGRESS_RATE_LIMIT,
   PROGRESS_RATE_WINDOW_SEC,
@@ -51,10 +51,10 @@ export class ProgressService {
 
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly buffer?: ProgressBufferService,
-    private readonly prisma?: ProgressPrisma,
-    private readonly rateEdge?: ProgressRateEdge,
-    private readonly clock: () => number = Date.now,
+    @Optional() private readonly buffer?: ProgressBufferService,
+    @Optional() private readonly prisma?: ProgressPrisma,
+    @Optional() private readonly rateEdge?: ProgressRateEdge,
+    @Optional() private readonly clock: () => number = Date.now,
   ) {}
 
   private async checkRateLimit(userId: string): Promise<void> {

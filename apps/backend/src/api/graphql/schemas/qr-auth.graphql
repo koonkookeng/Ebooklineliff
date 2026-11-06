@@ -1,0 +1,11 @@
+# Phase 007 §3.2 — QR cross-platform login (desktop init)
+extend type Query {
+  initQrLoginSession(tenantId: ID): QrSessionPayload!
+}
+
+type QrSessionPayload {
+  qrToken: String!
+  encryptedNonce: String!
+  expiresInSec: Int!
+  websocketChannel: String!
+}

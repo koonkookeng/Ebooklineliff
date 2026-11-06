@@ -24,7 +24,7 @@ function tenantOf(req: LooseReq): string {
   return headers['x-tenant-slug'] ?? headers['x-tenant-identifier'] ?? 'default';
 }
 
-@Controller('api/v1/admin/disputes')
+@Controller('admin/disputes')
 export class DisputeAdminController {
   constructor(private readonly disputes: DisputeService) {}
 

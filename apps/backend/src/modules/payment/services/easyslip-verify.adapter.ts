@@ -3,7 +3,7 @@
 // Transport is delegated to EasySlipProvider (URL + base64 + SlipOK fallback,
 // Zod-validated); this adapter keeps the Phase-012 VerifiedSlip contract and
 // emits the fallback analytics hook. Uses global fetch (zero new deps).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { EasySlipProvider } from '../providers/easyslip.provider';
 import type { EasySlipResponse } from '@repo/shared';
 
@@ -24,7 +24,7 @@ const looksLikeHttpUrl = (s: string): boolean => s.startsWith('http://') || s.st
 
 @Injectable()
 export class EasySlipVerifyAdapter {
-  constructor(private readonly provider = new EasySlipProvider()) {}
+  constructor(@Optional() private readonly provider = new EasySlipProvider()) {}
 
   /** Accepts an R2 URL (preferred) or a raw base64 image (v1 API path). */
   async verify(slipImage: string, onFallback?: () => void): Promise<VerifiedSlip> {

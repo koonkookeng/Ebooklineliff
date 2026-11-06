@@ -46,7 +46,7 @@ function coercePages(body: Record<string, unknown>): { pages: PagePayload[]; spi
   return { pages, spine };
 }
 
-@Controller('api/v1/book-pipeline')
+@Controller('book-pipeline')
 export class BookPipelineController {
   private readonly queue = new BookJobQueue();
 

@@ -11,7 +11,7 @@
 // - RISK_CALL deviation: HMAC-SHA256 instead of ED25519 (zero-new-dep;
 //   same tamper-evidence for server-issued opaque tokens).
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash, createHmac, randomBytes, randomUUID, createCipheriv } from 'node:crypto';
 import {
   OFFLINE_LICENSE_DEFAULT_DAYS,
@@ -63,9 +63,9 @@ function serverKey(secret: string): Buffer {
 @Injectable()
 export class OfflineLicenseService {
   constructor(
-    private readonly tables?: LicenseTables,
-    private readonly stream?: LicenseStream,
-    private readonly secret: string = process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly tables?: LicenseTables,
+    @Optional() private readonly stream?: LicenseStream,
+    @Optional() private readonly secret: string = process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
   ) {}
 
   userHash(userId: string): string {

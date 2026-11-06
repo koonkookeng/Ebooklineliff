@@ -4,9 +4,11 @@ import { Module } from '@nestjs/common';
 import { RAGSearchService } from './application/rag-search.service';
 import { SentimentAnalyzerService } from './application/sentiment-analyzer.service';
 import { EmbeddingGeneratorService } from '../vector-search/services/embedding-generator.service';
+import { VectorSearchModule } from '../vector-search/vector-search.module';
 import { PrismaService } from '../../infra/database/prisma.service';
 
 @Module({
+  imports: [VectorSearchModule],
   providers: [
     SentimentAnalyzerService,
     {

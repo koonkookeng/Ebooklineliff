@@ -26,7 +26,7 @@ function adminOf(req: AuthedRequest): { adminId: string; role: string; ip: strin
   return { adminId, role: req.user?.role ?? '', ip: fwd ? fwd.split(',')[0].trim() : ((req.ip as string) ?? 'unknown') };
 }
 
-@Controller('api/v1/user-inspector')
+@Controller('user-inspector')
 @UseGuards(JwtAuthGuard, AdminRbacGuard)
 export class UserInspectorController {
   constructor(

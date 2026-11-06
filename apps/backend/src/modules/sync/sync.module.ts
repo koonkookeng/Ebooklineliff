@@ -14,7 +14,15 @@ import { SYNC_WRITEBACK_SEC } from '@repo/shared';
 import { ConflictResolverService } from './domain/services/conflict-resolver.service';
 import { drainProgressQueues } from './application/workers/progress-persistence.worker';
 import { RedisIoAdapter } from './infrastructure/adapters/redis-io.adapter';
-import { ProgressSyncGateway } from './infrastructure/gateways/progress-sync.gateway';
+import {
+  ProgressSyncGateway,
+  SYNC_GATEWAY_CACHE,
+  SYNC_GATEWAY_QUEUE,
+  SYNC_SESSION_STORE,
+  type SyncGatewayCache,
+  type SyncGatewayQueue,
+  type SyncSessionStore,
+} from './infrastructure/gateways/progress-sync.gateway';
 import { SyncResolver } from './sync.resolver';
 import { CrossDeviceStateService } from './cross-device-state.service';
 import { SessionHandshakeService } from '../auth/session-handshake.service';
@@ -55,37 +63,55 @@ export class SyncWriteBackQueue {
       inject: [RedisPubSubAdapter],
     },
     {
+      provide: SYNC_GATEWAY_CACHE,
+      useFactory: (edge: RedisClusterService): SyncGatewayCache => ({
+        hset: (k, f) => edge.hset(k, f),
+      }),
+      inject: [RedisClusterService],
+    },
+    {
+      provide: SYNC_GATEWAY_QUEUE,
+      useFactory: (writeback: SyncWriteBackQueue): SyncGatewayQueue => ({
+        enqueue: (q, p) => writeback.enqueue(q, p),
+      }),
+      inject: [SyncWriteBackQueue],
+    },
+    {
+      provide: SYNC_SESSION_STORE,
+      useFactory: (prisma: PrismaService): SyncSessionStore => ({
+        register: async (args) => {
+          await (prisma as unknown as {
+            activeDeviceSession: { upsert(a: unknown): Promise<unknown> };
+          }).activeDeviceSession.upsert({
+            where: { socketId: args.socketId },
+            create: { ...args },
+            update: { lastActiveAt: new Date() },
+          });
+        },
+        unregister: async (socketId) => {
+          await (prisma as unknown as {
+            activeDeviceSession: { deleteMany(a: unknown): Promise<unknown> };
+          }).activeDeviceSession.deleteMany({ where: { socketId } });
+        },
+      }),
+      inject: [PrismaService],
+    },
+    {
       provide: ProgressSyncGateway,
       useFactory: (
         rooms: RedisPubSubAdapter,
         bus: RedisIoAdapter,
-        edge: RedisClusterService,
-        prisma: PrismaService,
-        writeback: SyncWriteBackQueue,
-      ): ProgressSyncGateway =>
-        new ProgressSyncGateway(
-          rooms,
-          bus,
-          { hset: (k, f) => edge.hset(k, f) },
-          { enqueue: (q, p) => writeback.enqueue(q, p) },
-          {
-            register: async (args) => {
-              await (prisma as unknown as {
-                activeDeviceSession: { upsert(a: unknown): Promise<unknown> };
-              }).activeDeviceSession.upsert({
-                where: { socketId: args.socketId },
-                create: { ...args },
-                update: { lastActiveAt: new Date() },
-              });
-            },
-            unregister: async (socketId) => {
-              await (prisma as unknown as {
-                activeDeviceSession: { deleteMany(a: unknown): Promise<unknown> };
-              }).activeDeviceSession.deleteMany({ where: { socketId } });
-            },
-          },
-        ),
-      inject: [RedisPubSubAdapter, RedisIoAdapter, RedisClusterService, PrismaService, SyncWriteBackQueue],
+        cache: SyncGatewayCache,
+        queue: SyncGatewayQueue,
+        sessions: SyncSessionStore,
+      ): ProgressSyncGateway => new ProgressSyncGateway(rooms, bus, cache, queue, sessions),
+      inject: [
+        RedisPubSubAdapter,
+        RedisIoAdapter,
+        SYNC_GATEWAY_CACHE,
+        SYNC_GATEWAY_QUEUE,
+        SYNC_SESSION_STORE,
+      ],
     },
     SyncResolver,
     // Atomic Phase 070: vector-clock SSOT + QR handshake (rooms/bus reuse).

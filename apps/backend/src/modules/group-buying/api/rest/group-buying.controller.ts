@@ -19,7 +19,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/group-buy')
+@Controller('group-buy')
 export class GroupBuyingController {
   constructor(
     private readonly create: CreateGroupRoomService,

@@ -18,7 +18,7 @@ interface CertificateReq {
   headers?: Record<string, string | undefined>;
 }
 
-@Controller('api/v1/certificate')
+@Controller('certificate')
 export class CertificateVerifyController {
   constructor(
     private readonly verifier: CertificateVerificationService,

@@ -6,7 +6,7 @@
 //   FFmpegTranscoderService (which owns progress/variants/READY).
 //   Failures propagate for queue retry (3x → DLQ, §10).
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { FFmpegTranscoderService } from '../ffmpeg.service';
 
 export interface LessonJobRow {
@@ -23,9 +23,9 @@ export interface LessonJobStore {
 export class VideoTranscodeProcessor044 {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly store?: LessonJobStore,
-    private readonly ffmpeg?: FFmpegTranscoderService,
-    private readonly keyUriFor: (jobId: string) => string = (jobId) => `/api/v1/stream/key?jobId=${jobId}`,
+    @Optional() private readonly store?: LessonJobStore,
+    @Optional() private readonly ffmpeg?: FFmpegTranscoderService,
+    @Optional() private readonly keyUriFor: (jobId: string) => string = (jobId) => `/api/v1/stream/key-by-job?jobId=${jobId}`,
     private readonly publicBaseUrl: string = process.env.R2_PUBLIC_BASE_URL ?? '',
   ) {}
 

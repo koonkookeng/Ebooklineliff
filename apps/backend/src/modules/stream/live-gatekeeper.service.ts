@@ -6,7 +6,7 @@
 // - heartbeat: 15s re-validation (expiry/kick/device) → OK/KICKED + log.
 // - RISK_CALL: HMAC tokens (no JWT lib), SSE kick fan-out (no WS lib).
 //   Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac, randomUUID } from 'node:crypto';
 import {
   LIVE_DEVICE_TTL_SEC,
@@ -57,8 +57,8 @@ export class LiveGatekeeperService {
   constructor(
     private readonly repo: LiveGatekeeperRepository,
     private readonly edge: GateCache,
-    private readonly hmacKey = process.env['LIVE_GATE_HMAC'] || 'dev-live-gate',
-    private readonly watermarkSalt = process.env['LIVE_WATERMARK_SALT'] || 'dev-live-salt',
+    @Optional() private readonly hmacKey = process.env['LIVE_GATE_HMAC'] || 'dev-live-gate',
+    @Optional() private readonly watermarkSalt = process.env['LIVE_WATERMARK_SALT'] || 'dev-live-salt',
   ) {}
 
   private sign(body: string): string {

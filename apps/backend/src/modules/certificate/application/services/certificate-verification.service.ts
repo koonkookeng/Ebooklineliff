@@ -5,7 +5,7 @@
 // - <200ms lookup budget (Gate 4). Never logs certificate data.
 // - Rate limit: 20 req/min per IP (Redis fixed window).
 // - Pure + tsx-safe. Zero new deps.
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../../infra/redis/redis-cluster.service';
 import { DigitalSignature, buildHmacPayload, timingSafeEquals } from '../../domain/value-objects/digital-signature.vo';
@@ -33,7 +33,7 @@ export class CertificateVerificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisClusterService,
-    private readonly hmacSecret: string = process.env.CERTIFICATE_HMAC_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly hmacSecret: string = process.env.CERTIFICATE_HMAC_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
   ) {}
 
   async verifyCertificate(input: VerificationInput): Promise<VerificationResult> {

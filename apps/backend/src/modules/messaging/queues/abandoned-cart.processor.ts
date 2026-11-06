@@ -9,7 +9,7 @@
 //   file (documented ADR deviation — no tenant template exists for the 024
 //   dispatcher vocabulary).
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 import {
@@ -72,8 +72,8 @@ export class AbandonedCartProcessor {
     private readonly push: LogOnlyLinePush,
     private readonly prisma: PrismaService,
     private readonly redis: RedisClusterService,
-    private readonly secret: string = process.env['RECOVERY_TOKEN_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly secret: string = process.env['RECOVERY_TOKEN_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   /** Sweep due carts for a step (cron/admin invocable, idempotent). */

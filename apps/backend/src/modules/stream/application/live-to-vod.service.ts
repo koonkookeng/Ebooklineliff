@@ -5,7 +5,7 @@
 //   progress events (<30s SLA, Gate 8).
 // - complete/failed: worker callbacks flip the ledger + lesson + notify.
 // - Port-based for DB-free tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { VOD_STREAM, vodJobKey, vodProgress, vodProgressKey } from '@repo/shared';
 import { isVodTrigger, parseStreamEvent } from '../domain/events/stream-ended.event';
 
@@ -41,7 +41,7 @@ export class LiveToVodService {
     private readonly ledger: VodJobLedger,
     private readonly queue: VodQueue,
     private readonly events: VodEvents,
-    private readonly runJob: (job: { liveSessionId: string; lessonId: string; tenantId: string; rawSourceUrl?: string }) => Promise<void>,
+    @Optional() private readonly runJob: (job: { liveSessionId: string; lessonId: string; tenantId: string; rawSourceUrl?: string }) => Promise<void>,
   ) {}
 
   async ingest(raw: unknown): Promise<{ received: boolean; queued: boolean; jobId?: string }> {

@@ -6,7 +6,7 @@
 //   delivery bytes + header, measures the 5ms budget, and audits failures
 //   through the 129 audit logger (fail-open audit, fail-closed auth).
 // - Zero new deps (node:crypto rides the 034 lane).
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { LINE_SIGNATURE_BUDGET_MS } from '@repo/shared';
 import { verifyLineSignature } from '../../line-oa/line-oa.service';
 
@@ -37,7 +37,7 @@ export function extractRawBody(req: Record<string, unknown>): string {
 
 @Injectable()
 export class LineSignatureGuard implements CanActivate {
-  constructor(private readonly audit?: LineAuditPort) {}
+  constructor(@Optional() private readonly audit?: LineAuditPort) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Record<string, unknown>>();

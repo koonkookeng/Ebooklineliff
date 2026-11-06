@@ -34,7 +34,7 @@ function clientIp(req: LooseReq): string {
   return (req['ip'] as string | undefined) ?? fwd.split(',')[0]?.trim() ?? '0.0.0.0';
 }
 
-@Controller('api/v1/share')
+@Controller('share')
 export class ShareController {
   constructor(
     private readonly generate: GenerateFlexShareUseCase,

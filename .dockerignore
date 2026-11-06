@@ -1,0 +1,48 @@
+# Dependencies (installed fresh inside the image)
+node_modules
+**/node_modules
+
+# Build artifacts
+.next
+**/.next
+dist
+**/dist
+build
+**/build
+*.tsbuildinfo
+.turbo
+**/.turbo
+
+# Version control
+.git
+.gitignore
+
+# Env / secrets
+.env
+.env.*
+
+# Logs / coverage / test output
+*.log
+coverage
+**/coverage
+playwright-report
+test-results
+
+# Local tooling and non-build assets
+.vscode
+.idea
+images
+e2e
+tests
+test
+terraform
+docs
+
+# Large design/reference docs
+*.md
+
+# Docker files themselves
+docker-compose*.yml
+Dockerfile*
+**/Dockerfile*
+.dockerignore

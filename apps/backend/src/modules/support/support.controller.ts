@@ -51,7 +51,7 @@ function assertAgent(role: string): void {
   }
 }
 
-@Controller('api/v1/support')
+@Controller('support')
 export class SupportController {
   constructor(
     private readonly createTicket: CreateTicketUseCase,

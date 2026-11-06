@@ -7,7 +7,7 @@
 // - blindIndex() = HMAC-SHA256 peppered hash (exact-match search, §8.1).
 // - maskField() delegates to @repo/shared (single mask source, BDD Scenario 2).
 // - Zero new deps (node:crypto only).
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Optional } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, scryptSync } from 'node:crypto';
 import {
   EncryptedFieldSchema,
@@ -30,7 +30,7 @@ export class FieldEncryptionService {
   private readonly keyVersion = 1;
   private readonly blindPepper: string;
 
-  constructor(secret?: string, salt?: string, pepper?: string) {
+  constructor(@Optional() secret?: string, @Optional() salt?: string, @Optional() pepper?: string) {
     const resolvedSecret = secret ?? process.env.PII_ENCRYPTION_SECRET ?? 'default-pdpa-secret-key-32-bytes!';
     const resolvedSalt = salt ?? process.env.PII_ENCRYPTION_SALT ?? 'ahong-emerald-salt';
     this.masterKey = scryptSync(resolvedSecret, resolvedSalt, 32);

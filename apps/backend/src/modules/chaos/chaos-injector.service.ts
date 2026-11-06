@@ -7,7 +7,7 @@
 // - SAFETY: fail-closed unless CHAOS_ENABLED=1 (faults can never arm in
 //   production by accident). Reads never throw (no fault = normal path).
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CHAOS_EVENT_STREAM,
   CHAOS_FAULT_TTL_SEC,
@@ -55,7 +55,7 @@ export class ChaosInjectorService {
 
   constructor(
     private readonly redis: ChaosRedisPort,
-    private readonly prisma?: ChaosPrismaPort,
+    @Optional() private readonly prisma?: ChaosPrismaPort,
   ) {}
 
   /** True only in drill environments (fail-closed safety gate). */

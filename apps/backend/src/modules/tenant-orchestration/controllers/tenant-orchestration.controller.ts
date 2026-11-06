@@ -36,7 +36,7 @@ function serializeTenantRow<T extends {
   };
 }
 
-@Controller('api/v1/super-admin/tenants')
+@Controller('super-admin/tenants')
 @UseGuards(JwtAuthGuard)
 export class TenantOrchestrationController {
   constructor(

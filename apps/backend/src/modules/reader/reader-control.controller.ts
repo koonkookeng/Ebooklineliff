@@ -25,7 +25,7 @@ function controlUserId(req: ControlReq): string {
   return userId;
 }
 
-@Controller('api/v1/reader-control')
+@Controller('reader-control')
 export class ReaderControlController {
   constructor(private readonly controls: ReaderControlService) {}
 

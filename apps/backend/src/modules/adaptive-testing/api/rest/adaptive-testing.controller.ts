@@ -15,7 +15,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/adaptive')
+@Controller('adaptive')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class AdaptiveTestingController {
   constructor(private readonly attempts: AdaptiveAttemptService) {}

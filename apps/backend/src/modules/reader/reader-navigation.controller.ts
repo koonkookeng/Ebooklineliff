@@ -20,7 +20,7 @@ function navUserId(req: NavReq): string {
   return userId;
 }
 
-@Controller('api/v1/reader')
+@Controller('reader')
 export class ReaderNavigationController {
   constructor(private readonly prefs: ReaderPreferenceService) {}
 

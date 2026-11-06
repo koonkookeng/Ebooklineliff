@@ -4,7 +4,7 @@
 //   $transaction: PointTransaction + user rewardPoints + squad/challenge
 //   totals (Gate 7) → leaderboard fan-out + stream (Gate 8).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Optional } from '@nestjs/common';
 import {
   CLAIM_VELOCITY_LIMIT,
   CLAIM_VELOCITY_WINDOW_SEC,
@@ -46,8 +46,8 @@ export class PointEngineService {
     private readonly store: PointStorePort,
     private readonly board: PointBoardPort,
     private readonly tx: PointTx,
-    private readonly bus?: PointBus,
-    private readonly secret: string = process.env['CLAIM_NONCE_SECRET'] || 'dev-claim-secret',
+    @Optional() private readonly bus?: PointBus,
+    @Optional() private readonly secret: string = process.env['CLAIM_NONCE_SECRET'] || 'dev-claim-secret',
   ) {}
 
   async claim(args: {

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string; messageId: string } },
+  { params }: { params: Promise<{ id: string; messageId: string }> },
 ) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
@@ -16,7 +16,7 @@ export async function POST(
   if (cookie) h['cookie'] = cookie;
   try {
     const res = await fetch(
-      `${backend}/api/v1/support/tickets/${encodeURIComponent(params.id)}/messages/${encodeURIComponent(params.messageId)}/attachments`,
+      `${backend}/api/v1/support/tickets/${encodeURIComponent((await params).id)}/messages/${encodeURIComponent((await params).messageId)}/attachments`,
       { method: 'POST', headers: h, body: JSON.stringify(body) },
     );
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });

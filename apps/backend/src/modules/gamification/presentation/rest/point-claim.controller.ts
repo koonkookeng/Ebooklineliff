@@ -14,7 +14,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/points')
+@Controller('points')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class PointClaimController {
   constructor(private readonly points: PointEngineService) {}

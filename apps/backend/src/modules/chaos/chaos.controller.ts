@@ -20,7 +20,7 @@ function superAdminOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/admin/chaos')
+@Controller('admin/chaos')
 export class ChaosController {
   constructor(
     private readonly chaos: ChaosInjectorService,

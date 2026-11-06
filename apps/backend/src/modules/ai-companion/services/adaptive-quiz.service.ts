@@ -4,7 +4,7 @@
 //   zero new deps, no LLM egress). Difficulty follows the learner insight
 //   level; submit grades + adapts the level atomically (Gate 7).
 // - Port-based for DB-free tests.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AI_STREAM, adaptLevel, comprehensionScore, type QuizLevel } from '@repo/shared';
 
@@ -49,7 +49,7 @@ function keySentence(chunk: string, level: QuizLevel): string {
 export class AdaptiveQuizService {
   constructor(
     private readonly insights: InsightStorePort,
-    private readonly bus?: QuizBus,
+    @Optional() private readonly bus?: QuizBus,
   ) {}
 
   async generate(args: { userId: string; lessonId: string; chunks: string[] }): Promise<{

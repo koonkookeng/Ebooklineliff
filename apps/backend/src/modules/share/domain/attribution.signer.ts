@@ -5,7 +5,7 @@
 // - verify() enforces the 30-day attribution window (BDD-2) and rejects
 //   tampered tokens via timing-safe comparison.
 // - Zero new deps (node:crypto only).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { signRefToken, verifyRefToken, FLEX_REF_TOKEN_TTL_SEC } from '@repo/shared';
 
 export interface RefTokenClaims {
@@ -17,7 +17,7 @@ export interface RefTokenClaims {
 
 @Injectable()
 export class AttributionSigner {
-  constructor(private readonly secret: string = process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
+  constructor(@Optional() private readonly secret: string = process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
 
   sign(args: { userId: string; productId: string; affiliateCode: string; issuedAt?: number }): string {
     return signRefToken(this.secret, args);

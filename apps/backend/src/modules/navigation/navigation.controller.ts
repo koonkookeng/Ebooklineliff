@@ -38,7 +38,7 @@ function actor(req: AuthedReq, bodyUserId?: unknown): string {
   throw new UnauthorizedException('Unauthorized');
 }
 
-@Controller('api/v1/navigation')
+@Controller('navigation')
 export class NavigationController {
   constructor(private readonly navigation: NavigationService) {}
 

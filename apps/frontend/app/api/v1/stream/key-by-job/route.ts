@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (auth) h['authorization'] = auth;
   if (cookie) h['cookie'] = cookie;
   try {
-    const res = await fetch(`${backend}/api/v1/stream/key?jobId=${encodeURIComponent(jobId)}`, { headers: h });
+    const res = await fetch(`${backend}/api/v1/stream/key-by-job?jobId=${encodeURIComponent(jobId)}`, { headers: h });
     if (!res.ok) return new Response('Key unavailable', { status: res.status });
     const bytes = await res.arrayBuffer();
     return new Response(bytes, { status: 200, headers: { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store' } });

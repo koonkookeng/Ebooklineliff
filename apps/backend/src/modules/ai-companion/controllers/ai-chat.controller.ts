@@ -27,7 +27,7 @@ function hashOf(userId: string): string {
   return createHash('sha256').update(userId).digest('hex').slice(0, 12);
 }
 
-@Controller('api/v1/ai')
+@Controller('ai')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class AiChatController {
   constructor(

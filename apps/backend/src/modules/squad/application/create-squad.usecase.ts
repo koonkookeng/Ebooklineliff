@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/squad/application/create-squad.usecase.ts
 // - Zod gate → entity guards → squad row + LEADER member (Gate 7) → Flex
 //   invite card (BDD-1) → stream (Gate 8). Port-based tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { CreateSquadInputSchema, SQUAD_STREAM, squadCode, squadInviteUrl } from '@repo/shared';
 import { assertSquadCreatable } from '../domain/squad.entity';
 import type { SquadRepository } from '../domain/squad.repository.interface';
@@ -17,7 +17,7 @@ export class CreateSquadUsecase {
   constructor(
     private readonly repo: SquadRepository,
     private readonly bus: SquadBus,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async execute(args: {

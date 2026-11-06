@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "nest build",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && node -e \"const fs=require('fs'),p=require('path');const walk=(d,o=[])=>{for(const e of fs.readdirSync(d,{withFileTypes:true})){const f=p.join(d,e.name);if(e.isDirectory())walk(f,o);else if(f.endsWith('.graphql'))o.push(f)}return o};for(const f of walk('src')){const t=p.join('dist',p.relative('src',f));fs.mkdirSync(p.dirname(t),{recursive:true});fs.copyFileSync(f,t)}\"",
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\"",
@@ -13,8 +13,10 @@
     "db:push": "prisma db push --schema ../../packages/db/prisma/schema.prisma"
   },
   "dependencies": {
-    "@fastify/cors": "^9.0.1",
-    "@fastify/helmet": "^11.1.1",
+    "@apollo/server": "^4.11.0",
+    "@as-integrations/fastify": "^2.1.1",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/helmet": "^13.0.0",
     "@nestjs/apollo": "^14.0.3",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -22,6 +24,8 @@
     "@nestjs/platform-fastify": "^11.0.0",
     "@prisma/client": "^5.22.0",
     "@repo/shared": "workspace:*",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "graphql": "^16.10.0",
     "ioredis": "^6.0.0",
     "reflect-metadata": "^0.2.2",

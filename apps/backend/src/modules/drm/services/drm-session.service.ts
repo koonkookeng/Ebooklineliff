@@ -6,7 +6,7 @@
 //   revokes the session per §7.1) + forensic payload build.
 // - reportViolation: atomic DB log + Redis telemetry (<500ms, fail-open).
 // - Pure orchestration; tsx-importable via useFactory. Zero new deps.
-import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
@@ -49,7 +49,7 @@ export class DrmSessionService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisClusterService,
     private readonly shuffling: DrmShufflingService,
-    private readonly ttlSec: number = DRM_SESSION_TTL_SEC,
+    @Optional() private readonly ttlSec: number = DRM_SESSION_TTL_SEC,
   ) {}
 
   /** SHA256 hex helper (forensic hashes). */

@@ -6,7 +6,7 @@
 //   precedent — not the §5.2 base64 sketch) + watermark text + baseline
 //   memory footprint + hasNext from EbookDetail.totalPages.
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import {
   SCALER_BASE_HEIGHT_PX,
@@ -39,10 +39,10 @@ export interface VectorChunkVault {
 @Injectable()
 export class VectorChunkService {
   constructor(
-    private readonly tables?: VectorChunkTables,
-    private readonly cache?: VectorChunkCache,
-    private readonly vault?: VectorChunkVault,
-    private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly tables?: VectorChunkTables,
+    @Optional() private readonly cache?: VectorChunkCache,
+    @Optional() private readonly vault?: VectorChunkVault,
+    @Optional() private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
   ) {}
 
   r2KeyFor(productId: string, pageNumber: number): string {

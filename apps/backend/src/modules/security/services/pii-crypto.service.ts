@@ -12,7 +12,7 @@
 //   the spec's single-IV column contract and legacy anchor reads.
 //   decryptVaultField() is the only correct way to read a non-anchor column.
 // - Zero new deps (node:crypto rides the 107 lane).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { FieldEncryptionService } from '../../../common/crypto/field-encryption.service';
 
 export interface PiiEncryptedBundle {
@@ -54,7 +54,7 @@ const VAULT_COLUMN: Record<PiiVaultField, 'encryptedPhone' | 'encryptedAddress' 
 
 @Injectable()
 export class PiiCryptoService {
-  constructor(private readonly fields: FieldEncryptionService = new FieldEncryptionService()) {}
+  constructor(@Optional() private readonly fields: FieldEncryptionService = new FieldEncryptionService()) {}
 
   encrypt(text: string): PiiEncryptedBundle {
     const env = this.fields.encrypt(text);

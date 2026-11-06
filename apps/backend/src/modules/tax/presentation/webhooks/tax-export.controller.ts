@@ -30,7 +30,7 @@ function isAdmin(req: LooseReq): boolean {
   return !!user.role && ADMIN_ROLES.has(user.role);
 }
 
-@Controller('api/v1/tax')
+@Controller('tax')
 export class TaxExportController {
   constructor(
     private readonly repo: PrismaTaxRepository,

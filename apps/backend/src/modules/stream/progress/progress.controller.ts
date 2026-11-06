@@ -17,7 +17,7 @@ interface ProgressReq {
   user?: { id?: string };
 }
 
-@Controller('api/v1/stream/progress')
+@Controller('stream/progress')
 export class ProgressController {
   constructor(private readonly progress: ProgressService) {}
 

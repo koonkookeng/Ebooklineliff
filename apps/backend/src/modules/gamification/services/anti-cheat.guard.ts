@@ -3,7 +3,7 @@
 // - signClaim/verifyClaim: HMAC(userId.activityType.referenceId.ts) with
 //   5-min TTL (replay-proof §8.1). isVelocityCapped: Redis counter gate.
 // - Pure helpers exported for tests; guard is injectable. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { CLAIM_NONCE_TTL_SEC, CLAIM_VELOCITY_LIMIT, MIN_DWELL_SEC } from '@repo/shared';
 
@@ -53,7 +53,7 @@ export function velocityCapped(recentClaims: number): boolean {
 
 @Injectable()
 export class AntiCheatGuard {
-  constructor(private readonly secret: string = process.env['CLAIM_NONCE_SECRET'] || 'dev-claim-secret') {}
+  constructor(@Optional() private readonly secret: string = process.env['CLAIM_NONCE_SECRET'] || 'dev-claim-secret') {}
 
   verify(userId: string, activityType: string, referenceId: string, nonce: string): boolean {
     return verifyClaimNonce({ nonce, userId, activityType, referenceId, secret: this.secret });

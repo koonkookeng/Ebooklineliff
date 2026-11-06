@@ -3,7 +3,7 @@
 // - POST generate (lesson chunks → quiz WITHOUT answers, key parked in
 //   Redis 1h) / POST submit (graded server-side — Phase 047 sanitizer
 //   precedent). Zero new deps.
-import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { AdaptiveQuizService } from '../services/adaptive-quiz.service';
@@ -13,6 +13,9 @@ export interface QuizAnswerStore {
   takeAnswers(quizId: string): Promise<number[] | null>;
 }
 
+/** Injection token for the structural quiz-answer store (Redis-backed). */
+export const QUIZ_ANSWER_STORE = 'AI_COMPANION_QUIZ_ANSWER_STORE';
+
 type LooseReq = Record<string, unknown>;
 
 function actorOf(req: LooseReq): string {
@@ -21,12 +24,12 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/ai/quiz')
+@Controller('ai/quiz')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class AiQuizController {
   constructor(
     private readonly quiz: AdaptiveQuizService,
-    private readonly answers: QuizAnswerStore,
+    @Inject(QUIZ_ANSWER_STORE) private readonly answers: QuizAnswerStore,
   ) {}
 
   @Post('generate')

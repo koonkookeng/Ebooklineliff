@@ -6,7 +6,7 @@
 // - complete: TRANSCODING_QUEUED + transcode enqueue (jobId returned).
 // - handleWorkerEvent: R2 ObjectCreated → secret-checked → same as complete.
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   hlsOutputPrefix,
@@ -65,10 +65,10 @@ export class VideoUploadService {
 
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly tables?: UploadTables,
-    private readonly vault?: UploadVault,
-    private readonly queue?: UploadQueue,
-    private readonly runJob?: (job: VideoTranscodeJobPayload) => Promise<void>,
+    @Optional() private readonly tables?: UploadTables,
+    @Optional() private readonly vault?: UploadVault,
+    @Optional() private readonly queue?: UploadQueue,
+    @Optional() private readonly runJob?: (job: VideoTranscodeJobPayload) => Promise<void>,
     private readonly workerSecret: string = process.env.VIDEO_WORKER_SECRET ?? '',
   ) {}
 

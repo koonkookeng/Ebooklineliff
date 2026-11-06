@@ -6,7 +6,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ProcessHlsWebhookUseCase } from '../../application/use-cases/process-hls-webhook.use-case';
 
-@Controller('api/v1/studio')
+@Controller('studio')
 export class HlsWebhookController {
   constructor(private readonly webhook: ProcessHlsWebhookUseCase) {}
 

@@ -6,7 +6,7 @@
 // - Fail-open on Redis outage (availability first; 050/122 precedent).
 // - Pure evaluateRateLimit exported for contract tests.
 // - Zero new deps.
-import { CanActivate, ExecutionContext, ForbiddenException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, HttpException, HttpStatus, Injectable, Optional } from '@nestjs/common';
 import {
   ATTACKER_BLOCK_TTL_SEC,
   attackerBlockKey,
@@ -32,7 +32,7 @@ export function evaluateRateLimit(
 export class RateLimiterGuard implements CanActivate {
   constructor(
     private readonly redis: RateLimitRedisPort,
-    private readonly rule: SecurityRateLimitRule = {
+    @Optional() private readonly rule: SecurityRateLimitRule = {
       endpointPattern: 'global',
       maxRequestsPerMinute: 30,
       blockDurationSeconds: 60,

@@ -4,7 +4,7 @@
 // - POST /api/v1/stream/transcode {lessonId,fileName,fileSizeBytes,rawR2Key}
 //   (JWT creator path, Zod SubmitTranscodeJobSchema) → {jobId}.
 // - GET  /api/v1/stream/transcode/:jobId (JWT) → ledger status + progress.
-// - GET  /api/v1/stream/key?jobId= (JWT + entitlement, §8.1) → raw key
+// - GET  /api/v1/stream/key-by-job?jobId= (JWT + entitlement, §8.1) → raw key
 //   bytes, no-store, never logged.
 // - Class is named StreamTranscodeController: the Phase 043 delivery
 //   controller already owns the StreamController name (single ownership).
@@ -26,7 +26,7 @@ interface KeyReply {
   send: (body: unknown) => unknown;
 }
 
-@Controller('api/v1/stream/transcode')
+@Controller('stream/transcode')
 export class StreamTranscodeController {
   constructor(
     private readonly worker: TranscodeWorkerHost,
@@ -54,7 +54,7 @@ export class StreamTranscodeController {
   }
 }
 
-@Controller('api/v1/stream/key')
+@Controller('stream/key-by-job')
 export class TranscodeKeyController {
   constructor(private readonly stream: StreamService) {}
 

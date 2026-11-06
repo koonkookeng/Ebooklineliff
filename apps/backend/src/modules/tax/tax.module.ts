@@ -64,6 +64,12 @@ import { TaxExportController } from './presentation/webhooks/tax-export.controll
       inject: [CalculateTaxUseCase, Generate50TawiPdfUseCase, PrismaTaxRepository],
     },
   ],
-  exports: [CalculateTaxUseCase, Generate50TawiPdfUseCase, PrismaTaxRepository, TaxCalculatorDomainService],
+  exports: [
+    CalculateTaxUseCase,
+    Generate50TawiPdfUseCase,
+    PrismaTaxRepository,
+    TaxCalculatorDomainService,
+    PdfCompilerService,
+  ],
 })
 export class TaxModule {}

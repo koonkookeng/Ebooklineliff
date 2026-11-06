@@ -23,7 +23,7 @@ function actorOf(req: LooseReq): { userId: string; ip: string } {
   return { userId: user.id, ip };
 }
 
-@Controller('api/v1/live-access')
+@Controller('live-access')
 export class LiveAccessController {
   constructor(
     private readonly gate: LiveGatekeeperService,

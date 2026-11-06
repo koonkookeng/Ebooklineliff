@@ -6,7 +6,7 @@
 //   Mandatory purposes can never be withdrawn while the account lives
 //   (strict gate; withdrawal rides the DSR erasure lane instead).
 // - Ports-based (tsx-importable). Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import {
   MANDATORY_PURPOSES,
   PDPA_CONSENT_VERSION,
@@ -56,7 +56,7 @@ export interface ConsentGrantInput {
 export class ConsentManagerService {
   constructor(
     private readonly db: ConsentDbPort,
-    private readonly edge?: ConsentEdgePort,
+    @Optional() private readonly edge?: ConsentEdgePort,
   ) {}
 
   /** Edge-first current purposes (null = never recorded). */

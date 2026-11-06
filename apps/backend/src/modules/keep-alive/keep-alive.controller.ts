@@ -25,7 +25,7 @@ function actor(req: AuthedReq, bodyUserId?: unknown): string {
   throw new UnauthorizedException('Unauthorized');
 }
 
-@Controller('api/v1/keep-alive')
+@Controller('keep-alive')
 export class KeepAliveController {
   constructor(private readonly states: KeepAliveService) {}
 

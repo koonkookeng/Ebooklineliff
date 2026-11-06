@@ -27,7 +27,7 @@ function adminOf(req: LooseReq): StorageUser {
   return user;
 }
 
-@Controller('api/v1/admin/storage')
+@Controller('admin/storage')
 export class StorageAdminController {
   constructor(
     private readonly lifecycle: R2LifecycleService,

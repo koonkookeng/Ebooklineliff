@@ -32,7 +32,7 @@ type CouponScheme {
 input OrderItemInput {
   productId: ID!
   price: Float!
-  quantity: Int!
+  quantity: Int
 }
 
 input CalculateStackableDiscountInput {

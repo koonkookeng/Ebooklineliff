@@ -7,7 +7,7 @@
 // - Session ledger: one VideoStreamSession row per issuance (reuse Phase 050
 //   model; clientIpHash/userAgent are the Phase 053 additive columns).
 // - Constructor takes ports — no Nest param decorators (tsx-importable).
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, Optional } from '@nestjs/common';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   HLS_SEGMENT_TOKEN_TTL_SEC,
@@ -51,8 +51,8 @@ export class HlsTokenGeneratorService {
   constructor(
     private readonly redis: HlsTokenRedisPort,
     private readonly db: HlsTokenDbPort,
-    private readonly secret: string = process.env.HLS_HMAC_SECRET || 'ahong-emerald-secret-144-xz',
-    private readonly cdnDomain: string = process.env.CLOUDFLARE_R2_CDN_DOMAIN || 'https://cdn.example.com',
+    @Optional() private readonly secret: string = process.env.HLS_HMAC_SECRET || 'ahong-emerald-secret-144-xz',
+    @Optional() private readonly cdnDomain: string = process.env.CLOUDFLARE_R2_CDN_DOMAIN || 'https://cdn.example.com',
   ) {}
 
   /** Mint a short-lived segment token bound to user + lesson + session + IP. */

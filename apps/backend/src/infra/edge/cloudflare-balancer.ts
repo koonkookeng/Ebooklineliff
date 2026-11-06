@@ -6,7 +6,7 @@
 //   remainder of the walk. Emits infra alerts best-effort (Gate 8) and
 //   never throws without trying every node.
 // - Zero new deps (global fetch only).
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { EDGE_FAILOVER_BUDGET_MS, EDGE_UNHEALTHY_AFTER_MS, INFRA_ALERT_STREAM, type EdgeNode } from '@repo/shared';
 import { planEdgeRoute } from './load-balancer';
 
@@ -33,7 +33,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 export class CloudflareBalancer {
   private readonly logger = new Logger(CloudflareBalancer.name);
 
-  constructor(private readonly stream?: BalancerStreamPort) {}
+  constructor(@Optional() private readonly stream?: BalancerStreamPort) {}
 
   /**
    * GET through the failover chain (first 2xx wins; regions that 5xx or

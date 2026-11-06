@@ -18,7 +18,7 @@ function ctx(req: Record<string, unknown>): { sellerId: string; tenantId: string
   return { sellerId: user.id, tenantId };
 }
 
-@Controller('api/v1/builder')
+@Controller('builder')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class ProductBuilderController {
   constructor(private readonly builder: ProductBuilderService) {}

@@ -16,7 +16,7 @@ function tenantOf(req: Record<string, unknown>): string {
   return (((req['tenantId'] as string | undefined) ?? headers['x-tenant-id'] ?? headers['X-Tenant-ID'] ?? '') as string).trim();
 }
 
-@Controller('api/v1/logistics')
+@Controller('logistics')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class LogisticsController {
   constructor(

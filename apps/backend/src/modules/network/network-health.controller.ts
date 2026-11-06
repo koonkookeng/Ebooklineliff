@@ -16,7 +16,7 @@ interface NetworkReq {
   user?: { id?: string };
 }
 
-@Controller('api/v1/network')
+@Controller('network')
 export class NetworkHealthController {
   constructor(
     private readonly health: NetworkHealthService,

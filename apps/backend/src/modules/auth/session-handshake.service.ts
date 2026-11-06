@@ -7,7 +7,7 @@
 //   viewport guard (≤2 recent viewports per user; ActiveDeviceSession stays
 //   schema-untouched per 057) → audit update → session fingerprint.
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { HANDSHAKE_TTL_SEC, MAX_ACTIVE_VIEWPORTS, handshakeRedisKey } from '@repo/shared';
 
@@ -38,8 +38,8 @@ interface HandshakePayload {
 @Injectable()
 export class SessionHandshakeService {
   constructor(
-    private readonly tables?: HandshakeTables,
-    private readonly cache?: HandshakeCache,
+    @Optional() private readonly tables?: HandshakeTables,
+    @Optional() private readonly cache?: HandshakeCache,
   ) {}
 
   async issueHandshake(

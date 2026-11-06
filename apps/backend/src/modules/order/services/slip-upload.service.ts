@@ -5,7 +5,7 @@
 // Phase 014 §7/§8: returns the SHA-256 forensic hash + emits payment_slip_uploaded
 // (orderId, fileSizeKb) to the analytics stream.
 import { createHash, createHmac } from 'node:crypto';
-import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, BadRequestException, ServiceUnavailableException, Optional } from '@nestjs/common';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 
 export const MAX_SLIP_BYTES = 5 * 1024 * 1024;
@@ -74,7 +74,7 @@ function r2Config(): { endpoint: string; bucket: string; accessKey: string; secr
 export class SlipUploadService {
   // Optional (no decorator — tsx contract tests run without
   // experimentalDecorators). Emits analytics only when wired.
-  constructor(private readonly redis?: RedisClusterService) {}
+  constructor(@Optional() private readonly redis?: RedisClusterService) {}
 
   async uploadSlipImage(
     orderId: string,

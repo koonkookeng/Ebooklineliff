@@ -8,7 +8,7 @@
 // - trackScrubSeek: fire-and-forget heatmap beacon → Redis stream
 //   (stream:scrub:seek-events) for the AI drop-off engine (§7.1).
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import {
   SCRUB_MANIFEST_TTL_SEC,
@@ -60,10 +60,10 @@ export const SCRUB_TILES_PER_SHEET_FALLBACK = 100;
 @Injectable()
 export class ThumbnailScrubbingService {
   constructor(
-    private readonly tables?: ScrubTables,
-    private readonly cache?: ScrubCache,
-    private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
-    private readonly onScrubSeek?: (event: { userId: string; lessonId: string; targetTimeSec: number }) => void,
+    @Optional() private readonly tables?: ScrubTables,
+    @Optional() private readonly cache?: ScrubCache,
+    @Optional() private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly onScrubSeek?: (event: { userId: string; lessonId: string; targetTimeSec: number }) => void,
   ) {}
 
   watermarkFor(userId: string, displayName: string | null): string {

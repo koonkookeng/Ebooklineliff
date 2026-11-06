@@ -5,7 +5,7 @@
 //   -> R2 vault put (zero-egress) -> atomic certificate row -> budget check
 //   (<500ms §10; overruns emit a slow-pdf stream note, never fail the doc).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import {
   TAX_PDF_BUDGET_MS,
   TAX_WITHHELD_STREAM,
@@ -41,7 +41,7 @@ export class Generate50TawiPdfUseCase {
     private readonly r2: TawiR2Vault,
     private readonly tx: TawiTx,
     private readonly bus: TawiBus,
-    private readonly downloadSecret: string = process.env['TAX_TICKET_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
+    @Optional() private readonly downloadSecret: string = process.env['TAX_TICKET_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
   ) {}
 
   async execute(args: {

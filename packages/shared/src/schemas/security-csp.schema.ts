@@ -155,6 +155,13 @@ export interface CspHeaderOptions {
   nonce?: string;
   /** Development adds 'unsafe-eval' (Next dev HMR); production never does. */
   isDev?: boolean;
+  /**
+   * Plain-HTTP request (e.g. local `http://localhost:3000`). When true the
+   * `upgrade-insecure-requests` directive is omitted: it would rewrite every
+   * same-origin navigation/subresource to https:// and the HTTP-only dev
+   * server would answer `ERR_SSL_PROTOCOL_ERROR`. TLS deployments keep it.
+   */
+  allowInsecure?: boolean;
 }
 
 /**
@@ -162,7 +169,7 @@ export interface CspHeaderOptions {
  * Keeps HLS blob streaming alive: media-src/worker-src allow blob: (§Gate 5).
  */
 export function buildCspHeader(options: CspHeaderOptions = {}): string {
-  const { nonce = '', isDev = false } = options;
+  const { nonce = '', isDev = false, allowInsecure = false } = options;
   const scriptSrc = [
     "'self'",
     ...(nonce ? [`'nonce-${nonce}'`] : []),
@@ -185,7 +192,7 @@ export function buildCspHeader(options: CspHeaderOptions = {}): string {
     "form-action 'self'",
     "frame-ancestors 'self' https://liff.line.me https://*.line.me",
     'report-uri /api/security/csp-report',
-    'upgrade-insecure-requests',
+    ...(allowInsecure ? [] : ['upgrade-insecure-requests']),
   ].join('; ');
 }
 

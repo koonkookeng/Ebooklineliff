@@ -1,7 +1,7 @@
 // SSOT Phase 005 §8.1 + §5.2 — Dual-token issuance (HS256, kid rotation, single-use refresh)
 // No new deps: Node crypto only. RS256/JWKS is the documented target; HS256 ships as the
 // zero-dep default and the verifier accepts key rotation via JWT_SECRET_PREV.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { JwtPayloadSchema, type JwtPayload } from '@repo/shared';
 
@@ -28,7 +28,9 @@ export class TokenService {
   private readonly currentSecret: string;
   private readonly prevSecret: string | null;
 
-  constructor(secret?: string, prevSecret?: string | null) {
+  // Secrets fall back to env when not supplied. @Optional() keeps Nest from
+  // trying to resolve the primitive "String" token (these are not providers).
+  constructor(@Optional() secret?: string, @Optional() prevSecret?: string | null) {
     this.currentSecret =
       secret ?? process.env.JWT_SECRET ?? 'secret-key-144-xz-dev-only-change-me';
     const prev = prevSecret ?? process.env.JWT_SECRET_PREV ?? null;

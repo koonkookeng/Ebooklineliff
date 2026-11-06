@@ -13,7 +13,7 @@ function actorOf(req: LooseReq): string | null {
   return (req['user'] as { id?: string } | undefined)?.id ?? null;
 }
 
-@Controller('api/v1/leaderboard')
+@Controller('leaderboard')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class LeaderboardController {
   constructor(private readonly board: RedisLeaderboardService) {}

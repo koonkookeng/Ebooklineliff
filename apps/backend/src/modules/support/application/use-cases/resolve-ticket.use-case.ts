@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/support/application/use-cases/resolve-ticket.use-case.ts
 // - Agent closes ticket → status RESOLVED → user notification →
 //   FCR event if user silent 5min (BDD §7.1). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import type { SupportRepository } from '../../repositories/support.repository';
 
 export interface ResolveTicketInput {
@@ -22,7 +22,7 @@ const SUPPORT_TICKET_STREAM = 'support:ticket:events';
 export class ResolveTicketUseCase {
   constructor(
     private readonly repo: SupportRepository,
-    private readonly bus?: TicketEventBus,
+    @Optional() private readonly bus?: TicketEventBus,
   ) {}
 
   async execute(input: ResolveTicketInput): Promise<void> {

@@ -6,7 +6,7 @@
 // - updatePreference: atomic upsert (Gate 7) + Zod gate + sanitized custom
 //   keymap; emits a best-effort event for the Redis stream (Gate 8).
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { UserReaderPreferenceSchema, type UserReaderPreference } from '@repo/shared';
 import { sanitizeKeybindings } from '../domain/value-objects/keybinding.vo';
 
@@ -61,8 +61,8 @@ function toPreference(userId: string, row: NavPreferenceRow | null): UserReaderP
 @Injectable()
 export class ReaderPreferenceService {
   constructor(
-    private readonly tables?: NavPreferenceTables,
-    private readonly onEvent?: (event: { kind: string; userId: string }) => void,
+    @Optional() private readonly tables?: NavPreferenceTables,
+    @Optional() private readonly onEvent?: (event: { kind: string; userId: string }) => void,
   ) {}
 
   async getUserPreference(userId: string): Promise<UserReaderPreference> {

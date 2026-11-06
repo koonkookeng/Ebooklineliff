@@ -21,7 +21,7 @@ function adminRoleOf(req: LooseReq): string {
   return user.role;
 }
 
-@Controller('api/v1/flash-sale')
+@Controller('flash-sale')
 export class FlashSaleAdminController {
   constructor(
     private readonly campaigns: FlashSaleCampaignService,

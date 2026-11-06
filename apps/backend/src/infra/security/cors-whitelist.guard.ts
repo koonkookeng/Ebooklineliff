@@ -9,7 +9,7 @@
 //   Prisma DomainWhitelistRegistry is the console-registration source of truth
 //   (Task 6) — sync the constant when the registry changes (parity-tested).
 // - Zero new deps. 403 carries no allowlist disclosure (opaque message).
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Optional } from '@nestjs/common';
 import { isOriginWhitelisted } from '@repo/shared';
 
 /** Compiled from config/line-developers-whitelist.json (default tenant). */
@@ -39,7 +39,7 @@ function first(headers: GuardRequest['headers'], name: string): string | undefin
 
 @Injectable()
 export class CorsWhitelistGuard implements CanActivate {
-  constructor(private readonly whitelist: string[] = DEFAULT_WHITELISTED_ORIGINS) {}
+  constructor(@Optional() private readonly whitelist: string[] = DEFAULT_WHITELISTED_ORIGINS) {}
 
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest<GuardRequest>();

@@ -5,7 +5,7 @@
 //   cheap edge tripwire: scans body/query/params strings with the shared
 //   looksLikeSqlInjection() signals, 403s on hit, audit-logs fail-open.
 // - Pure scanSqlInjectionInput() exported for contract tests. Zero new deps.
-import { ForbiddenException, Injectable, NestMiddleware } from '@nestjs/common';
+import { ForbiddenException, Injectable, NestMiddleware, Optional } from '@nestjs/common';
 import { capSnippet, looksLikeSqlInjection } from '@repo/shared';
 
 export interface WafAuditPort {
@@ -41,7 +41,7 @@ export function scanSqlInjectionInput(input: unknown, depth = 0): string | null 
 
 @Injectable()
 export class SqlInjectionFilterMiddleware implements NestMiddleware {
-  constructor(private readonly audit?: WafAuditPort) {}
+  constructor(@Optional() private readonly audit?: WafAuditPort) {}
 
   async use(
     req: Record<string, unknown>,

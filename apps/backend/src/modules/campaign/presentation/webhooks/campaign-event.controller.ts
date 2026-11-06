@@ -16,7 +16,7 @@ type LooseReq = Record<string, unknown>;
 
 const TRACKED = new Set(['coupon_validated', 'coupon_claimed', 'coupon_redeemed', 'coupon_expired_view']);
 
-@Controller('api/v1/campaigns')
+@Controller('campaigns')
 export class CampaignEventController {
   constructor(
     private readonly store: PrismaCouponRepository,

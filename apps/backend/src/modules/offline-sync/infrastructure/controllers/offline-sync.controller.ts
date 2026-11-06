@@ -14,7 +14,7 @@ interface BulkReq {
   headers?: Record<string, string | undefined>;
 }
 
-@Controller('api/v1/offline-sync')
+@Controller('offline-sync')
 export class OfflineSyncController {
   constructor(private readonly bulk: ProcessBulkSyncUseCase) {}
 

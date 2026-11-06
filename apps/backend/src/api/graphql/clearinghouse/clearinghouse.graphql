@@ -50,5 +50,6 @@ extend type Query {
 
 extend type Mutation {
   requestSellerPayout(input: PayoutRequestInput!): PayoutExecutionResult!
-  reconcileBankStatement(statementFileUrl: String!): ReconciliationResult!
+  # reconcileBankStatement is owned by the reconciliation module SDL
+  # (statementId form) — one field, one signature.
 }

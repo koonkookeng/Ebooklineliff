@@ -5,7 +5,7 @@
 //   (5-min, LINE-user-bound) verified by our own HLS edge gatekeeper
 //   (050/053 pattern). Zero new deps — node:crypto only, no secrets in code
 //   (env-first HMAC key, R2 zero-egress delivery).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac } from 'node:crypto';
 import { LIVE_PLAYBACK_TOKEN_TTL_SEC, liveTokenBody } from '@repo/shared';
 
@@ -20,7 +20,7 @@ export interface VendorPlayback {
 export class AmazonIvsAdapter {
   private readonly key: string;
 
-  constructor(key = process.env['LIVE_PLAYBACK_HMAC'] || 'dev-live-hmac') {
+  constructor(@Optional() key = process.env['LIVE_PLAYBACK_HMAC'] || 'dev-live-hmac') {
     this.key = key;
   }
 

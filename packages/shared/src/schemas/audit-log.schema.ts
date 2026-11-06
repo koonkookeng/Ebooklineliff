@@ -15,8 +15,10 @@
 //   auditVaultKey (WORM layout). Budgets: <2ms/block append (Gate 5),
 //   1000-block WORM batches, 7-year retention tag.
 // - Zero new deps (zod + node:crypto only).
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
+
+// Lazy node:crypto access — keeps this module browser-safe (no top-level node:crypto import).
+const crypto = (): typeof import('node:crypto') => require('node:crypto');
 
 export const AuditAdminRoleEnum = z.enum([
   'SUPER_ADMIN',
@@ -105,12 +107,12 @@ export function auditBlockHash(args: {
   timestamp: string;
 }): string {
   const raw = `${String(args.sequenceNumber)}|${args.actorId}|${args.actionName}|${stable(args.payloadBefore)}|${stable(args.payloadAfter)}|${args.previousHash}|${args.timestamp}`;
-  return createHash('sha256').update(raw, 'utf8').digest('hex');
+  return crypto().createHash('sha256').update(raw, 'utf8').digest('hex');
 }
 
 /** HMAC-SHA256 block signature (env-first secret, explicit fallback). */
 export function signAuditHash(currentHash: string, secret: string): string {
-  return createHmac('sha256', secret).update(currentHash, 'utf8').digest('hex');
+  return crypto().createHmac('sha256', secret).update(currentHash, 'utf8').digest('hex');
 }
 
 /** Timing-safe signature verification (length-guarded). */
@@ -118,7 +120,7 @@ export function verifyAuditSignature(currentHash: string, signature: string, sec
   const expected = signAuditHash(currentHash, secret);
   if (signature.length !== expected.length) return false;
   try {
-    return timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expected, 'utf8'));
+    return crypto().timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expected, 'utf8'));
   } catch {
     return false;
   }

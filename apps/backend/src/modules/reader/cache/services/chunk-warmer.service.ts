@@ -5,7 +5,7 @@
 // - §7.1 AI predictive seam: warmReadAhead() pre-warms the next N pages.
 // - R2 read arrives via injected R2ChunkReader (production: R2StorageService
 //   getObjectText bound in ChunkCacheModule; tests: in-memory fake).
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   chunkR2ObjectKey,
   CHUNK_CACHE_TTL_SEC,
@@ -23,7 +23,7 @@ export class ChunkWarmerService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe, see above).
   constructor(
     private readonly edge: RedisEdgeService,
-    private readonly r2Reader?: R2ChunkReader,
+    @Optional() private readonly r2Reader?: R2ChunkReader,
   ) {}
 
   /** Reader-facing path: HIT returns instantly; MISS warms from R2 vault. */

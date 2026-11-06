@@ -4,7 +4,7 @@
 //   exec delegate port. The heavy binary runs through the injected exec
 //   (043 doctrine); byte-transcode itself reuses FFmpegTranscoderService.
 // - Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { VOD_LADDER } from '@repo/shared';
 
 export interface LadderRung {
@@ -27,7 +27,7 @@ export interface ExecPort {
 
 @Injectable()
 export class FfmpegTranscoderAdapter {
-  constructor(private readonly execPort: ExecPort = { exec: async () => undefined }) {}
+  constructor(@Optional() private readonly execPort: ExecPort = { exec: async () => undefined }) {}
 
   ladder(): LadderRung[] {
     return [...RUNGS].filter((r) => (VOD_LADDER as readonly string[]).includes(r.resolution));

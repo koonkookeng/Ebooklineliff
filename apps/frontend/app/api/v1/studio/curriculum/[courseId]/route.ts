@@ -2,7 +2,7 @@
 // Canonical: apps/frontend/app/api/v1/studio/curriculum/[courseId]/route.ts
 import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, ctx: { params: { courseId: string } }) {
+export async function GET(req: Request, ctx: { params: Promise<{ courseId: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
   const headers: Record<string, string> = { Accept: 'application/json', 'x-tenant-id': tenant };
@@ -12,7 +12,7 @@ export async function GET(req: Request, ctx: { params: { courseId: string } }) {
   if (cookie) headers['cookie'] = cookie;
   try {
     const res = await fetch(
-      `${backend}/api/v1/studio/curriculum/${encodeURIComponent(ctx.params.courseId)}`,
+      `${backend}/api/v1/studio/curriculum/${encodeURIComponent((await ctx.params).courseId)}`,
       { headers },
     );
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });

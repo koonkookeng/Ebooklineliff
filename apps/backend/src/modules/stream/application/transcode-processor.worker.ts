@@ -4,7 +4,7 @@
 //   → lesson attach (Gate 7) → deterministic summary → best-effort LINE
 //   notify → ledger COMPLETE. Failures flip FAILED (ERROR UI path).
 // - Port-based for DB-free tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { VOD_STREAM, vodProgressKey } from '@repo/shared';
 import type { VodEvents, VodJobLedger, VodNotifier, VodSummary } from './live-to-vod.service';
 import type { LessonVodPort } from '../../course/lesson.service';
@@ -21,8 +21,8 @@ export class TranscodeProcessorWorker {
     private readonly summary: VodSummary,
     private readonly notify: VodNotifier,
     private readonly events: VodEvents,
-    private readonly publicBaseUrl = process.env['R2_PUBLIC_ORIGIN'] ?? 'https://vod.local',
-    private readonly keyUri = process.env['HLS_KEY_URI'] ?? 'https://vod.local/keys',
+    @Optional() private readonly publicBaseUrl = process.env['R2_PUBLIC_ORIGIN'] ?? 'https://vod.local',
+    @Optional() private readonly keyUri = process.env['HLS_KEY_URI'] ?? 'https://vod.local/keys',
   ) {}
 
   async run(job: { liveSessionId: string; lessonId: string; tenantId: string; rawSourceUrl?: string }): Promise<void> {

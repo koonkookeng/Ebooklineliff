@@ -145,9 +145,17 @@ const CAMEL = {
   }
   assert.ok(!prod.includes('unsafe-eval'), 'prod must not allow unsafe-eval');
   assert.ok(buildCspHeader({ nonce: 'N==', isDev: true }).includes("'unsafe-eval'"));
+  // Plain-HTTP (local dev) must not upgrade navigation to https://.
+  assert.ok(!buildCspHeader({ nonce: 'N==', allowInsecure: true }).includes('upgrade-insecure-requests'));
 
   // Edge copy byte-parity (same nonce/dev matrix → identical strings).
-  for (const opts of [{ nonce: '' }, { nonce: 'abc123==' }, { nonce: 'x', isDev: true }, { nonce: '', isDev: true }]) {
+  for (const opts of [
+    { nonce: '' },
+    { nonce: 'abc123==' },
+    { nonce: 'x', isDev: true },
+    { nonce: '', isDev: true },
+    { nonce: 'n', allowInsecure: true },
+  ]) {
     assert.equal(buildEdgeCspHeader(opts), buildCspHeader(opts), `edge parity failed for ${JSON.stringify(opts)}`);
   }
   const nonces = new Set([mintEdgeNonce(), mintEdgeNonce(), mintEdgeNonce(), mintCspNonce(), mintCspNonce()]);

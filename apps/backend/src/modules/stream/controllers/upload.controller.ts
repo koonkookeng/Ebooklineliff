@@ -10,7 +10,7 @@ import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { InitiateUploadSchema, VideoWorkerEventSchema } from '@repo/shared';
 import { VideoUploadService } from '../services/video-upload.service';
 
-@Controller('api/v1/stream/upload')
+@Controller('stream/upload')
 export class UploadController {
   constructor(private readonly uploads: VideoUploadService) {}
 

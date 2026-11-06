@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/ai-copilot/services/whisper-transcriber.service.ts
 // - Creates the VIDEO_TRANSCRIBE job row and enqueues chunk work (<30s
 //   intake; heavy lifting rides the processor). Port-based tests.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { z } from 'zod';
 import { CaptionLanguageEnum, COPILOT_STREAM } from '@repo/shared';
 import { InMemoryTranscribeQueue } from '../queues/transcribe.queue';
@@ -27,7 +27,7 @@ export class WhisperTranscriberService {
   constructor(
     private readonly queue: InMemoryTranscribeQueue,
     private readonly jobs: TranscribeJobStore,
-    private readonly bus?: TranscribeBus,
+    @Optional() private readonly bus?: TranscribeBus,
   ) {}
 
   async requestTranscribe(args: {

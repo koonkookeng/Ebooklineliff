@@ -7,7 +7,7 @@
 // - POST /api/v1/sync/position { ...CrossDeviceSyncPayload } (JWT push).
 // - SSE GET /api/v1/sync/cross-device-stream?userId= (room fan-out <500ms).
 // - Zero new deps (rxjs + @Sse are existing).
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Sse, UseGuards, Optional } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { CROSS_DEVICE_EVENT, crossDeviceChannel } from '@repo/shared';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -20,12 +20,12 @@ interface HandshakeReq {
   ip?: string;
 }
 
-@Controller('api/v1/sync')
+@Controller('sync')
 export class HandshakeController {
   constructor(
     private readonly state: CrossDeviceStateService,
     private readonly handshake: SessionHandshakeService,
-    private readonly rooms?: RedisPubSubAdapter,
+    @Optional() private readonly rooms?: RedisPubSubAdapter,
   ) {}
 
   @Post('handshake/issue')

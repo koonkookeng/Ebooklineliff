@@ -2,7 +2,7 @@
 // Canonical: apps/frontend/app/api/v1/logistics/shipments/[orderId]/route.ts
 import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, ctx: { params: { orderId: string } }) {
+export async function GET(req: Request, ctx: { params: Promise<{ orderId: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
   const headers: Record<string, string> = { Accept: 'application/json', 'x-tenant-id': tenant };
@@ -12,7 +12,7 @@ export async function GET(req: Request, ctx: { params: { orderId: string } }) {
   if (cookie) headers['cookie'] = cookie;
   try {
     const res = await fetch(
-      `${backend}/api/v1/logistics/shipments/${encodeURIComponent(ctx.params.orderId)}`,
+      `${backend}/api/v1/logistics/shipments/${encodeURIComponent((await ctx.params).orderId)}`,
       { headers },
     );
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });

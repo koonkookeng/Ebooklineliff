@@ -33,7 +33,7 @@ function netOf(req: LooseReq): { ipAddress: string } {
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN']);
 
-@Controller('api/v1/payout')
+@Controller('payout')
 export class PayoutController {
   constructor(
     private readonly request: RequestPayoutUseCase,

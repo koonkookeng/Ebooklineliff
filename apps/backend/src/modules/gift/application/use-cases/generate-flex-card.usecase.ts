@@ -3,7 +3,7 @@
 // - Rebuilds the shareable Flex card for an existing gift (sender re-share,
 //   claim-page preview). Claim URL + sender display (anon-aware).
 // - Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { giftClaimUrl } from '@repo/shared';
 import type { GiftRepository } from '../../domain/repository/gift.repository.interface';
 import { LineFlexGiftBuilder } from '../../infrastructure/line/line-flex-gift.builder';
@@ -13,7 +13,7 @@ export class GenerateFlexCardUseCase {
   constructor(
     private readonly repo: GiftRepository,
     private readonly flex: LineFlexGiftBuilder,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async execute(claimCode: string): Promise<{ flexMessageJson: string; claimUrl: string }> {

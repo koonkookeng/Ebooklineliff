@@ -8,6 +8,7 @@ import { Module } from '@nestjs/common';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
 import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
 import { batchLineLockKey, skuLockKey } from '@repo/shared';
 import { InventoryLockAdapter } from './infrastructure/redis-lock.adapter';
 import { PrismaInventoryRepository } from './infrastructure/prisma-inventory.repository';
@@ -19,6 +20,7 @@ import { InventoryResolver } from './presentation/inventory.resolver';
 import { OrderInventoryLockService } from '../order/inventory-lock.service';
 
 @Module({
+  imports: [R2StorageModule],
   controllers: [InventoryController],
   providers: [
     InventoryLockAdapter,

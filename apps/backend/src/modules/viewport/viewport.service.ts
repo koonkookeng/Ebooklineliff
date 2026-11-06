@@ -5,7 +5,7 @@
 //   memory budget, mints the forensic watermark line, and caches the session
 //   in the Redis edge (3600s TTL, fail-open).
 // - Constructor takes ports — no Nest param decorators (tsx-importable).
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import {
   VIEWPORT_SESSION_TTL_SEC,
@@ -46,7 +46,7 @@ export class ViewportRouterService {
     private readonly entitlements: ViewportEntitlementPort,
     private readonly users: ViewportUserPort,
     private readonly sessions: ViewportSessionCache,
-    private readonly syncStore?: ViewportSyncStore,
+    @Optional() private readonly syncStore?: ViewportSyncStore,
   ) {}
 
   async resolveViewportConfig(

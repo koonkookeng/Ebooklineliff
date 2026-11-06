@@ -19,7 +19,7 @@ function clientIp(req: { ip?: string; headers?: Record<string, string | string[]
   return (first ?? req.ip ?? 'unknown').trim();
 }
 
-@Controller('api/v1/resolver')
+@Controller('resolver')
 export class FastifyResolverController {
   constructor(
     private readonly resolve: ResolveDeepLinkUseCase,

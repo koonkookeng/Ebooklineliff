@@ -5,6 +5,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
 import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
 import { DraftStorageService } from './services/draft-storage.service';
 import { ProductBuilderService } from './services/product-builder.service';
@@ -14,6 +15,7 @@ import { UploadPresignController } from './controllers/upload-presign.controller
 import { ProductBuilderResolver } from './resolvers/product-builder.resolver';
 
 @Module({
+  imports: [R2StorageModule],
   controllers: [ProductBuilderController, UploadPresignController],
   providers: [
     {

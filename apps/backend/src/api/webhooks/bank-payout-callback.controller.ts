@@ -8,7 +8,7 @@
 // - Public route (bank calls it): the envelope IS the auth. Must be
 //   registered in WebhooksModule (no global guards on webhooks).
 // - Zero new deps.
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Optional } from '@nestjs/common';
 import { BankPayoutCallbackSchema, PAYOUT_CLEARING_STREAM, verifyBankPayload } from '@repo/shared';
 import { PrismaClearingStore } from '../../modules/payout/infrastructure/clearing.store';
 import { GenerateTaxPdfUseCase } from '../../modules/payout/application/use-cases/generate-tax-pdf.use-case';
@@ -22,7 +22,7 @@ export class BankPayoutCallbackController {
     private readonly taxPdf: GenerateTaxPdfUseCase,
     private readonly prisma: PrismaService,
     private readonly redis: RedisClusterService,
-    private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
+    @Optional() private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz',
   ) {}
 
   @Post()

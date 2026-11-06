@@ -4,7 +4,7 @@
 //   primary (091 extractive summarizer) → on timeout/error, secondary
 //   extractive fallback within 500ms (never blocks the reader).
 // - TTFT measured per call (Gate 8 telemetry). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   AI_FALLBACK_BUDGET_MS,
   SEMANTIC_CACHE_THRESHOLD,
@@ -52,7 +52,7 @@ export class LlmOrchestratorService {
   constructor(
     private readonly embeddings: EmbeddingGeneratorService,
     private readonly summarizer: AiSummarizerService,
-    private readonly cache?: SemanticCachePort,
+    @Optional() private readonly cache?: SemanticCachePort,
   ) {}
 
   async answer(args: {

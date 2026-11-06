@@ -42,7 +42,7 @@ const CATEGORY_BY_EVENT: Record<string, string> = {
   VIDEO_WATCH_PROGRESS: 'video',
 };
 
-@Controller('api/v1/recommendations')
+@Controller('recommendations')
 export class RecommendationEventController {
   constructor(
     private readonly reranker: HybridRerankerService,

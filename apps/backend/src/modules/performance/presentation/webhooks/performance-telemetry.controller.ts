@@ -25,7 +25,7 @@ function userAgentOf(req: AuthedReq): string | undefined {
   return typeof s === 'string' && s ? s.slice(0, 500) : undefined;
 }
 
-@Controller('api/v1/performance')
+@Controller('performance')
 export class PerformanceTelemetryController {
   constructor(
     private readonly guard: BundleGuardService,

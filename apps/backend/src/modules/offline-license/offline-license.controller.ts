@@ -15,7 +15,7 @@ interface LicenseReq {
   user?: { id?: string };
 }
 
-@Controller('api/v1/offline-license')
+@Controller('offline-license')
 export class OfflineLicenseController {
   constructor(private readonly licenses: OfflineLicenseService) {}
 

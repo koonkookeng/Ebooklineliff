@@ -31,6 +31,15 @@ export async function fetchOrderDetail(orderId: string): Promise<Order> {
   return (await res.json()) as Order;
 }
 
+export async function fetchUserOrders(tenantId?: string): Promise<Order[]> {
+  const qs = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+  const res = await fetch(`/api/checkout/orders${qs}`);
+  if (!res.ok) {
+    throw new Error('โหลดรายการคำสั่งซื้อไม่สำเร็จ');
+  }
+  return (await res.json()) as Order[];
+}
+
 export async function createSmartOrder(input: CreateOrderInput): Promise<CreateOrderPayload> {
   const res = await fetch('/api/checkout/orders', {
     method: 'POST',

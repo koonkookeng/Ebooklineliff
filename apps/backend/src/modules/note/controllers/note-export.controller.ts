@@ -26,7 +26,7 @@ interface SyncItem {
   updatedAt: string;
 }
 
-@Controller('api/v1/notes')
+@Controller('notes')
 export class NoteExportController {
   constructor(
     private readonly notes: NoteService,

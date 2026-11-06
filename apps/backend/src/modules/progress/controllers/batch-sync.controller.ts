@@ -13,7 +13,7 @@ interface BatchReq {
   headers?: Record<string, string | undefined>;
 }
 
-@Controller('api/v1/progress')
+@Controller('progress')
 export class BatchSyncController {
   constructor(private readonly sync: ProgressSyncService) {}
 

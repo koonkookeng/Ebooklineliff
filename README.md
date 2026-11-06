@@ -16,6 +16,11 @@
 corepack enable && corepack prepare pnpm@9.0.0 --activate
 pnpm install
 cp .env.example .env          # แก้ DATABASE_URL / JWT_SECRET / LINE / R2
+./scripts/deploy-local.sh     # สั่ง Deploy Full-stack Docker Containers อัตโนมัติ (Postgres + Redis Cluster + Backend + Frontend)
+```
+
+หรือเปิดเฉพาะบริการพื้นฐานด้วย Docker Compose:
+```bash
 docker compose up -d          # Postgres 16 + Redis 6-node cluster
 set -a; source .env; set +a
 pnpm db:generate && pnpm db:push

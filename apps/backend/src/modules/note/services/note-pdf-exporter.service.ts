@@ -7,7 +7,7 @@
 // - Uploads via R2StorageService.putObjectBuffer, returns a short-lived
 //   presigned GET URL (zero egress via Cloudflare CDN).
 // - tsx-safe structural R2 port. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { formatNoteTimestamp } from '@repo/shared';
 
@@ -100,7 +100,7 @@ export function buildNotesPdf(title: string, items: NotePdfItem[], forensic: str
 
 @Injectable()
 export class NotePdfExporterService {
-  constructor(private readonly r2?: NoteR2Port) {}
+  constructor(@Optional() private readonly r2?: NoteR2Port) {}
 
   async exportLessonNotes(userId: string, lessonId: string, items: NotePdfItem[]): Promise<{ ok: boolean; url?: string; error?: string }> {
     if (!this.r2 || items.length === 0) return { ok: false, error: 'EXPORT_UNAVAILABLE' };

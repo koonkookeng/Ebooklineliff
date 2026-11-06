@@ -20,7 +20,7 @@ function actorOf(req: LooseReq): { id: string; role?: string } {
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN', 'CONTENT_MODERATOR']);
 
-@Controller('api/v1/abandoned-cart')
+@Controller('abandoned-cart')
 export class AbandonedCartController {
   constructor(
     private readonly carts: AbandonedCartService,

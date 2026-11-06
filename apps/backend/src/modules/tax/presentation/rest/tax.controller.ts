@@ -27,7 +27,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/tax')
+@Controller('tax')
 export class TaxController {
   constructor(
     private readonly calculate: CalculateTaxUseCase,

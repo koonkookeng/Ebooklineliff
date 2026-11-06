@@ -5,7 +5,7 @@
 // - logTelemetry: best-effort NetworkTelemetryLog row for disconnection
 //   segments >5s (QoE analytics, §7.1).
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 export interface NetworkHealthTables {
   networkTelemetryLog: {
@@ -25,7 +25,7 @@ export interface TelemetryInput {
 
 @Injectable()
 export class NetworkHealthService {
-  constructor(private readonly tables?: NetworkHealthTables) {}
+  constructor(@Optional() private readonly tables?: NetworkHealthTables) {}
 
   pingCheck(tenantId?: string): { status: 'ok'; serverTimestamp: number; tenantId?: string } {
     return { status: 'ok', serverTimestamp: Date.now(), ...(tenantId ? { tenantId } : {}) };

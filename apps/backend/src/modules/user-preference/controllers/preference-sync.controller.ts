@@ -6,7 +6,7 @@
 // - POST /api/v1/preferences/sync { preference } — offline LWW drain (JWT).
 // - SSE GET /api/v1/preferences/stream?userId= — room fan-out (<100ms).
 // - Zero new deps (rxjs + @Sse are existing).
-import { BadRequestException, Body, Controller, Get, Patch, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Patch, Post, Query, Req, Sse, UseGuards, Optional } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { PREFERENCE_UPDATED_EVENT, preferenceChannel } from '@repo/shared';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
@@ -21,11 +21,11 @@ export interface PreferenceRoomBus {
   subscribeRoom(channel: string, event: string, handler: (data: unknown) => void): Promise<() => void>;
 }
 
-@Controller('api/v1/preferences')
+@Controller('preferences')
 export class PreferenceSyncController {
   constructor(
     private readonly prefs: UserPreferenceService,
-    private readonly rooms?: PreferenceRoomBus,
+    @Optional() private readonly rooms?: PreferenceRoomBus,
   ) {}
 
   @Get()

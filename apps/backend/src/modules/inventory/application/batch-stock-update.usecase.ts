@@ -3,7 +3,7 @@
 // - Per line: tryLock (contention -> failedItems, BDD-1) -> guarded delta ->
 //   upsert -> immutable log -> aggregate sync. Zod gate at entry (BDD-2).
 // - Port-based (locks/repo/tx) for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { BatchStockUpdatePayloadSchema } from '@repo/shared';
 import { applyDelta, assertLineTenant } from '../domain/inventory-adjustment.entity';
 import type { WarehouseInventoryRepository } from '../domain/warehouse-stock.repository';
@@ -30,7 +30,7 @@ export class BatchStockUpdateUseCase {
     private readonly repo: WarehouseInventoryRepository,
     private readonly locks: BatchLocks,
     private readonly tx: BatchTx,
-    private readonly lockKeyFor: (warehouseId: string, sku: string) => string,
+    @Optional() private readonly lockKeyFor: (warehouseId: string, sku: string) => string,
   ) {}
 
   async execute(headerTenantId: string | undefined, body: unknown): Promise<BatchStockResult> {

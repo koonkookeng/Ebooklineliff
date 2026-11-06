@@ -6,7 +6,7 @@
 //   cutoff: page > previewPages ⇒ 403 PREVIEW_LIMIT_EXCEEDED; video beyond
 //   previewLimitSec is fenced by signed segment tokens + player cutoff.
 // - Constructor takes ports — no Nest param decorators (tsx-importable).
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, Optional } from '@nestjs/common';
 import {
   PREVIEW_EBOOK_DEFAULT_PAGES,
   PREVIEW_VIDEO_DEFAULT_SEC,
@@ -53,7 +53,7 @@ export interface PreviewIdentity {
 export class PreviewGatekeeperService {
   constructor(
     private readonly db: PreviewDbPort,
-    private readonly events?: PreviewEventSink,
+    @Optional() private readonly events?: PreviewEventSink,
   ) {}
 
   private identityKey(id: PreviewIdentity): string {

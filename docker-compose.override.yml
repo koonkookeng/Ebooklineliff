@@ -4,6 +4,7 @@ services:
     restart: "no"
     ports:
       - "5432:5432"
-  redis-node-1:
-    ports:
-      - "6379:6379"
+  # Redis Cluster is internal-only: every node advertises its 172.28.0.x
+  # address, which a host client cannot reach. Use `docker compose exec`
+  # for manual inspection. (Windows also excludes host port 6379.)
+  redis-node-1: {}

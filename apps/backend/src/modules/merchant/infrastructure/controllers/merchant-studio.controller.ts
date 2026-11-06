@@ -27,7 +27,7 @@ function userRole(req: Record<string, unknown>): string | undefined {
   return (req['user'] as { role?: string } | undefined)?.role;
 }
 
-@Controller('api/v1/merchant/studio')
+@Controller('merchant/studio')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class MerchantStudioController {
   constructor(

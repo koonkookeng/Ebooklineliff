@@ -6,7 +6,7 @@
 //   upserts (small batches, <1s) instead of interactive $transaction —
 //   matches the Phase 062 ledger precedent; each row is atomic.
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { OfflineProgressSyncPayloadSchema, type OfflineProgressSyncPayload } from '@repo/shared';
 
 export interface OfflineSyncTables {
@@ -28,7 +28,7 @@ export interface OfflineSyncTables {
 
 @Injectable()
 export class OfflineSyncService {
-  constructor(private readonly tables?: OfflineSyncTables) {}
+  constructor(@Optional() private readonly tables?: OfflineSyncTables) {}
 
   async processOfflineSync(userId: string, syncData: unknown, ipAddress: string, deviceId = 'offline-lease'): Promise<{ success: boolean; syncedRecords: number }> {
     const parsed = OfflineProgressSyncPayloadSchema.safeParse({ ...(syncData as object), userId });

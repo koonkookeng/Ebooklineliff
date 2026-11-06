@@ -34,7 +34,7 @@ function netOf(req: LooseReq): { ipAddress: string; userAgent: string; tenant: s
   };
 }
 
-@Controller('api/v1/admin/reconciliation')
+@Controller('admin/reconciliation')
 export class ManualOverrideController {
   constructor(
     private readonly overrides: ManualOverrideService,

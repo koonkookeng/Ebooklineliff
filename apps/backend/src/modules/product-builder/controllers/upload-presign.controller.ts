@@ -9,7 +9,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { assertMerchantRole } from '../../merchant/domain/entities/merchant-account.entity';
 import { R2AssetPipelineService } from '../services/r2-asset-pipeline.service';
 
-@Controller('api/v1/builder')
+@Controller('builder')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class UploadPresignController {
   constructor(private readonly pipeline: R2AssetPipelineService) {}

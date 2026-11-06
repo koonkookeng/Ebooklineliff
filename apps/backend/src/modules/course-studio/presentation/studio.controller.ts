@@ -31,7 +31,7 @@ function assertCreatorRole(role: string | undefined): void {
   }
 }
 
-@Controller('api/v1/studio')
+@Controller('studio')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class StudioController {
   constructor(

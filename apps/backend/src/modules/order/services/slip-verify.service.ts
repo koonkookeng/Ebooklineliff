@@ -5,7 +5,7 @@
 // Phase 013: expected amount honors the active PromptPayTransaction total
 // (fractional-cent matching); the txn flips it PAID; failures feed the
 // PromptPay fraud guard (optional — keeps Phase-012 constructions compiling).
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 // Phase 014: Redis transRef anti-replay (SLIP_ALREADY_USED, 30-day lock,
@@ -44,11 +44,11 @@ export class SlipVerifyService {
     private readonly redis: RedisClusterService,
     private readonly easyslip: EasySlipVerifyAdapter,
     private readonly grants: EntitlementGrantService,
-    // Optional (no @Optional decorator — tsx contract tests run without
+    @Optional() // Optional (no @Optional decorator — tsx contract tests run without
     // experimentalDecorators; Nest resolves via design:paramtypes metadata).
     // OrderModule imports PromptPayModule so runtime resolution succeeds.
     private readonly guard?: PromptPayGuardService,
-    // Phase 015: outbox + retry drain (same-module, optional for test compat).
+    @Optional() // Phase 015: outbox + retry drain (same-module, optional for test compat).
     private readonly atomic?: OrderAtomicService,
   ) {}
 

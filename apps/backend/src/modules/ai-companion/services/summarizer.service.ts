@@ -4,7 +4,7 @@
 //   retrieve (DRM-capped) → orchestrate (cache/fallback) → ONE $transaction:
 //   session ensure + USER/AI messages (Gate 7) → AiChatResponse.
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AiChatQuerySchema, AiSummaryRequestSchema, AI_STREAM, estimateTokens } from '@repo/shared';
 import { RagRetrievalService } from './rag-retrieval.service';
@@ -33,7 +33,7 @@ export class CompanionSummarizerService {
     private readonly orchestrator: LlmOrchestratorService,
     private readonly store: ChatStorePort,
     private readonly tx: ChatTx,
-    private readonly bus?: CompanionBus,
+    @Optional() private readonly bus?: CompanionBus,
   ) {}
 
   async chat(args: {

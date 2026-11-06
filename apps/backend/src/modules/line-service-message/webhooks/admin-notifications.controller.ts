@@ -8,7 +8,7 @@ import { LineServiceMessageService } from '../application/line-service-message.s
 
 const TenantQuerySchema = z.object({ tenantId: z.string().min(1) });
 
-@Controller('api/v1/admin/notifications')
+@Controller('admin/notifications')
 export class AdminNotificationsController {
   constructor(private readonly dispatch: LineServiceMessageService) {}
 

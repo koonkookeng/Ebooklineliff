@@ -10,6 +10,8 @@
 export interface EdgeCspOptions {
   nonce?: string;
   isDev?: boolean;
+  /** Plain-HTTP request: omit `upgrade-insecure-requests` (local dev over http). */
+  allowInsecure?: boolean;
 }
 
 export function mintEdgeNonce(): string {
@@ -21,7 +23,7 @@ export function mintEdgeNonce(): string {
 }
 
 export function buildEdgeCspHeader(options: EdgeCspOptions = {}): string {
-  const { nonce = '', isDev = false } = options;
+  const { nonce = '', isDev = false, allowInsecure = false } = options;
   const scriptSrc = [
     "'self'",
     ...(nonce ? [`'nonce-${nonce}'`] : []),
@@ -44,14 +46,14 @@ export function buildEdgeCspHeader(options: EdgeCspOptions = {}): string {
     "form-action 'self'",
     "frame-ancestors 'self' https://liff.line.me https://*.line.me",
     'report-uri /api/security/csp-report',
-    'upgrade-insecure-requests',
+    ...(allowInsecure ? [] : ['upgrade-insecure-requests']),
   ].join('; ');
 }
 
 /** Security response headers applied to every edge response (CSP + hardening). */
-export function edgeSecurityHeaders(nonce: string, isDev: boolean): Record<string, string> {
+export function edgeSecurityHeaders(nonce: string, isDev: boolean, allowInsecure = false): Record<string, string> {
   return {
-    'Content-Security-Policy': buildEdgeCspHeader({ nonce, isDev }),
+    'Content-Security-Policy': buildEdgeCspHeader({ nonce, isDev, allowInsecure }),
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-CSP-Nonce': nonce,

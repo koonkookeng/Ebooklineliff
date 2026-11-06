@@ -5,7 +5,7 @@
 //   (LlmPort) allows swapping to a managed model without touching callers.
 // - Every answer carries an invisible forensic watermark tag (§8.1).
 // - Port-based for DB-free tests.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { capExcerpt, watermarkTag } from '@repo/shared';
 import { RagContextBuilderService } from './rag-context-builder.service';
 
@@ -30,7 +30,7 @@ function topSentences(text: string, max = 3): string[] {
 export class AiSummarizerService {
   constructor(
     private readonly context: RagContextBuilderService,
-    private readonly llm?: LlmPort,
+    @Optional() private readonly llm?: LlmPort,
   ) {}
 
   async ask(args: {

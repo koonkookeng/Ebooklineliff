@@ -11,7 +11,7 @@
 //   onTransition hook lets hosts record Prometheus gauges without a module
 //   cycle. Fail-open: Redis faults degrade to direct execution.
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CIRCUIT_COOLDOWN_SEC,
   CIRCUIT_EVENT_STREAM,
@@ -51,7 +51,7 @@ export class CircuitBreakerService {
 
   constructor(
     private readonly redis: CircuitRedisPort,
-    private readonly onTransition?: (t: CircuitTransition) => void,
+    @Optional() private readonly onTransition?: (t: CircuitTransition) => void,
   ) {}
 
   /** Current state (CLOSED on miss/fault). */

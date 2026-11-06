@@ -5,7 +5,7 @@
 // - Monotonic progress: max(lastPage)/max(watchedSec) so stale offline
 //   replays never rewind newer online state (Phase 057 LWW precedent).
 // - tsx-safe structural port. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 export interface OfflineSyncTables {
   offlineDeviceSession: {
@@ -26,7 +26,7 @@ export interface OfflineSyncTables {
 
 @Injectable()
 export class OfflineSyncRepository {
-  constructor(private readonly tables?: OfflineSyncTables) {}
+  constructor(@Optional() private readonly tables?: OfflineSyncTables) {}
 
   async recordSessionLedger(userId: string, deviceId: string, targetType: string, itemsCount: number, status: string): Promise<void> {
     if (!this.tables) return;

@@ -27,7 +27,7 @@ function ipOf(req: WatermarkReq): string {
   return req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
 }
 
-@Controller('api/v1/watermark')
+@Controller('watermark')
 export class WatermarkController {
   constructor(
     private readonly seeds: GetWatermarkSeedHandler,

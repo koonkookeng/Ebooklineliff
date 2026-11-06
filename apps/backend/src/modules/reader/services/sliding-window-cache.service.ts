@@ -5,7 +5,7 @@
 //   pages the client must evict (GC N-2 rule).
 // - Pure orchestration over injected ports; tsx-safe (no param decorators).
 // - Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   readerEvictedPages,
   readerWindowPages,
@@ -23,7 +23,7 @@ export interface ReaderWindow {
 @Injectable()
 export class SlidingWindowCacheService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly warmer?: ChunkWarmerService) {}
+  constructor(@Optional() private readonly warmer?: ChunkWarmerService) {}
 
   windowFor(currentPage: number): number[] {
     return readerWindowPages(currentPage);

@@ -3,7 +3,7 @@
 // - searchSimilarVectors calls match_content_vectors (HNSW, Gate 4 tenant
 //   filter mandatory). saveVectorEmbedding batch-inserts one row.
 // - Port-based (RawSqlPort) for DB-free tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../infra/database/prisma.service';
 
 export interface VectorMatchResult {
@@ -26,7 +26,7 @@ export interface RawSqlPort {
 export class PgVectorRepositoryService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly raw?: RawSqlPort,
+    @Optional() private readonly raw?: RawSqlPort,
   ) {}
 
   private get db(): RawSqlPort {

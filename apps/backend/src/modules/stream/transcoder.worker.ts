@@ -5,7 +5,7 @@
 //   enqueue → {jobId}. The shared VideoTranscodeQueue (Phase 043, no BullMQ)
 //   retries 3x with backoff, then DLQ; FAILED rows keep the error.
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { VideoTranscodeQueue } from '../../jobs/transcoder/video-transcode.queue';
 import type { SubmitTranscodeJob } from '@repo/shared';
 import { VideoTranscodeProcessor044 } from './workers/video-transcode.processor';
@@ -24,9 +24,9 @@ export interface LessonSubmit extends SubmitTranscodeJob {
 export class TranscodeWorkerHost {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly tables?: LessonLedgerTables,
-    private readonly queue?: VideoTranscodeQueue,
-    private readonly processor?: VideoTranscodeProcessor044,
+    @Optional() private readonly tables?: LessonLedgerTables,
+    @Optional() private readonly queue?: VideoTranscodeQueue,
+    @Optional() private readonly processor?: VideoTranscodeProcessor044,
   ) {}
 
   async submitLessonJob(input: LessonSubmit): Promise<{ jobId: string; queued: boolean }> {

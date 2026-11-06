@@ -138,30 +138,58 @@ function LessonInner({ lessonId }: { lessonId: string }) {
   }, []);
 
   return (
-    <div className="flex w-full flex-col gap-1">
-      <HlsVideoPlayer
-        masterManifestUrl={payload.hlsManifestUrl}
-        securityToken={payload.signedEdgeToken}
-        watermarkText={`${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
-        onProgressSync={handleProgress}
-        initialTime={payload.lastWatchedSec}
-        durationSec={payload.durationSec}
-        autoPlay={false}
-      />
-      <VideoScrubbingBar
-        durationSec={payload.durationSec}
-        currentTimeSec={scrubNow}
-        manifest={scrubManifest}
-        watermarkText={scrubWatermark || `${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
-        lessonId={payload.lessonId}
-        onSeek={handleScrubSeek}
-      />
-      <InVideoNoteEngine
-        lessonId={payload.lessonId}
-        getCurrentTimeSec={getNoteTime}
-        seekToSeconds={handleScrubSeek}
-        pauseVideo={pauseNoteVideo}
-      />
+    <div className="flex flex-col lg:flex-row w-full min-h-screen">
+      {/* Primary Content: Player (70% on Desktop) */}
+      <div className="w-full lg:w-[70%] lg:h-screen lg:sticky lg:top-0 bg-black flex flex-col">
+        <HlsVideoPlayer
+          masterManifestUrl={payload.hlsManifestUrl}
+          securityToken={payload.signedEdgeToken}
+          watermarkText={`${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
+          onProgressSync={handleProgress}
+          initialTime={payload.lastWatchedSec}
+          durationSec={payload.durationSec}
+          autoPlay={false}
+        />
+        <div className="px-4 py-3 bg-slate-900 border-t border-slate-800">
+          <VideoScrubbingBar
+            durationSec={payload.durationSec}
+            currentTimeSec={scrubNow}
+            manifest={scrubManifest}
+            watermarkText={scrubWatermark || `${payload.forensicWatermark.displayName} | ${payload.forensicWatermark.userIdHash.slice(0, 12)}`}
+            lessonId={payload.lessonId}
+            onSeek={handleScrubSeek}
+          />
+        </div>
+      </div>
+
+      {/* Secondary Content: Playlist/Tabs (30% on Desktop) */}
+      <div className="flex-1 flex flex-col bg-background lg:border-l border-border h-full lg:overflow-y-auto">
+        {/* Mobile-only tab bar */}
+        <div className="flex lg:hidden border-b border-border sticky top-0 bg-background z-20">
+          {['เนื้อหา', 'โน้ต', 'Q&A'].map((tab, idx) => (
+            <button 
+              key={tab} 
+              className={`flex-1 py-4 text-sm font-bold border-b-2 ${idx === 0 ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4 space-y-6">
+          <div className="lg:block">
+            <h1 className="text-xl font-bold mb-1">เนื้อหาบทเรียน</h1>
+            <p className="text-sm text-muted-foreground mb-4">คอร์ส: [E-Learning Course Name]</p>
+            
+            <InVideoNoteEngine
+              lessonId={payload.lessonId}
+              getCurrentTimeSec={getNoteTime}
+              seekToSeconds={handleScrubSeek}
+              pauseVideo={pauseNoteVideo}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -170,7 +198,7 @@ export default function LiffLessonPage({ params }: { params: Promise<{ courseId:
   const { lessonId } = use(params);
   return (
     <Suspense fallback={<div className="flex aspect-video w-full items-center justify-center rounded-xl bg-black" aria-busy><div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-500" /></div>}>
-      <main className="mx-auto w-full max-w-3xl px-4 py-4">
+      <main className="w-full min-h-screen bg-background">
         <LessonInner lessonId={lessonId} />
       </main>
     </Suspense>

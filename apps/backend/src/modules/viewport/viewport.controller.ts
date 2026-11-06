@@ -13,7 +13,7 @@ import {
   ViewportStateSyncInputSchema,
 } from '@repo/shared';
 
-@Controller('api/v1/viewport')
+@Controller('viewport')
 export class ViewportController {
   constructor(private readonly router: ViewportRouterService) {}
 

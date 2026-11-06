@@ -7,7 +7,7 @@
 //   latest AES-128 key bytes (never logged, never cached at CDN).
 // - reportProgress: Redis progress key (300s) + injectable heatmap sink.
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   VIDEO_TOKEN_TTL_SEC,
@@ -84,11 +84,11 @@ export function videoProgressKey(userId: string, lessonId: string): string {
 export class StreamService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly tables?: StreamTables,
-    private readonly vault?: StreamVault,
-    private readonly cache?: StreamCache,
-    private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
-    private readonly onProgress?: (event: { userId: string; lessonId: string; watchedSec: number }) => void,
+    @Optional() private readonly tables?: StreamTables,
+    @Optional() private readonly vault?: StreamVault,
+    @Optional() private readonly cache?: StreamCache,
+    @Optional() private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly onProgress?: (event: { userId: string; lessonId: string; watchedSec: number }) => void,
   ) {}
 
   signToken(videoId: string, userId: string, expiresAtMs: number): string {

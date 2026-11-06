@@ -6,7 +6,7 @@
 //   verifier job can prove restorability. Pure snapshotPath exported.
 // - Ports-based (tsx-importable); R2StorageService.putObjectBuffer is the
 //   production vault port. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { WAL_ARCHIVE_SEC } from '@repo/shared';
 
@@ -38,7 +38,7 @@ export class R2PitrBackupService {
   constructor(
     private readonly vault: PitrVaultPort,
     private readonly db: PitrDbPort,
-    private readonly nodeName = 'db-primary',
+    @Optional() private readonly nodeName = 'db-primary',
   ) {}
 
   async archiveWal(walPayload: Buffer, kind: 'FULL' | 'WAL_LOG' | 'INCREMENTAL' = 'WAL_LOG'): Promise<{ snapshotId: string; r2Path: string; bytes: number; sha256: string }> {

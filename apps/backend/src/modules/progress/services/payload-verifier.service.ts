@@ -7,7 +7,7 @@
 //   unsigned items (zero-trust ownership still applies) so missing/invalid
 //   signatures are flagged, never silently trusted.
 // - Pure timing-safe compare; tsx-safe. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { SYNC_IDEMPOTENCY_TTL_SEC, syncBatchDedupeKey } from '@repo/shared';
 
@@ -29,8 +29,8 @@ function hmacEqual(a: string, b: string): boolean {
 @Injectable()
 export class PayloadVerifierService {
   constructor(
-    private readonly cache?: DedupeCache,
-    private readonly secretKey: string = process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly cache?: DedupeCache,
+    @Optional() private readonly secretKey: string = process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
   ) {}
 
   signCanonical(canonical: string): string {

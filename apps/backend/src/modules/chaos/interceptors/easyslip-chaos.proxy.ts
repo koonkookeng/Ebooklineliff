@@ -6,7 +6,7 @@
 //   BDD-2 path); EASYSLIP_500_ERROR throws a vendor-500 immediately.
 //   Composes OUTSIDE the 122 circuit adapter (chaos → breaker → vendor).
 // - Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { CHAOS_EASYSLIP_LATENCY_MS } from '@repo/shared';
 import { ChaosInjectorService } from '../chaos-injector.service';
 
@@ -23,7 +23,7 @@ export class EasySlipChaosProxy implements ChaosEasySlipPort {
   constructor(
     private readonly chaos: ChaosInjectorService,
     private readonly inner: ChaosEasySlipPort,
-    private readonly targetService = 'easyslip',
+    @Optional() private readonly targetService = 'easyslip',
   ) {}
 
   async verify(slipUrl: string): Promise<{ transRef: string; amount: number; receiverAccount: string }> {

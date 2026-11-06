@@ -24,7 +24,7 @@ interface AuthedRequest {
   headers?: Record<string, string>;
 }
 
-@Controller('api/v1/security')
+@Controller('security')
 @UseGuards(JwtAuthGuard)
 export class SecurityMatrixController {
   constructor(

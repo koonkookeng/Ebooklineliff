@@ -30,7 +30,7 @@ function netOf(req: LooseReq): { ipAddress: string; userAgent: string; tenantNam
   };
 }
 
-@Controller('api/v1/admin/kyc111')
+@Controller('admin/kyc111')
 export class KycQueueController {
   constructor(private readonly review: KycQueueReviewService) {}
 

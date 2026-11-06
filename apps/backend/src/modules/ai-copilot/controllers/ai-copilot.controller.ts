@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/ai-copilot/controllers/ai-copilot.controller.ts
 // - POST outline / SSE outline-stream / POST transcribe / GET job /
 //   POST quiz-from-transcript. Zero new deps (rxjs ships with Nest).
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
@@ -14,6 +14,10 @@ export interface JobStatusStore {
   findJob(jobId: string, userId: string): Promise<{ id: string; status: string; progressPercent: number; errorMessage: string | null } | null>;
 }
 
+/** Injection token for the structural job-store port (interfaces have no runtime token). */
+export const JOB_STATUS_STORE = 'AI_COPILOT_JOB_STATUS_STORE';
+export type { JobStatusStore as JobStatusStorePort };
+
 type LooseReq = Record<string, unknown>;
 
 function actorOf(req: LooseReq): string {
@@ -22,14 +26,14 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/copilot')
+@Controller('copilot')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class AiCopilotController {
   constructor(
     private readonly outline: OutlineGeneratorService,
     private readonly transcriber: WhisperTranscriberService,
     private readonly quiz: AutoQuizBuilderService,
-    private readonly jobs: JobStatusStore,
+    @Inject(JOB_STATUS_STORE) private readonly jobs: JobStatusStore,
   ) {}
 
   @Post('outline')

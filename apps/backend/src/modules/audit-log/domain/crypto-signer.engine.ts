@@ -6,7 +6,7 @@
 // - Secret resolution: explicit ctor arg wins, else AUDIT_HMAC_SECRET env,
 //   else the documented development fallback (provision the env in prod).
 // - Zero new deps (node:crypto via contract).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { signAuditHash, verifyAuditSignature } from '@repo/shared';
 
@@ -20,7 +20,7 @@ export function resolveAuditSecret(explicit?: string): string {
 export class CryptoSignerEngine {
   private readonly secret: string;
 
-  constructor(secret?: string) {
+  constructor(@Optional() secret?: string) {
     this.secret = resolveAuditSecret(secret);
     if (!this.secret) throw new Error('Audit HMAC secret must not be empty');
   }

@@ -1,4 +1,4 @@
-// SSOT Phase 072 §2.1 — App global stylesheet (single-source import)
-// Canonical: apps/frontend/app/globals.css
-// Tokens live in apps/frontend/styles/globals.css (plain CSS, no Tailwind dep).
+/* SSOT Phase 072 §2.1 — App global stylesheet (single-source import)
+   Canonical: apps/frontend/app/globals.css
+   Tokens live in apps/frontend/styles/globals.css (plain CSS, no Tailwind dep). */
 @import '../styles/globals.css';

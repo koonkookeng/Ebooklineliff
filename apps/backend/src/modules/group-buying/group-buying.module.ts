@@ -23,7 +23,13 @@ import { GroupBuyingController } from './api/rest/group-buying.controller';
     PrismaGroupRepository,
     LineFlexGroupBuilder,
     EntitlementGrantService,
-    GenerateFlexInviteUseCase,
+    {
+      // GroupRepository is a TS interface (no runtime token) — wire explicitly.
+      provide: GenerateFlexInviteUseCase,
+      useFactory: (repo: PrismaGroupRepository, flex: LineFlexGroupBuilder) =>
+        new GenerateFlexInviteUseCase(repo, flex),
+      inject: [PrismaGroupRepository, LineFlexGroupBuilder],
+    },
     {
       provide: CreateGroupRoomService,
       useFactory: (repo: PrismaGroupRepository, flex: LineFlexGroupBuilder, redis: RedisClusterService) =>

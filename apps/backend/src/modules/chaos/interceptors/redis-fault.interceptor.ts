@@ -7,14 +7,14 @@
 //   Inactive drills pass through untouched (zero prod overhead beyond the
 //   drillsEnabled() flag check).
 // - Zero new deps.
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, ServiceUnavailableException } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, ServiceUnavailableException, Optional } from '@nestjs/common';
 import { ChaosInjectorService } from '../chaos-injector.service';
 
 @Injectable()
 export class RedisFaultInterceptor implements NestInterceptor {
   constructor(
     private readonly chaos: ChaosInjectorService,
-    private readonly targetService = 'reader-chunk',
+    @Optional() private readonly targetService = 'reader-chunk',
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<ReturnType<CallHandler['handle']>> {

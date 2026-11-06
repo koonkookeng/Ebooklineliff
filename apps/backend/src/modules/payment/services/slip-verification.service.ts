@@ -2,7 +2,7 @@
  * Phase 000 — Slip verification < 1s atomic (EasySlip transRef/account/amount + Prisma txn).
  * BDD: PENDING_PAYMENT -> COMPLETED + Entitlement grant within 1 second.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { SlipVerificationPayloadSchema } from '@repo/shared';
 
 export interface EasySlipResult {
@@ -14,7 +14,7 @@ export interface EasySlipResult {
 @Injectable()
 export class SlipVerificationService {
   constructor(
-    private readonly prisma: {
+    @Optional() private readonly prisma: {
       $transaction<T>(fn: (tx: never) => Promise<T>): Promise<T>;
     },
     private readonly easyslip: {

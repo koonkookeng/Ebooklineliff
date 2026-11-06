@@ -10,7 +10,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   HLS_SEGMENT_SECONDS,
   lessonHlsPrefix,
@@ -117,10 +117,10 @@ export class FFmpegTranscoderService {
 
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly ledger?: TranscodeLedger,
-    private readonly vault?: LessonVault,
-    private readonly uploader?: R2UploaderService,
-    private readonly exec: (cmd: string) => Promise<void> = async () => undefined,
+    @Optional() private readonly ledger?: TranscodeLedger,
+    @Optional() private readonly vault?: LessonVault,
+    @Optional() private readonly uploader?: R2UploaderService,
+    @Optional() private readonly exec: (cmd: string) => Promise<void> = async () => undefined,
   ) {}
 
   async runLessonJob(input: LessonTranscodeInput): Promise<{ masterPlaylistUrl: string; variants: number }> {

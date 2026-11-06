@@ -18,7 +18,7 @@ interface PreviewVideoReply {
   send: (body: unknown) => unknown;
 }
 
-@Controller('api/v1/preview/video')
+@Controller('preview/video')
 export class VideoPreviewController {
   constructor(
     private readonly gate: PreviewGatekeeperService,

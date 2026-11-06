@@ -25,7 +25,7 @@ function header(headers: ReportRequest['headers'], name: string): string | undef
   return typeof s === 'string' && s ? s : undefined;
 }
 
-@Controller('api/v1/security')
+@Controller('security')
 export class CspReportController {
   private readonly logger = new Logger(CspReportController.name);
 

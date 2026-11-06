@@ -6,7 +6,7 @@
 //   best-effort { processedCount, failedItemIds }. Ownership from JWT
 //   userId (never trusts client-stamped identity).
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { OfflineQueueItemSchema } from '@repo/shared';
 
 export interface OfflineSyncTables {
@@ -36,7 +36,7 @@ interface QueueItem {
 
 @Injectable()
 export class OfflineSyncService {
-  constructor(private readonly tables?: OfflineSyncTables) {}
+  constructor(@Optional() private readonly tables?: OfflineSyncTables) {}
 
   private async applyEbookProgress(userId: string, payload: Record<string, unknown>): Promise<boolean> {
     if (!this.tables) return false;

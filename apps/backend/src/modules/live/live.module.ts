@@ -54,7 +54,12 @@ function fanoutOf(redis: RedisClusterService) {
     PrismaLiveInteractionRepository,
     AmazonIvsAdapter,
     CloudflareR2VodAdapter,
-    RedisFanoutAdapter,
+    {
+      // FanoutRedis is a TS interface — bind it to the cluster client.
+      provide: RedisFanoutAdapter,
+      useFactory: (redis: RedisClusterService) => new RedisFanoutAdapter(redis),
+      inject: [RedisClusterService],
+    },
     {
       provide: EntitlementCheckerService,
       useFactory: (repo: PrismaLiveRepository) => new EntitlementCheckerService(repo),

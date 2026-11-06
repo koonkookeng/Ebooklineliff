@@ -2,6 +2,7 @@
 // Canonical: apps/frontend/app/api/auth/callback/[provider]/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
 import {
+  STATE_COOKIE,
   applySessionCookies,
   clearStateCookie,
   postToBackend,

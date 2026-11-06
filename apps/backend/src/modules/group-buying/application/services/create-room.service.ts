@@ -4,7 +4,7 @@
 //   creator member (orderId = pending:<roomId>:<userId>, slip binds later) ->
 //   Flex invite + claim URL -> GROUP_ROOM_CREATED stream.
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   CreateGroupRoomInputSchema,
   GROUP_STREAM,
@@ -39,7 +39,7 @@ export class CreateGroupRoomService {
     private readonly repo: GroupRepository,
     private readonly flex: LineFlexGroupBuilder,
     private readonly bus: GroupBus,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async execute(args: {

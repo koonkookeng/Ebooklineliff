@@ -16,7 +16,7 @@ import { OutlineGeneratorService } from './services/outline-generator.service';
 import { WhisperTranscriberService } from './services/whisper-transcriber.service';
 import { SubtitleFormatterService } from './services/subtitle-formatter.service';
 import { AutoQuizBuilderService } from './services/auto-quiz-builder.service';
-import { AiCopilotController } from './controllers/ai-copilot.controller';
+import { AiCopilotController, JOB_STATUS_STORE } from './controllers/ai-copilot.controller';
 import { SubtitleDownloadController } from './controllers/subtitle-download.controller';
 import { AiCopilotResolver } from './resolvers/ai-copilot.resolver';
 
@@ -144,6 +144,13 @@ function jobStoreOf(db: Db) {
         });
       },
       inject: [InMemoryTranscribeQueue, DeterministicSttAdapter, SubtitleFormatterService, PrismaService, RedisClusterService],
+    },
+    {
+      // Structural job-store port (interface → string token) shared by the
+      // REST controller, resolver and processor.
+      provide: JOB_STATUS_STORE,
+      useFactory: (prisma: PrismaService) => jobStoreOf(prisma as unknown as Db),
+      inject: [PrismaService],
     },
     {
       provide: AiCopilotController,

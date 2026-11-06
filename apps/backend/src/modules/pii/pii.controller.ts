@@ -15,7 +15,7 @@ interface AuthedRequest {
   headers?: Record<string, string>;
 }
 
-@Controller('api/v1/pii')
+@Controller('pii')
 @UseGuards(JwtAuthGuard)
 export class PiiController {
   constructor(private readonly pii: PiiService) {}

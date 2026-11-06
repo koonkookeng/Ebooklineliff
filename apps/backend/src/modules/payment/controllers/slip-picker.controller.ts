@@ -12,7 +12,7 @@ interface AuthedReq {
   user?: { id?: string };
 }
 
-@Controller('api/v1/payment')
+@Controller('payment')
 @UseGuards(JwtAuthGuard)
 export class SlipPickerController {
   constructor(private readonly analytics: SlipPickerAnalyticsService) {}

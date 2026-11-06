@@ -9,7 +9,7 @@ import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
 import { TenantBrandingSchema, TenantIdentifierSchema } from '@repo/shared';
 import { TenantResolverService } from './tenant-resolver.service';
 
-@Controller('api/v1/tenant')
+@Controller('tenant')
 export class TenantResolverController {
   constructor(private readonly tenants: TenantResolverService) {}
 

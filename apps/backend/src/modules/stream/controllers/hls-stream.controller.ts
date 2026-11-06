@@ -39,7 +39,7 @@ function ipOf(req: HlsReq): string {
   return req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
 }
 
-@Controller('api/v1/hls')
+@Controller('hls')
 export class HlsStreamController {
   constructor(
     private readonly security: HlsSecurityService,

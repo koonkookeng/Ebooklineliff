@@ -3,7 +3,7 @@
 // - encrypt/decrypt envelope: base64(iv):base64(tag):base64(ciphertext).
 //   Key: KYC_ENC_KEY (64-hex) env-first, phase fallback documented.
 // - Port-based (ctor key) for DB-free tests. Zero new deps (node:crypto).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 export function resolveKycKey(explicit?: string): Buffer {
@@ -31,7 +31,7 @@ function createHash32(s: string): Buffer {
 export class KycEncryptionService {
   private readonly key: Buffer;
 
-  constructor(key?: Buffer | string) {
+  constructor(@Optional() key?: Buffer | string) {
     this.key = Buffer.isBuffer(key) ? key : resolveKycKey(typeof key === 'string' ? key : undefined);
     if (this.key.length !== 32) throw new Error('KYC encryption key must be 32 bytes');
   }

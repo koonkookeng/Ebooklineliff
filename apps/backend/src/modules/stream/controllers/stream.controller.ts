@@ -35,7 +35,7 @@ function ipOf(req: StreamReq): string {
   return req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
 }
 
-@Controller('api/v1/stream')
+@Controller('stream')
 export class StreamController {
   constructor(private readonly stream: StreamService) {}
 

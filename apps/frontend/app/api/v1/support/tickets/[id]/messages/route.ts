@@ -2,7 +2,7 @@
 // Canonical: apps/frontend/app/api/v1/support/tickets/[id]/messages/route.ts
 import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
   const h: Record<string, string> = { 'x-tenant-id': tenant };
@@ -11,14 +11,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (auth) h['authorization'] = auth;
   if (cookie) h['cookie'] = cookie;
   try {
-    const res = await fetch(`${backend}/api/v1/support/tickets/${encodeURIComponent(params.id)}/messages`, { headers: h });
+    const res = await fetch(`${backend}/api/v1/support/tickets/${encodeURIComponent((await params).id)}/messages`, { headers: h });
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });
   } catch {
     return NextResponse.json({ message: 'Support service unavailable' }, { status: 503 });
   }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
   const body = await req.json().catch(() => null);
@@ -28,7 +28,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (auth) h['authorization'] = auth;
   if (cookie) h['cookie'] = cookie;
   try {
-    const res = await fetch(`${backend}/api/v1/support/tickets/${encodeURIComponent(params.id)}/messages`, {
+    const res = await fetch(`${backend}/api/v1/support/tickets/${encodeURIComponent((await params).id)}/messages`, {
       method: 'POST',
       headers: h,
       body: JSON.stringify(body),

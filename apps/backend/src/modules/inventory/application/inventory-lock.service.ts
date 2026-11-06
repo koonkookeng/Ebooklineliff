@@ -5,7 +5,7 @@
 //   Contention/exhaustion surface as OUT_OF_STOCK (<150ms, BDD-1).
 // - Standalone (order.service is READ_ONLY in this phase; checkout wires it
 //   in the order pipeline phase). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { applyDelta } from '../domain/inventory-adjustment.entity';
 import type { WarehouseInventoryRepository } from '../domain/warehouse-stock.repository';
 
@@ -18,7 +18,7 @@ export class InventoryLockService {
   constructor(
     private readonly repo: WarehouseInventoryRepository,
     private readonly locks: CheckoutLocks,
-    private readonly tx: { run<T>(fn: (tx: unknown) => Promise<T>): Promise<T> },
+    @Optional() private readonly tx: { run<T>(fn: (tx: unknown) => Promise<T>): Promise<T> },
     private readonly lockKeyFor: (sku: string) => string,
   ) {}
 

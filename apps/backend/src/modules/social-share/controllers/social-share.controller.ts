@@ -19,7 +19,7 @@ function actor(req: AuthedReq): string {
   return id;
 }
 
-@Controller('api/v1/social-share')
+@Controller('social-share')
 export class SocialShareController {
   constructor(private readonly share: SocialShareService) {}
 

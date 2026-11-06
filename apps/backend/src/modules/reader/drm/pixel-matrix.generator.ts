@@ -6,7 +6,7 @@
 //   default 8×8), 15-min validity. Byte-parity with the shared
 //   permutationFromSeed helper (frontend deshuffler).
 // - Pure + tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHmac } from 'node:crypto';
 import {
   DRM_GRID_DEFAULT,
@@ -26,7 +26,7 @@ function clampGrid(n: number): number {
 @Injectable()
 export class PixelMatrixGeneratorService {
   constructor(
-    private readonly hmacSecret: string = process.env.DRM_HMAC_SECRET || 'ahong-emerald-super-secret-key-999',
+    @Optional() private readonly hmacSecret: string = process.env.DRM_HMAC_SECRET || 'ahong-emerald-super-secret-key-999',
   ) {}
 
   seedFor(userId: string, productId: string, pageNumber: number, sessionNonce: string): string {

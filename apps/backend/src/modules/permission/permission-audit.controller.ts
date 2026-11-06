@@ -33,7 +33,7 @@ function header(headers: AuthedReq['headers'], name: string): string | undefined
   return typeof s === 'string' && s ? s : undefined;
 }
 
-@Controller('api/v1/permission')
+@Controller('permission')
 export class PermissionAuditController {
   constructor(
     private readonly audits: PermissionAuditService,

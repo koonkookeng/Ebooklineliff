@@ -28,7 +28,7 @@ function ipOf(req: LooseReq): string {
   return ((req['ip'] as string | undefined) ?? fwd.split(',')[0]?.trim() ?? '0.0.0.0');
 }
 
-@Controller('api/v1/security/device')
+@Controller('security/device')
 export class SecurityFingerprintController {
   constructor(
     private readonly verifier: FingerprintVerifierService,

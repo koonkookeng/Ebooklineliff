@@ -6,6 +6,7 @@ import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useGamificationHub } from '../../../hooks/useGamificationHub';
 import { DailyStreakWidget } from '../../../components/gamification/DailyStreakWidget';
+import { DailyAttendanceCalendar } from '../../../components/gamification/DailyAttendanceCalendar';
 import { BadgeGallery } from '../../../components/gamification/BadgeGallery';
 import { RewardCatalogDrawer } from '../../../components/reward/RewardCatalogDrawer';
 import { gameApi, type CheckinResult } from '../../../lib/gamification/gamification-client';
@@ -38,20 +39,19 @@ function GamificationInner() {
   }
 
   return (
-    <div>
-      <h1>Gamification Hub</h1>
-      <DailyStreakWidget
+    <div className="flex flex-col gap-6 p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold">Gamification Hub</h1>
+      
+      <DailyAttendanceCalendar
         currentStreak={profile.currentStreak}
         hasCheckedInToday={profile.hasCheckedInToday}
-        rewardPoints={profile.rewardPoints}
-        streakFreezeCount={profile.streakFreezeCount}
-        onCheckin={doCheckin}
-        onCheckinSuccess={(d) => {
-          setToast(d.message);
-          setUnlocked(d.badgeUnlocked);
+        onCheckin={async () => {
+          const res = await doCheckin();
+          setToast(res.message);
+          setUnlocked(res.badgeUnlocked);
         }}
       />
-      {toast && <p role="status">{toast}</p>}
+
       {unlocked && (
         <div role="dialog" aria-label="Badge unlocked">
           <p>ปลดล็อก {unlocked.badgeName}!</p>

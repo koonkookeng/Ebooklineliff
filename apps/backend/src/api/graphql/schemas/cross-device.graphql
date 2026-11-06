@@ -50,6 +50,6 @@ extend type Mutation {
   authorizeDesktopSession(handshakeToken: String!): AuthTokenPayload!
 }
 
-extend type Subscription {
+type Subscription {
   onCrossDeviceStateChanged(userId: ID!, productId: ID!): CrossDeviceSyncPayload!
 }

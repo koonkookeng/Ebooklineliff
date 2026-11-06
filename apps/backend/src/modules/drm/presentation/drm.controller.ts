@@ -21,7 +21,7 @@ function clientIpOf(req: DrmReq): string {
   return req.ip || req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
 }
 
-@Controller('api/v1/drm')
+@Controller('drm')
 export class DrmController {
   constructor(private readonly sessions: DrmSessionService) {}
 

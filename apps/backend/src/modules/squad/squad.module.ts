@@ -13,8 +13,22 @@ import { SquadResolver } from './squad.resolver';
   controllers: [SquadController],
   providers: [
     PrismaSquadRepository,
-    JoinSquadUsecase,
-    LeaveSquadUsecase,
+    {
+      // Ports are TS interfaces (erased at runtime), so Nest cannot resolve
+      // them by class token — wire them explicitly via factories.
+      provide: JoinSquadUsecase,
+      useFactory: (repo: PrismaSquadRepository, redis: RedisClusterService) =>
+        new JoinSquadUsecase(repo, {
+          xadd: (stream: string, fields: Record<string, string | number>) =>
+            redis.xaddPipeline(stream, [fields]),
+        }),
+      inject: [PrismaSquadRepository, RedisClusterService],
+    },
+    {
+      provide: LeaveSquadUsecase,
+      useFactory: (repo: PrismaSquadRepository) => new LeaveSquadUsecase(repo),
+      inject: [PrismaSquadRepository],
+    },
     {
       provide: CreateSquadUsecase,
       useFactory: (repo: PrismaSquadRepository, redis: RedisClusterService) =>

@@ -20,7 +20,7 @@ interface LineEvent {
   source?: { userId?: unknown };
 }
 
-@Controller('api/v1/line-compliance')
+@Controller('line-compliance')
 export class LineWebhookController {
   constructor(private readonly audit: AuditLoggerService) {}
 

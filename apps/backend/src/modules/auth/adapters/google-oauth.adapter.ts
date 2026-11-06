@@ -22,6 +22,7 @@ export class GoogleOAuthAdapter {
 
   async verifyIdToken(idToken: string): Promise<GoogleProfile> {
     if (!idToken || idToken.length < 10) throw new UnauthorizedException('Invalid Google ID Token');
+    if (!this.clientId) throw new UnauthorizedException('Google Login is not configured');
     let data: Record<string, unknown>;
     try {
       const res = await fetch(`${TOKENINFO_URL}?id_token=${encodeURIComponent(idToken)}`, {
@@ -38,6 +39,13 @@ export class GoogleOAuthAdapter {
     }
     const sub = typeof data['sub'] === 'string' ? (data['sub'] as string) : '';
     if (!sub) throw new UnauthorizedException('Invalid Google ID Token');
+    if (String(data['aud'] ?? '') !== this.clientId) {
+      throw new UnauthorizedException('Invalid Google ID Token audience');
+    }
+    const iss = String(data['iss'] ?? '');
+    if (iss !== 'accounts.google.com' && iss !== 'https://accounts.google.com') {
+      throw new UnauthorizedException('Invalid Google ID Token issuer');
+    }
     const email = typeof data['email'] === 'string' ? (data['email'] as string) : null;
     return {
       sub,
@@ -47,7 +55,21 @@ export class GoogleOAuthAdapter {
       // tokeninfo serialises booleans as strings ("true"/"false") in some
       // deployments; accept both representations.
       emailVerified: email !== null && String(data['email_verified']).toLowerCase() === 'true',
-      nonce: typeof data['nonce'] === 'string' ? (data['nonce'] as string) : null,
+      // tokeninfo does not echo `nonce`; decode the already-verified JWT payload.
+      nonce: readNonceFromJwtPayload(idToken),
     };
+  }
+}
+
+function readNonceFromJwtPayload(idToken: string): string | null {
+  try {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'),
+    ) as Record<string, unknown>;
+    return typeof payload['nonce'] === 'string' ? payload['nonce'] : null;
+  } catch {
+    return null;
   }
 }

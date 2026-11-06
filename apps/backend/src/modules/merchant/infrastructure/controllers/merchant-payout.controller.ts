@@ -20,7 +20,7 @@ function headerTenant(req: Record<string, unknown>): string | undefined {
   return (req['tenantId'] as string | undefined) ?? headers['x-tenant-id'] ?? headers['X-Tenant-ID'];
 }
 
-@Controller('api/v1/merchant')
+@Controller('merchant')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class MerchantPayoutController {
   constructor(

@@ -12,7 +12,8 @@
 // - Pure helpers: hashStatement (SHA-256 dedupe), windowBounds (per-account
 //   tolerance override), makerCheckerRequired (>1000 THB), matchRate,
 //   RECON budgets/keys. Zero new deps (node:crypto for hash + zod).
-import { createHash } from 'node:crypto';
+// Lazy node:crypto — browser-safe.
+const crypto = (): typeof import('node:crypto') => require('node:crypto');
 import { z } from 'zod';
 
 export const ReconciliationStatusEnum = z.enum([
@@ -77,7 +78,7 @@ export const RECON_STREAM = 'financial:reconciliation:events';
 
 /** SHA-256 dedupe signature: transRef_amount_txTimestamp (spec §5.2). */
 export function hashStatement(args: { transRef: string; amount: number; txTimestamp: string }): string {
-  return createHash('sha256').update(`${args.transRef}_${args.amount}_${args.txTimestamp}`, 'utf8').digest('hex');
+  return crypto().createHash('sha256').update(`${args.transRef}_${args.amount}_${args.txTimestamp}`, 'utf8').digest('hex');
 }
 
 /** Time-window bounds around a statement timestamp (tolerance minutes). */
@@ -99,7 +100,7 @@ export function autoMatchRate(matched: number, total: number): number {
 
 /** SHA-256 audit chain step (§8.1): H_n = H(H_{n-1} | stmt | order | maker | ts). */
 export function chainStep(prevHash: string, args: { statementId: string; orderId: string; initiatedBy: string; timestamp: string }): string {
-  return createHash('sha256')
+  return crypto().createHash('sha256')
     .update(`${prevHash}|${args.statementId}|${args.orderId}|${args.initiatedBy}|${args.timestamp}`, 'utf8')
     .digest('hex');
 }

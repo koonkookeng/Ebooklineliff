@@ -1,7 +1,7 @@
 // SSOT Phase 130 §5.2 — Kubernetes liveness/readiness probes (redacted)
 // Canonical: apps/backend/src/modules/health/go-live.controller.ts
 // (legacy src/backend/modules/health/* — 001 HealthController untouched)
-// - GET /healthz/live (no deps, instant) + GET /healthz/readiness
+// - GET /api/v1/healthz/live (no deps, instant) + /api/v1/healthz/readiness
 //   (db+redis pings via GoLiveAuditService). Envelopes carry no hosts,
 //   DSNs, or secrets (Gate 4).
 // - CRITICAL_FAILURE must return HTTP 503: Kubernetes only looks at the

@@ -19,6 +19,22 @@ function setHeader(res: HeaderSink, name: string, value: string): void {
   else if (typeof res.header === 'function') res.header(name, value);
 }
 
+/**
+ * True when the request reached us over TLS (directly or via a trusted proxy).
+ * Plain-HTTP local/dev traffic must not be told to upgrade to https://.
+ */
+function isSecureRequest(req: Record<string, unknown>): boolean {
+  const headers = req['headers'] as Record<string, string | string[] | undefined> | undefined;
+  const fwd = headers?.['x-forwarded-proto'];
+  const proto = Array.isArray(fwd) ? fwd[0] : fwd;
+  if (typeof proto === 'string' && proto.trim()) {
+    return proto.split(',')[0]?.trim().toLowerCase() === 'https';
+  }
+  if (typeof req['protocol'] === 'string') return req['protocol'] === 'https';
+  const socket = req['socket'] as { encrypted?: boolean } | undefined;
+  return Boolean(socket?.encrypted);
+}
+
 export function mintCspNonce(): string {
   return randomBytes(16).toString('base64');
 }
@@ -28,9 +44,12 @@ export class ContentSecurityPolicyMiddleware implements NestMiddleware {
   use(req: Record<string, unknown>, res: HeaderSink, next: () => void): void {
     const nonce = mintCspNonce();
     req['cspNonce'] = nonce;
-    setHeader(res, 'Content-Security-Policy', buildCspHeader({ nonce }));
+    const secure = isSecureRequest(req);
+    setHeader(res, 'Content-Security-Policy', buildCspHeader({ nonce, allowInsecure: !secure }));
     setHeader(res, 'X-Content-Type-Options', 'nosniff');
-    setHeader(res, 'Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    // HSTS is meaningless (and ignored by browsers) over plain HTTP; only
+    // advertise it once the request actually arrived over TLS.
+    if (secure) setHeader(res, 'Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     setHeader(res, 'Cross-Origin-Resource-Policy', 'cross-origin');
     setHeader(res, 'Referrer-Policy', 'strict-origin-when-cross-origin');
     next();

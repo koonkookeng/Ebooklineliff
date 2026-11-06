@@ -3,7 +3,7 @@
 // - Validates timestamp integrity (§10 overlap checker), builds VTT/SRT,
 //   uploads to R2 (zero-egress vault), persists VideoSubtitle + segments in
 //   ONE $transaction (Gate 7). Port-based for DB-free tests.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { buildSrt, buildVtt, cuesOverlap, type CaptionCue } from '@repo/shared';
 
 export interface SubtitleTx {
@@ -30,7 +30,7 @@ export class SubtitleFormatterService {
   constructor(
     private readonly store: SubtitleStorePort,
     private readonly tx: SubtitleTx,
-    private readonly r2?: R2PutPort,
+    @Optional() private readonly r2?: R2PutPort,
   ) {}
 
   async formatAndStore(args: {

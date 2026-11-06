@@ -16,7 +16,7 @@ import {
 } from '../../domain/value-objects/ephemeral-nonce.vo';
 import type { InitQrSessionResponse } from '@repo/shared';
 
-const TenantIdSchema = z.string().uuid();
+const TenantIdSchema = z.string().min(1);
 
 @Injectable()
 export class InitQrSessionUseCase {
@@ -29,7 +29,17 @@ export class InitQrSessionUseCase {
     if (!TenantIdSchema.safeParse(input.tenantId).success) {
       throw new BadRequestException('Invalid tenant');
     }
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: input.tenantId } }).catch(() => null);
+    let tenant: { id: string; isActive: boolean } | null = null;
+    if (input.tenantId === 'default') {
+      tenant = await this.prisma.tenant.findFirst({ where: { slug: 'default' } }).catch(() => null);
+      if (!tenant) {
+        tenant = await this.prisma.tenant
+          .create({ data: { slug: 'default', name: 'Default Tenant', isActive: true } })
+          .catch(() => null);
+      }
+    } else {
+      tenant = await this.prisma.tenant.findUnique({ where: { id: input.tenantId } }).catch(() => null);
+    }
     if (!tenant || !tenant.isActive) throw new BadRequestException('Invalid tenant');
 
     const qrToken = generateQrToken();

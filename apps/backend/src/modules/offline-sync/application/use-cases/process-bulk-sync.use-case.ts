@@ -5,7 +5,7 @@
 //   watch upsert; OFFLINE_ANALYTICS → stream sink (best-effort).
 // - Session ledger per flush (Gate 7); per-item failures → failedIds, never
 //   fail the batch. tsx-safe. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import type { BulkOfflineSyncResponse } from '@repo/shared';
 import { foldOutcomes, type ItemOutcome } from '../../domain/entities/sync-item.entity';
 import { asCourseProgress, asEbookProgress } from '../../domain/value-objects/sync-target.vo';
@@ -15,8 +15,8 @@ import { validateOfflineQueue } from './validate-offline-queue.use-case';
 @Injectable()
 export class ProcessBulkSyncUseCase {
   constructor(
-    private readonly ledger?: OfflineSyncRepository,
-    private readonly onAnalytics?: (event: { userId: string; targetType: string; payload: Record<string, unknown> }) => void,
+    @Optional() private readonly ledger?: OfflineSyncRepository,
+    @Optional() private readonly onAnalytics?: (event: { userId: string; targetType: string; payload: Record<string, unknown> }) => void,
   ) {}
 
   async execute(jwtUserId: string, body: unknown, deviceLabel?: string): Promise<BulkOfflineSyncResponse> {

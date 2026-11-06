@@ -204,7 +204,7 @@ async function main(): Promise<void> {
   assert.ok(gate.includes('slip-fallback-queue'), 'local fallback queue');
   assert.ok(!/lucide-react|recharts|framer-motion|chart\\.js/.test(gate), 'zero heavy UI deps');
   const bff = readFileSync('apps/frontend/app/api/v1/infra/golive/route.ts', 'utf8');
-  assert.ok(bff.includes('/healthz/readiness') && bff.includes('no-store') && bff.includes('AbortController'));
+  assert.ok(bff.includes('/api/v1/healthz/readiness') && bff.includes('no-store') && bff.includes('AbortController'));
   for (const layout of ['apps/frontend/app/(liff)/layout.tsx', 'apps/frontend/app/(web)/layout.tsx']) {
     assert.ok(readFileSync(layout, 'utf8').includes('ProductionStateGate'), `${layout} mounts gate`);
   }
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
     { get: async () => 'warm' },
   );
   assert.equal((await svc.readiness()).status, 'HEALTHY');
-  ok('5. /healthz/live + /healthz/readiness');
+  ok('5. /api/v1/healthz/live + /api/v1/healthz/readiness');
 }
 // ---------- 6. Prisma read-only boundary (no 130 schema edits) ----------
 {
@@ -280,7 +280,7 @@ async function main(): Promise<void> {
 {
   const deploy = readFileSync('apps/backend/src/infra/k8s/backend-deployment.yaml', 'utf8');
   assert.ok(deploy.includes('name: api-green') && deploy.includes('replicas: 10'));
-  assert.ok(deploy.includes('/healthz/readiness') && deploy.includes('/healthz/live'));
+  assert.ok(deploy.includes('/api/v1/healthz/readiness') && deploy.includes('/api/v1/healthz/live'));
   assert.ok(deploy.includes('maxUnavailable: 0') && deploy.includes('memory: "512Mi"'));
   assert.ok(!deploy.includes('TODO') && !deploy.includes('placeholder'));
   const hpa = readFileSync('apps/backend/src/infra/k8s/backend-hpa.yaml', 'utf8');
@@ -303,7 +303,7 @@ async function main(): Promise<void> {
 // ---------- 9. Compose + promotion workflow ----------
 {
   const compose = readFileSync('apps/backend/src/infra/docker/docker-compose.prod.yml', 'utf8');
-  for (const needle of ['postgres:16-alpine', 'redis:7.2-alpine', 'POOL_MODE: transaction', 'DEFAULT_POOL_SIZE: "50"', 'RESERVE_POOL_SIZE: "10"', 'MAX_DB_CONNECTIONS: "200"', 'max_connections=300', '/healthz/readiness', 'replicas: 10']) {
+  for (const needle of ['postgres:16-alpine', 'redis:7.2-alpine', 'POOL_MODE: transaction', 'DEFAULT_POOL_SIZE: "50"', 'RESERVE_POOL_SIZE: "10"', 'MAX_DB_CONNECTIONS: "200"', 'max_connections=300', '/api/v1/healthz/readiness', 'replicas: 10']) {
     assert.ok(compose.includes(needle), `compose ${needle}`);
   }
   assert.ok(compose.includes('env_file: .env.production'), 'secrets via env_file');

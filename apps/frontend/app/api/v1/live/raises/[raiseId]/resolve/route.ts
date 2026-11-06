@@ -2,7 +2,7 @@
 // Canonical: apps/frontend/app/api/v1/live/raises/[raiseId]/resolve/route.ts
 import { NextResponse } from 'next/server';
 
-export async function POST(req: Request, { params }: { params: { raiseId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ raiseId: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const body = await req.json().catch(() => null);
   const h: Record<string, string> = { 'Content-Type': 'application/json', 'x-tenant-id': new URL(req.url).searchParams.get('tenant') ?? 'default' };
@@ -11,7 +11,7 @@ export async function POST(req: Request, { params }: { params: { raiseId: string
   if (auth) h['authorization'] = auth;
   if (cookie) h['cookie'] = cookie;
   try {
-    const res = await fetch(`${backend}/api/v1/live/raises/${encodeURIComponent(params.raiseId)}/resolve`, {
+    const res = await fetch(`${backend}/api/v1/live/raises/${encodeURIComponent((await params).raiseId)}/resolve`, {
       method: 'POST',
       headers: h,
       body: JSON.stringify(body),

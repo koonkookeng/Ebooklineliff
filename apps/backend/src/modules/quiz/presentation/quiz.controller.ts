@@ -15,7 +15,7 @@ interface QuizReq {
   user?: { id?: string; tenantId?: string };
 }
 
-@Controller('api/v1/quiz')
+@Controller('quiz')
 export class QuizController {
   constructor(
     private readonly evaluator: QuizEvaluatorService,

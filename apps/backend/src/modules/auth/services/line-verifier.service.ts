@@ -1,7 +1,7 @@
 // SSOT Phase 006 §5.2 — LINE ID Token verifier (verify-endpoint primary, kid/certs check, Zod-validated)
 // Zero-dep: global fetch + manual base64url decode (no jsonwebtoken / jwks-rsa / node-fetch).
 // Fail-fast 401 INVALID_LINE_TOKEN on malformed signature, audience mismatch, expiry, or stale iat.
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { DecodedLineTokenSchema, type DecodedLineToken } from '@repo/shared';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 
@@ -26,7 +26,7 @@ interface JwtHeader {
 export class LineVerifierService {
   constructor(
     private readonly redis: RedisClusterService,
-    private readonly channelId: string = process.env.LINE_LOGIN_CHANNEL_ID ?? '',
+    @Optional() private readonly channelId: string = process.env.LINE_LOGIN_CHANNEL_ID ?? '',
   ) {}
 
   async verifyIdToken(idToken: string, expectedChannelId?: string): Promise<DecodedLineToken> {

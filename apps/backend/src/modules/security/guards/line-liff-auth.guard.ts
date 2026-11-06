@@ -6,7 +6,7 @@
 //   checks, 401 INVALID_LINE_TOKEN). This guard only extracts the bearer,
 //   stamps req.lineProfile, and audits rejections (fail-open audit).
 // - Zero new deps.
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { LineVerifierService } from '../../auth/services/line-verifier.service';
 import type { LineAuditPort } from './line-signature.guard';
 
@@ -21,7 +21,7 @@ export interface LineProfile {
 export class LineLiffAuthGuard implements CanActivate {
   constructor(
     private readonly verifier: Pick<LineVerifierService, 'verifyIdToken'>,
-    private readonly audit?: LineAuditPort,
+    @Optional() private readonly audit?: LineAuditPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

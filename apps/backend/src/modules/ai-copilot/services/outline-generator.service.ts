@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/ai-copilot/services/outline-generator.service.ts
 // - Zod gate → deterministic outline chain → AiCoPilotJob row doubles as the
 //   editable draft store (<30s, no CourseDetail churn). Port-based tests.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { COPILOT_STREAM, CourseOutlinePromptSchema } from '@repo/shared';
 import { DeterministicOutlineAdapter } from '../adapters/llm-orchestrator.adapter';
 
@@ -21,7 +21,7 @@ export class OutlineGeneratorService {
   constructor(
     private readonly llm: DeterministicOutlineAdapter,
     private readonly jobs: OutlineJobStore,
-    private readonly bus?: OutlineBus,
+    @Optional() private readonly bus?: OutlineBus,
   ) {}
 
   async generate(args: {

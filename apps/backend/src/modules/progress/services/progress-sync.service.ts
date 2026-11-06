@@ -7,7 +7,7 @@
 // - Row-atomic sequential upserts (062/063 precedent; interactive
 //   $transaction can't stay tsx-safe on structural ports — ADR-064).
 // - tsx-safe. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   BatchProgressSyncPayloadSchema,
   syncItemCanonical,
@@ -35,9 +35,9 @@ export interface ProgressSyncTables {
 @Injectable()
 export class ProgressSyncService {
   constructor(
-    private readonly tables?: ProgressSyncTables,
-    private readonly verifier?: PayloadVerifierService,
-    private readonly onSync?: (event: { userId: string; conflicts: number }) => void,
+    @Optional() private readonly tables?: ProgressSyncTables,
+    @Optional() private readonly verifier?: PayloadVerifierService,
+    @Optional() private readonly onSync?: (event: { userId: string; conflicts: number }) => void,
   ) {}
 
   async processBatchSync(

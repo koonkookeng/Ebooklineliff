@@ -3,7 +3,7 @@
 // - Zod gate → entity guards → atomic row (Gate 7) → cache invalidate +
 //   density/share stream (Gate 8) → Flex share payload (Task 7).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { CreateMarginNoteSchema, SOCIAL_STREAM, isAuthorNote, socialPageKey } from '@repo/shared';
 import { assertNoteCreatable } from '../domain/social-note.entity';
 import type { SocialNoteRepository } from '../domain/social-note.repository.interface';
@@ -23,7 +23,7 @@ export class CreateNoteUsecase {
     private readonly repo: SocialNoteRepository,
     private readonly cache: SocialCachePort,
     private readonly bus: SocialBus,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async execute(args: {

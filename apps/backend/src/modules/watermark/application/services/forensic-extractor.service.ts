@@ -11,7 +11,7 @@
 //     invalid sig → 0 + isTampered (manifest forged or image re-encoded)
 // - The image bytes are hashed for the audit trail only (never stored).
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import type { ForensicVerificationPayload } from '@repo/shared';
 import { WatermarkCryptoService } from './watermark-crypto.service';
 
@@ -30,8 +30,8 @@ export interface ForensicManifest {
 export class ForensicExtractorService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly crypto?: WatermarkCryptoService,
-    private readonly seeds?: SeedLogLookup,
+    @Optional() private readonly crypto?: WatermarkCryptoService,
+    @Optional() private readonly seeds?: SeedLogLookup,
   ) {}
 
   async verify(imageDataBase64: string, manifest: ForensicManifest): Promise<ForensicVerificationPayload> {

@@ -8,7 +8,7 @@
 // - Gate 8 seam: injectable annotation event sink (default no-op).
 // - tsx-safe (no Nest parameter decorators; structural Prisma/Cache ports);
 //   zero new deps.
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import {
   annotationCacheKey,
   ANNOTATION_CACHE_TTL_SEC,
@@ -124,9 +124,9 @@ export class ReaderControlService {
 
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly prisma?: ReaderControlPrisma,
-    private readonly cache?: ReaderControlCache,
-    private readonly onEvent?: (event: AnnotationEvent) => void,
+    @Optional() private readonly prisma?: ReaderControlPrisma,
+    @Optional() private readonly cache?: ReaderControlCache,
+    @Optional() private readonly onEvent?: (event: AnnotationEvent) => void,
   ) {}
 
   private emit(event: AnnotationEvent): void {

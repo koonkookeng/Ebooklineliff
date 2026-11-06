@@ -2,7 +2,7 @@
 // Canonical: apps/frontend/app/api/v1/studio/quiz/[quizId]/route.ts
 import { NextResponse } from 'next/server';
 
-export async function DELETE(req: Request, ctx: { params: { quizId: string } }) {
+export async function DELETE(req: Request, ctx: { params: Promise<{ quizId: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const tenant = new URL(req.url).searchParams.get('tenant') ?? 'default';
   const headers: Record<string, string> = { Accept: 'application/json', 'x-tenant-id': tenant };
@@ -12,7 +12,7 @@ export async function DELETE(req: Request, ctx: { params: { quizId: string } }) 
   if (cookie) headers['cookie'] = cookie;
   try {
     const res = await fetch(
-      `${backend}/api/v1/studio/quiz/${encodeURIComponent(ctx.params.quizId)}`,
+      `${backend}/api/v1/studio/quiz/${encodeURIComponent((await ctx.params).quizId)}`,
       { method: 'DELETE', headers },
     );
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });

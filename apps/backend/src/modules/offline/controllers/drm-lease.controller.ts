@@ -25,7 +25,7 @@ function leaseIp(req: LeaseReq): string {
   return req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
 }
 
-@Controller('api/v1/offline')
+@Controller('offline')
 export class DrmLeaseController {
   constructor(
     private readonly leases: DrmLeaseService,

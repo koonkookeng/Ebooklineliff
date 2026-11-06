@@ -6,13 +6,13 @@
 //   envelope and this route forwards it verbatim.
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:4000';
+const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:3001';
 
 export async function GET() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
   try {
-    const res = await fetch(`${BACKEND}/healthz/readiness`, {
+    const res = await fetch(`${BACKEND}/api/v1/healthz/readiness`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       cache: 'no-store',

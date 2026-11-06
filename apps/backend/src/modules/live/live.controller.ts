@@ -31,7 +31,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/live')
+@Controller('live')
 export class LiveController {
   constructor(
     private readonly access: MintPlaybackTokenUseCase,

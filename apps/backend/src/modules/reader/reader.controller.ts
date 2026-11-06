@@ -23,7 +23,7 @@ function reqIdentity(req: ReaderReq, queryTenantId?: string): { userId: string; 
   return { userId, tenantId: req.user?.tenantId ?? queryTenantId ?? 'default' };
 }
 
-@Controller('api/v1/reader')
+@Controller('reader')
 export class ReaderController {
   constructor(
     private readonly reader: ReaderService,

@@ -5,7 +5,7 @@
 //   EXTINF); every listed segment carries a token bound to (lesson, segment,
 //   exp) so deep-linking segment N+1 is cryptographically impossible.
 // - Separate secret scope from Phase 050 full-stream tokens. Zero new deps.
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { PREVIEW_HLS_TOKEN_TTL_SEC } from '@repo/shared';
 
@@ -19,7 +19,7 @@ function b64urlDecode(encoded: string): string {
 
 @Injectable()
 export class PreviewHlsTokenService {
-  constructor(private readonly secret: string = process.env.PREVIEW_HLS_SECRET || 'dev-preview-hls-secret') {}
+  constructor(@Optional() private readonly secret: string = process.env.PREVIEW_HLS_SECRET || 'dev-preview-hls-secret') {}
 
   mintSegmentToken(lessonId: string, segmentName: string, ttlSec: number = PREVIEW_HLS_TOKEN_TTL_SEC): string {
     const exp = Math.floor(Date.now() / 1000) + ttlSec;

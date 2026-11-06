@@ -12,7 +12,7 @@
 // - Correct answers NEVER leave the server (Gate 4); hints escalate without
 //   revealing options.
 // - tsx-safe (no param decorators). Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
   isChoiceCorrect,
@@ -66,10 +66,10 @@ function gradeQuiz(quiz: LessonQuizRow, input: SubmitQuizAnswerInput): boolean {
 export class QuizEvaluatorService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly quizzes?: QuizRepository,
-    private readonly hints?: AiHintGeneratorService,
-    private readonly tokenSecret: string = process.env.QUIZ_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
-    private readonly onAttempt?: (event: { userId: string; lessonId: string; quizId: string; timestampSec: number; isCorrect: boolean; attemptNumber: number }) => void,
+    @Optional() private readonly quizzes?: QuizRepository,
+    @Optional() private readonly hints?: AiHintGeneratorService,
+    @Optional() private readonly tokenSecret: string = process.env.QUIZ_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly onAttempt?: (event: { userId: string; lessonId: string; quizId: string; timestampSec: number; isCorrect: boolean; attemptNumber: number }) => void,
   ) {}
 
   async evaluateSubmission(userId: string, rawInput: unknown): Promise<QuizEvaluationResult> {

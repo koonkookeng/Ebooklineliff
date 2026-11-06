@@ -8,7 +8,7 @@
 //   tenant-isolated rooms, <100ms fan-out, 200-byte wire guard.
 // - Session registry: ActiveDeviceSession rows per stream (socketId = stream
 //   uuid); removed on unsubscribe. Device fingerprint enforced on ingest.
-import { BadRequestException, Body, Controller, Get, Post, Query, Sse } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Sse } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Observable } from 'rxjs';
 import {
@@ -38,14 +38,20 @@ export interface SyncGatewayQueue {
   enqueue(queue: string, payload: unknown): Promise<void>;
 }
 
-@Controller('api/v1/sync')
+// Structural ports are interfaces (erased at runtime) — expose explicit tokens
+// so the controller can be instantiated by Nest directly.
+export const SYNC_GATEWAY_CACHE = 'SYNC_GATEWAY_CACHE_PORT';
+export const SYNC_GATEWAY_QUEUE = 'SYNC_GATEWAY_QUEUE_PORT';
+export const SYNC_SESSION_STORE = 'SYNC_SESSION_STORE_PORT';
+
+@Controller('sync')
 export class ProgressSyncGateway {
   constructor(
     private readonly rooms: RedisPubSubAdapter,
     private readonly bus: RedisIoAdapter,
-    private readonly cache: SyncGatewayCache,
-    private readonly queue: SyncGatewayQueue,
-    private readonly sessions: SyncSessionStore,
+    @Inject(SYNC_GATEWAY_CACHE) private readonly cache: SyncGatewayCache,
+    @Inject(SYNC_GATEWAY_QUEUE) private readonly queue: SyncGatewayQueue,
+    @Inject(SYNC_SESSION_STORE) private readonly sessions: SyncSessionStore,
   ) {}
 
   namespace(): string {

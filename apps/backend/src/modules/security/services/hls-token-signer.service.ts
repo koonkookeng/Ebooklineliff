@@ -9,7 +9,7 @@
 // - Secret: explicit ctor arg wins, else HLS_TICKET_SECRET env, else the
 //   documented development fallback (provision the env in prod).
 // - Zero new deps (node:crypto only).
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 export function resolveHlsTicketSecret(explicit?: string): string {
@@ -30,7 +30,7 @@ export interface PlaybackTicket {
 export class HlsTokenSignerService {
   private readonly secret: string;
 
-  constructor(secret?: string) {
+  constructor(@Optional() secret?: string) {
     this.secret = resolveHlsTicketSecret(secret);
     if (!this.secret) throw new Error('HLS ticket secret must not be empty');
   }

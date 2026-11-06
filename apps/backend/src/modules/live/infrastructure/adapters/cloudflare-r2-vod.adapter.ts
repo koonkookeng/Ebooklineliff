@@ -3,7 +3,7 @@
 // - Pure path/URL builders + a narrow R2 put delegate port (the real bytes
 //   ride the shared R2 vault client; this adapter owns key layout only).
 // - Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { liveVodPrefix } from '@repo/shared';
 
 export interface R2PutPort {
@@ -12,7 +12,7 @@ export interface R2PutPort {
 
 @Injectable()
 export class CloudflareR2VodAdapter {
-  constructor(private readonly store?: R2PutPort) {}
+  constructor(@Optional() private readonly store?: R2PutPort) {}
 
   masterKey(sessionId: string): string {
     return liveVodPrefix(sessionId);

@@ -4,7 +4,7 @@
 //   30-80 / format 80-100) → STT adapter → subtitle formatter →
 //   COMPLETED/FAILED. Temp audio is never persisted (Gate 6).
 // - Port-based for DB-free tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { COPILOT_STREAM } from '@repo/shared';
 import { DeterministicSttAdapter } from '../adapters/openai-whisper.adapter';
 import { SubtitleFormatterService } from '../services/subtitle-formatter.service';
@@ -28,7 +28,7 @@ export class TranscribeProcessor {
     private readonly stt: DeterministicSttAdapter,
     private readonly formatter: SubtitleFormatterService,
     private readonly jobs: TranscribeJobStore,
-    private readonly bus?: TranscribeBus,
+    @Optional() private readonly bus?: TranscribeBus,
   ) {}
 
   async drain(limit = 10): Promise<{ processed: number }> {

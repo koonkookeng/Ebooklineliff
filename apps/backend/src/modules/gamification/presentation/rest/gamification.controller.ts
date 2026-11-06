@@ -24,7 +24,7 @@ function actorOf(req: LooseReq): { id: string; role?: string } {
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN', 'CONTENT_MODERATOR']);
 
-@Controller('api/v1/gamification')
+@Controller('gamification')
 export class GamificationController {
   constructor(
     private readonly checkin: DailyCheckinUseCase,

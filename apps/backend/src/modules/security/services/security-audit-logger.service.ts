@@ -6,7 +6,7 @@
 // - PII discipline: payloadSnippet capped at 1000 chars, no secrets.
 // - Ports-based (tsx-importable); wired via useFactory in DeviceSecurityModule.
 // - Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   SECURITY_EVENT_STREAM,
   capSnippet,
@@ -40,7 +40,7 @@ export interface SecurityIncidentRow {
 export class SecurityAuditLoggerService {
   constructor(
     private readonly db: AuditDbPort,
-    private readonly stream?: AuditStreamPort,
+    @Optional() private readonly stream?: AuditStreamPort,
   ) {}
 
   /** Guard/WAF audit port shape (subset of the full row). */

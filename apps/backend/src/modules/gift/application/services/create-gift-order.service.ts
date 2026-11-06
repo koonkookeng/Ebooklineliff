@@ -5,7 +5,7 @@
 //   row (payment binds later via bindOrder — payment core untouched) ->
 //   Flex card + claim URL -> GIFT_CREATED stream.
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   CreateGiftOrderInputSchema,
   GIFT_STREAM,
@@ -27,7 +27,7 @@ export class CreateGiftOrderService {
     private readonly repo: GiftRepository,
     private readonly flex: LineFlexGiftBuilder,
     private readonly bus: GiftBus,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async execute(args: {

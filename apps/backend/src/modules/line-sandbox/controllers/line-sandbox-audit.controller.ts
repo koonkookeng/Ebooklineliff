@@ -24,7 +24,7 @@ function actor(req: AuthedReq, bodyUserId?: unknown): string {
   throw new UnauthorizedException('Unauthorized');
 }
 
-@Controller('api/v1/line-sandbox')
+@Controller('line-sandbox')
 export class LineSandboxAuditController {
   constructor(
     private readonly runner: LineSandboxRunnerService,

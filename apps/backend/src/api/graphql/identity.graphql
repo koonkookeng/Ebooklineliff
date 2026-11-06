@@ -1,17 +1,17 @@
-// SSOT Phase 003 §3.2 — identity SDL parity (code-first resolver is runtime truth)
-// Canonical: apps/backend/src/api/graphql/identity.graphql
-// (legacy src/backend/api/graphql/identity.graphql)
-// - Mirrors the IdentityResolver intents. submitCreatorKYC rides the 085
-//   submitKyc lane (canonical) and is intentionally absent here (no dupes).
+# SSOT Phase 003 §3.2 — identity SDL parity (code-first resolver is runtime truth)
+# Canonical: apps/backend/src/api/graphql/identity.graphql
+# (legacy src/backend/api/graphql/identity.graphql)
+# - Mirrors the IdentityResolver intents. submitCreatorKYC rides the 085
+#   submitKyc lane (canonical) and is intentionally absent here (no dupes).
 
 type UserProfile {
   id: ID!
-  lineUserId: String
+  lineUserId: ID!
   email: String
   phone: String
   displayName: String!
   avatarUrl: String
-  role: UserRole!
+  role: String!
   kycStatus: KYCStatus!
   walletBalance: Float!
   rewardPoints: Int!

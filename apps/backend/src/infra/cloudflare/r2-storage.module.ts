@@ -6,11 +6,12 @@
 //   the global InfraModule (single pool); entitlement is checked structurally
 //   (the standalone EntitlementModule is not AppModule-registered).
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single pool).
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { R2StorageService } from './r2-storage.service';
 import { MediaVaultController } from '../../api/controllers/media-vault.controller';
 import { EdgeStreamEntitlementGuard } from '../../modules/entitlement/guards/edge-stream-entitlement.guard';
 
+@Global()
 @Module({
   controllers: [MediaVaultController],
   providers: [R2StorageService, EdgeStreamEntitlementGuard],

@@ -4,7 +4,7 @@
 //   HNSW search (Gate 4) -> enrich product titles -> threshold sort.
 //   p95 budget 50ms tracked per call (Gate 8 telemetry field).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { SemanticSearchInputSchema, VECTOR_STREAM } from '@repo/shared';
 import { EmbeddingGeneratorService } from './embedding-generator.service';
 import { PgVectorRepositoryService } from './pgvector-repository.service';
@@ -23,7 +23,7 @@ export class SemanticSearchService {
     private readonly embeddings: EmbeddingGeneratorService,
     private readonly vectors: PgVectorRepositoryService,
     private readonly titles: ProductTitlePort,
-    private readonly bus?: SearchBus,
+    @Optional() private readonly bus?: SearchBus,
   ) {}
 
   async execute(input: {

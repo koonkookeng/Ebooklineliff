@@ -27,7 +27,7 @@ function tenantOf(req: LooseReq): string {
   return headers['x-tenant-slug'] ?? headers['x-tenant-identifier'] ?? 'default';
 }
 
-@Controller('api/v1/admin/analytics')
+@Controller('admin/analytics')
 export class ExecutiveAnalyticsController {
   constructor(
     private readonly bi: ExecutiveAnalyticsService,

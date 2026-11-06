@@ -25,7 +25,7 @@ function lineUserOf(req: LooseReq): string | undefined {
   return user.lineUserId;
 }
 
-@Controller('api/v1/b2b')
+@Controller('b2b')
 export class B2bCorporateController {
   constructor(
     private readonly licenses: B2bLicenseService,

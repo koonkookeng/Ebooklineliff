@@ -8,7 +8,7 @@
 //   edge latency exceeds EDGE_SELFHEAL_MS (§10 self-healing loop seam).
 // - Zero new deps (node:zlib only; ioredis client injected, never constructed
 //   here so unit tests run without a live cluster).
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { gunzip as gunzipCb, gzip as gzipCb } from 'node:zlib';
 import { promisify } from 'node:util';
 import {
@@ -70,7 +70,7 @@ export class RedisEdgeService implements ChunkCacheReader, ChunkCacheWriter {
   private readonly l1 = new Map<string, { payload: RedisChunkPayload; expiresAt: number }>();
   private readonly telemetry = new EdgeCacheTelemetry();
 
-  constructor(private readonly client?: EdgeCacheClient) {}
+  constructor(@Optional() private readonly client?: EdgeCacheClient) {}
 
   /** Canonical key builder (single source — shared helper). */
   buildKey(params: ChunkCacheKeyParams): string {

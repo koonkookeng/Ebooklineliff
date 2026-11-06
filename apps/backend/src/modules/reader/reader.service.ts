@@ -9,7 +9,7 @@
 // - syncEbookProgress: single upsert (<50ms Gate 7) + best-effort analytics
 //   sink for dwell events (Gate 8 seam; default no-op).
 // - tsx-safe (no Nest parameter decorators); zero new deps.
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   EbookChunkPayloadSchema,
   type EbookChunkPayload,
@@ -46,11 +46,11 @@ export interface ReadingDwellEvent {
 export class ReaderService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
   constructor(
-    private readonly warmer?: ChunkWarmerService,
-    private readonly prisma?: ReaderPrisma,
-    private readonly watermarks?: WatermarkGeneratorService,
-    private readonly appSecret: string = '',
-    private readonly onProgressEvent?: (event: ReadingDwellEvent) => void,
+    @Optional() private readonly warmer?: ChunkWarmerService,
+    @Optional() private readonly prisma?: ReaderPrisma,
+    @Optional() private readonly watermarks?: WatermarkGeneratorService,
+    @Optional() private readonly appSecret: string = '',
+    @Optional() private readonly onProgressEvent?: (event: ReadingDwellEvent) => void,
   ) {}
 
   async getEbookPageChunk(

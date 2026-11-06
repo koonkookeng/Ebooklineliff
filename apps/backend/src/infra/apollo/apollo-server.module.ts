@@ -3,6 +3,7 @@
 // budget (APP_GUARD here applies app-wide; the guard no-ops for HTTP).
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { join } from 'node:path';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AuthResolver } from '../../api/graphql/resolvers/auth.resolver';
@@ -24,13 +25,22 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
     AuthModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
+      // Schema-first: the SDL lives in src/**/*.graphql (copied into dist by
+      // the package build script). Resolvers use string names (@Query('me')),
+      // so code-first auto-schema generation cannot describe them.
+      typePaths: [join(__dirname, '../../../**/*.graphql')],
+      // The SDL corpus is curated per phase; a handful of resolvers exist that
+      // have no SDL field yet. Tolerate them instead of failing boot (they are
+      // simply unreachable over GraphQL until their SDL lands).
+      resolverValidationOptions: { requireResolversToMatchSchema: 'ignore' },
       playground: !IS_PRODUCTION,
       // Schema disclosure is an OWASP A05 reconnaissance vector; production
       // keeps introspection closed (codegen runs against staging).
       introspection: !IS_PRODUCTION,
-      context: ({ req }: { req: { headers: Record<string, string | undefined>; user?: { id: string } } }) =>
-        buildGraphQLContext({ req }),
+      context: (arg: any) => {
+        const req = arg?.req ?? arg?.request ?? arg;
+        return buildGraphQLContext({ req });
+      },
     }),
   ],
   providers: [

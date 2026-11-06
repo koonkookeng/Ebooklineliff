@@ -12,7 +12,7 @@ import { EbookStructureService } from '../services/ebook-structure.service';
 import { CourseStructureService } from '../services/course-structure.service';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 
-@Controller('api/v1/catalog/structure')
+@Controller('catalog/structure')
 export class CatalogStructureController {
   constructor(
     private readonly ebooks: EbookStructureService,

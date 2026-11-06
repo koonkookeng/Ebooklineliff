@@ -18,7 +18,7 @@ function identityOf(req: ScrubReq): string {
   return req.user.id;
 }
 
-@Controller('api/v1/stream')
+@Controller('stream')
 export class ScrubbingController {
   constructor(private readonly scrubbing: ThumbnailScrubbingService) {}
 

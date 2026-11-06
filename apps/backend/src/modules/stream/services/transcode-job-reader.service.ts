@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/stream/services/transcode-job-reader.service.ts
 // - Single injectable behind the job-status REST/GQL (no interface tokens).
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 export interface TranscodeJobStatus {
   jobId: string;
@@ -31,7 +31,7 @@ export interface TranscodeJobTables {
 @Injectable()
 export class TranscodeJobReaderService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly tables?: TranscodeJobTables) {}
+  constructor(@Optional() private readonly tables?: TranscodeJobTables) {}
 
   async findJobWithVariants(jobId: string): Promise<TranscodeJobStatus | null> {
     const row = await this.tables?.videoTranscodeJob

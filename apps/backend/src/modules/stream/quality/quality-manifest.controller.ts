@@ -13,7 +13,7 @@ interface QualityReq {
   user?: { id?: string };
 }
 
-@Controller('api/v1/stream')
+@Controller('stream')
 export class QualityManifestController {
   constructor(private readonly quality: QualitySelectorService) {}
 

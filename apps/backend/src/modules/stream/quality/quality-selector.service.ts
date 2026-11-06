@@ -9,7 +9,7 @@
 // - reportTelemetry: Zod-gated ledger row + analytics stream (best-effort,
 //   never blocks playback).
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   StreamTelemetryPayloadSchema,
   QUALITY_LADDER,
@@ -50,9 +50,9 @@ const LADDER_LABELS = ['1080p', '720p', '480p', '360p'] as const;
 @Injectable()
 export class QualitySelectorService {
   constructor(
-    private readonly tables?: QualityTables,
-    private readonly cache?: QualityCache,
-    private readonly stream?: QualityStream,
+    @Optional() private readonly tables?: QualityTables,
+    @Optional() private readonly cache?: QualityCache,
+    @Optional() private readonly stream?: QualityStream,
   ) {}
 
   private variantUrls(masterUrl: string): string[] {

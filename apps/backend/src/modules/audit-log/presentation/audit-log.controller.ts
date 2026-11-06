@@ -29,7 +29,7 @@ function actorOf(req: LooseReq): AuditActorContext {
   };
 }
 
-@Controller('api/v1/admin/audit')
+@Controller('admin/audit')
 export class AuditLogController {
   constructor(private readonly audit: AuditLogService) {}
 

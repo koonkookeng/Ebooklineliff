@@ -83,6 +83,6 @@ import { KycQueueReviewService } from './services/kyc-queue-review.service';
       inject: [KycVerificationService, R2PrivateVaultClient],
     },
   ],
-  exports: [KycVerificationService, PrismaKycStore, KycEncryptionService, PiiCryptoService, KycRiskService, KycQueueReviewService],
+  exports: [KycVerificationService, PrismaKycStore, KycEncryptionService, PiiCryptoService, KycRiskService, KycQueueReviewService, KycQueueService],
 })
 export class KycModule {}

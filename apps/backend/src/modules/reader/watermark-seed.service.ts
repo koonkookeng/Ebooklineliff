@@ -5,7 +5,7 @@
 //   the 15-minute TTL so rapid page turns never re-hit the audit log.
 // - Delegates to GetWatermarkSeedHandler (WatermarkModule owns crypto/audit).
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { WATERMARK_SEED_TTL_SEC, type WatermarkSeedPayload } from '@repo/shared';
 import { GetWatermarkSeedHandler, type SeedRequest } from '../watermark/application/queries/get-watermark-seed.handler';
 
@@ -14,7 +14,7 @@ export class WatermarkSeedService {
   private readonly memo = new Map<string, { payload: WatermarkSeedPayload; expiresAt: number }>();
 
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly handler?: GetWatermarkSeedHandler) {}
+  constructor(@Optional() private readonly handler?: GetWatermarkSeedHandler) {}
 
   async getSeed(req: SeedRequest, nowMs: number = Date.now()): Promise<WatermarkSeedPayload> {
     if (!this.handler) throw new Error('Watermark service unavailable');

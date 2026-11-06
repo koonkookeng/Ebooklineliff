@@ -162,6 +162,11 @@ export async function middleware(req: NextRequest) {
     // LINE Messaging API webhook: LINE has no session; the proxy forwards the
     // raw body and X-Line-Signature to the backend guard for verification.
     pathname.startsWith('/api/webhooks/line') ||
+    pathname.startsWith('/auth/qr/') ||
+    pathname === '/scan-login' ||
+    pathname.startsWith('/scan-login/') ||
+    pathname === '/auth' ||
+    pathname.startsWith('/auth/') ||
     pathname.startsWith('/api/v1/resolver/') ||
     // Phase 026: viral preview is public (recipients may be logged out).
     pathname === '/api/v1/social-share/preview' ||
@@ -212,7 +217,11 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev, allowInsecure);
     }
-    return applyCsp(NextResponse.redirect(new URL('/login', req.url)), nonce, isDev, allowInsecure);
+    const loginUrl = new URL('/login', req.url);
+    if (req.method === 'GET' && pathname !== '/login') {
+      loginUrl.searchParams.set('next', `${pathname}${req.nextUrl.search}`);
+    }
+    return applyCsp(NextResponse.redirect(loginUrl), nonce, isDev, allowInsecure);
   }
 
   const secret = process.env.JWT_SECRET ?? 'secret-key-144-xz-dev-only-change-me';
@@ -221,7 +230,12 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev, allowInsecure);
     }
-    return applyCsp(NextResponse.redirect(new URL('/login?error=session_expired', req.url)), nonce, isDev, allowInsecure);
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('error', 'session_expired');
+    if (req.method === 'GET' && pathname !== '/login') {
+      loginUrl.searchParams.set('next', `${pathname}${req.nextUrl.search}`);
+    }
+    return applyCsp(NextResponse.redirect(loginUrl), nonce, isDev, allowInsecure);
   }
 
   const headers = new Headers(req.headers);

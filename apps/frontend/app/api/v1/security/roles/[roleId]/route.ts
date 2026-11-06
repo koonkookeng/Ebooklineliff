@@ -11,13 +11,13 @@ function forwardHeaders(req: Request, tenantFallback: string): Record<string, st
   return headers;
 }
 
-export async function GET(req: Request, ctx: { params: { roleId: string } }): Promise<NextResponse> {
+export async function GET(req: Request, ctx: { params: Promise<{ roleId: string }> }): Promise<NextResponse> {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const url = new URL(req.url);
   const tenantId = url.searchParams.get('tenantId') ?? 'default';
   try {
     const res = await fetch(
-      `${backend}/api/v1/security/roles/${encodeURIComponent(ctx.params.roleId)}?tenantId=${encodeURIComponent(tenantId)}`,
+      `${backend}/api/v1/security/roles/${encodeURIComponent((await ctx.params).roleId)}?tenantId=${encodeURIComponent(tenantId)}`,
       { headers: forwardHeaders(req, tenantId) },
     );
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });
@@ -26,13 +26,13 @@ export async function GET(req: Request, ctx: { params: { roleId: string } }): Pr
   }
 }
 
-export async function PUT(req: Request, ctx: { params: { roleId: string } }): Promise<NextResponse> {
+export async function PUT(req: Request, ctx: { params: Promise<{ roleId: string }> }): Promise<NextResponse> {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const url = new URL(req.url);
   const tenantId = url.searchParams.get('tenantId') ?? 'default';
   try {
     const body = await req.json().catch(() => ({}));
-    const res = await fetch(`${backend}/api/v1/security/roles/${encodeURIComponent(ctx.params.roleId)}`, {
+    const res = await fetch(`${backend}/api/v1/security/roles/${encodeURIComponent((await ctx.params).roleId)}`, {
       method: 'PUT',
       headers: { ...forwardHeaders(req, tenantId), 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

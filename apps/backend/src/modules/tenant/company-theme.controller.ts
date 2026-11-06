@@ -7,7 +7,7 @@ import { BadRequestException, Body, Controller, Get, Put, Query, UseGuards } fro
 import { CompanyThemeService } from './company-theme.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
-@Controller('api/v1/tenant')
+@Controller('tenant')
 export class CompanyThemeController {
   constructor(private readonly themes: CompanyThemeService) {}
 

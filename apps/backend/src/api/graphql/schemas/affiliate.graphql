@@ -39,7 +39,8 @@ input PayoutRequestInput {
 
 type Query {
   getAffiliateDashboard: AffiliateDashboardPayload!
-  generateProductFlexShare(productId: ID!): FlexSharePayload!
+  # generateProductFlexShare is owned by the social-share SDL
+  # (input: DynamicFlexShareInput!) — one field, one signature.
 }
 
 type Mutation {

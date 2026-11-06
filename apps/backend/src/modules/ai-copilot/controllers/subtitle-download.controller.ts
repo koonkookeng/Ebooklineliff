@@ -3,7 +3,7 @@
 // - GET vtt/srt by lessonId + ticket. Ticket = HMAC(lessonId.exp, secret),
 //   5-minute TTL, learner-bound session check via entitlement read.
 // - Zero new deps (node:crypto only).
-import { BadRequestException, Controller, ForbiddenException, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Get, Query, Req, Res, UseGuards, Optional } from '@nestjs/common';
 import { buildSrt, buildVtt } from '@repo/shared';
 import { subtitleTicket, verifySubtitleTicket } from '../utils/subtitle-ticket.util';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
@@ -26,13 +26,13 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/subtitles')
+@Controller('subtitles')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class SubtitleDownloadController {
   constructor(
     private readonly grants: EntitlementGrantService,
     private readonly prisma: PrismaService,
-    private readonly secret: string = process.env['SUBTITLE_TICKET_SECRET'] || 'dev-subtitle-secret',
+    @Optional() private readonly secret: string = process.env['SUBTITLE_TICKET_SECRET'] || 'dev-subtitle-secret',
   ) {}
 
   @Get('ticket')

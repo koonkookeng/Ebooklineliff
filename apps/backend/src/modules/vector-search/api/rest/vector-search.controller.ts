@@ -25,7 +25,7 @@ function actorOf(req: LooseReq): { userId: string; tenantId: string } {
   return { userId: user.id, tenantId };
 }
 
-@Controller('api/v1/vector-search')
+@Controller('vector-search')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class VectorSearchController {
   constructor(

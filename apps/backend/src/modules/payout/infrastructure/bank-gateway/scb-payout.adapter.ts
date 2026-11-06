@@ -3,7 +3,7 @@
 // - Same staged-transport contract as the Kasikorn adapter (see its header).
 //   Factory selection: KBANK accounts ride Kasikorn, everything else SCB.
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { signBankPayload } from '@repo/shared';
 import type { BankGatewayPort } from '../../application/use-cases/process-batch-clearing.use-case';
 
@@ -12,7 +12,7 @@ export class ScbPayoutAdapter implements BankGatewayPort {
   readonly bankCode = 'SCB';
   private readonly logger = new Logger(ScbPayoutAdapter.name);
 
-  constructor(private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
+  constructor(@Optional() private readonly secret: string = process.env['BANK_CALLBACK_SECRET'] || process.env['JWT_SECRET'] || 'secret-key-144-xz') {}
 
   async stageBatch(args: {
     batchNo: string;

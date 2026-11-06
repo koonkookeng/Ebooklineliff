@@ -19,7 +19,7 @@ function actorOf(req: LooseReq): string {
   return user.id;
 }
 
-@Controller('api/v1/flash-sale')
+@Controller('flash-sale')
 export class FlashSaleController {
   constructor(
     private readonly campaigns: FlashSaleCampaignService,

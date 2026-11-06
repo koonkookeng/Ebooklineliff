@@ -2,7 +2,7 @@
  * Phase 000 — Redis Edge sliding-window cache [N-1, N, N+1]
  * BDD: deliver encrypted vector SVG chunks, GC N-2 via TTL + explicit del.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
 const WINDOW_TTL_SEC = 300;
 
@@ -14,7 +14,7 @@ export function slidingWindow(currentPage: number): number[] {
 export class EdgeCacheService {
   // Thin wrapper: real Redis client injected in Phase 002 (ioredis). Map fallback for tests.
   private mem = new Map<string, string>();
-  constructor(private readonly redis?: { get(k: string): Promise<string | null>; setex(k: string, ttl: number, v: string): Promise<unknown>; del(...k: string[]): Promise<unknown> }) {}
+  constructor(@Optional() private readonly redis?: { get(k: string): Promise<string | null>; setex(k: string, ttl: number, v: string): Promise<unknown>; del(...k: string[]): Promise<unknown> }) {}
 
   key(productId: string, page: number): string {
     return `ebook:chunk:${productId}:${page}`;

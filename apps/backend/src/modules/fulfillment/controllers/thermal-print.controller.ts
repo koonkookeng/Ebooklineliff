@@ -14,7 +14,7 @@ function tenantOf(req: Record<string, unknown>): string {
   return (((req['tenantId'] as string | undefined) ?? headers['x-tenant-id'] ?? headers['X-Tenant-ID'] ?? '') as string).trim();
 }
 
-@Controller('api/v1/fulfillment')
+@Controller('fulfillment')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class ThermalPrintController {
   constructor(private readonly print: BatchThermalPrintService) {}

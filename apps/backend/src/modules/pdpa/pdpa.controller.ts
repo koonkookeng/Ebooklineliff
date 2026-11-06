@@ -41,7 +41,7 @@ function actorOf(req: AuthedReq): { id: string; ip: string; ua: string } {
   };
 }
 
-@Controller('api/v1/pdpa')
+@Controller('pdpa')
 @UseGuards(JwtAuthGuard)
 export class PdpaController {
   constructor(

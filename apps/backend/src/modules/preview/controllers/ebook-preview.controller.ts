@@ -11,7 +11,7 @@ import { previewIdentityOf, type PreviewHttpReq } from '../preview-identity';
 import { EbookChunkService } from '../services/ebook-chunk.service';
 import { PreviewGatekeeperService } from '../services/preview-gatekeeper.service';
 
-@Controller('api/v1/preview/ebook')
+@Controller('preview/ebook')
 export class EbookPreviewController {
   constructor(
     private readonly chunks: EbookChunkService,

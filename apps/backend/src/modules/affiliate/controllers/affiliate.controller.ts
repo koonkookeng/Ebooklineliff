@@ -24,7 +24,7 @@ function actorOf(req: Record<string, unknown>): string {
   return user.id;
 }
 
-@Controller('api/v1/affiliate')
+@Controller('affiliate')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class AffiliateController {
   constructor(

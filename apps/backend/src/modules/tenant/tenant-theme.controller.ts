@@ -9,7 +9,7 @@ import { BadRequestException, Body, Controller, Get, Put, Query, UseGuards } fro
 import { TenantThemeService } from './tenant-theme.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
-@Controller('api/v1/tenant')
+@Controller('tenant')
 export class TenantThemeController {
   constructor(private readonly themes: TenantThemeService) {}
 

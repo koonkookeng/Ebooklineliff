@@ -17,7 +17,7 @@ function actorOf(req: LooseReq): { userId: string; displayName: string } {
   return { userId: user.id, displayName: user.displayName ?? 'นักอ่าน' };
 }
 
-@Controller('api/v1/social-notes')
+@Controller('social-notes')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class SocialReadingController {
   constructor(

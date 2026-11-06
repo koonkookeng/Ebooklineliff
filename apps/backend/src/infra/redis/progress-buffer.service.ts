@@ -5,7 +5,7 @@
 //   ZSET increments. All calls fail-open to null so the <20ms sync path
 //   (Gate 7) never breaks on edge outage.
 // - tsx-safe (no param decorators). Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { heatmapKey, progressBufferKey } from '@repo/shared';
 
 export interface ProgressEdge {
@@ -23,7 +23,7 @@ export const PROGRESS_BUFFER_TTL_SEC = 3600;
 @Injectable()
 export class ProgressBufferService {
   // NOTE: Module wires via useFactory (no param decorators — tsx-safe).
-  constructor(private readonly edge?: ProgressEdge) {}
+  constructor(@Optional() private readonly edge?: ProgressEdge) {}
 
   bufferKey(userId: string, lessonId: string): string {
     return progressBufferKey(userId, lessonId);

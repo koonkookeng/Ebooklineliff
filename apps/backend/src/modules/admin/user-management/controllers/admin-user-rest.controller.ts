@@ -38,7 +38,7 @@ function tenantScopeOf(req: AuthedRequest): string | undefined {
   return req.headers?.['x-tenant-id'] ?? req.user?.tenantId;
 }
 
-@Controller('api/v1/admin/users')
+@Controller('admin/users')
 @UseGuards(JwtAuthGuard, AdminRbacGuard)
 export class AdminUserRestController {
   constructor(

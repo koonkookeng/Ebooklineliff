@@ -5,6 +5,7 @@
 // - PrismaService + RedisClusterService arrive via global InfraModule;
 //   R2StorageService exposes getObjectText/getObjectBuffer (Phase 036 surface).
 import { Module } from '@nestjs/common';
+import { R2StorageModule } from '../../infra/cloudflare/r2-storage.module';
 import { R2StorageService } from '../../infra/cloudflare/r2-storage.service';
 import { PrismaService } from '../../infra/database/prisma.service';
 import { RedisClusterService } from '../../infra/redis/redis-cluster.service';
@@ -14,6 +15,7 @@ import { HlsSecurityService, HlsR2Port } from './services/hls-security.service';
 import { VideoSessionService, VideoSessionDbPort, VideoSessionRedisPort } from './services/video-session.service';
 
 @Module({
+  imports: [R2StorageModule],
   controllers: [HlsStreamController],
   providers: [
     {

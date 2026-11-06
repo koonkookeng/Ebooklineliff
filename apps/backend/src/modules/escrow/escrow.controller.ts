@@ -15,7 +15,7 @@ function actorOf(req: LooseReq): { id: string; role: string | undefined } {
   return { id: user.id, role: user.role };
 }
 
-@Controller('api/v1/escrow')
+@Controller('escrow')
 export class EscrowController {
   constructor(private readonly escrow: EscrowService) {}
 

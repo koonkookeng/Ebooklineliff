@@ -5,7 +5,7 @@
 // - R2 holds AES-128 encrypted .ts chunks; NestJS proxies bytes (zero egress fee).
 // - Zero new deps (node:crypto only). Constructor takes ports — no Nest param
 //   decorators so the class stays tsx-importable (Phase 027–049 precedent).
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
   StreamTokenType,
@@ -31,7 +31,7 @@ function b64urlDecode(encoded: string): string {
 export class HlsSecurityService {
   constructor(
     private readonly r2: HlsR2Port,
-    private readonly secret: string = process.env.HLS_STREAM_SECRET || 'dev-hls-stream-secret',
+    @Optional() private readonly secret: string = process.env.HLS_STREAM_SECRET || 'dev-hls-stream-secret',
   ) {}
 
   /** Mint a short-lived signed token bound to lesson + purpose. */

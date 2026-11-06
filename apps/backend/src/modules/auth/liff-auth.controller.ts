@@ -5,7 +5,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException } f
 import { LiffAuthService } from './liff-auth.service';
 import { LiffAuthHandshakeSchema, LiffAuthResponse } from '@repo/shared';
 
-@Controller('api/v1/auth/liff')
+@Controller('auth/liff')
 export class LiffAuthController {
   constructor(private readonly liffAuthService: LiffAuthService) {}
 

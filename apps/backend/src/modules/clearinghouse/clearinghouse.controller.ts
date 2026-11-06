@@ -34,7 +34,7 @@ function adminOf(req: LooseReq): { id: string; role: string } {
   return { id: a.id, role: a.role };
 }
 
-@Controller('api/v1/clearinghouse')
+@Controller('clearinghouse')
 export class ClearinghouseController {
   constructor(
     private readonly clearing: ClearinghouseService,

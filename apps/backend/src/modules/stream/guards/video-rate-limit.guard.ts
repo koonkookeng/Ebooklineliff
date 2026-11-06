@@ -6,7 +6,8 @@
 //   session service escalates to TEMPORARY_BLOCK / PERMANENT_BAN.
 // - Fail-open on Redis outage (availability first; §10 false-positive rule).
 // - Pure decision fn is exported for contract tests (no Nest runtime needed).
-import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus, Inject } from '@nestjs/common';
+import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 import {
   VIDEO_RATE_MAX_BURST_SEGMENTS,
   VIDEO_RATE_WINDOW_SEC,
@@ -27,7 +28,11 @@ export function evaluateVideoRate(requestCount: number): { allowed: boolean; bur
 
 @Injectable()
 export class VideoRateLimitGuard implements CanActivate {
-  constructor(private readonly redis: VideoRateRedisPort) {}
+  // The port is a TS interface (erased at runtime), so bind the concrete
+  // global Redis client explicitly. Guards used via @UseGuards() are also
+  // instantiated by Nest outside the provider registry, where an interface
+  // token can never resolve.
+  constructor(@Inject(RedisClusterService) private readonly redis: VideoRateRedisPort) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest() as {

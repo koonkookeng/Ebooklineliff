@@ -11,10 +11,10 @@ function forward(req: Request): Record<string, string> {
   return h;
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   try {
-    const res = await fetch(`${backend}/api/v1/live/sessions/${encodeURIComponent(params.id)}/chat`, {
+    const res = await fetch(`${backend}/api/v1/live/sessions/${encodeURIComponent((await params).id)}/chat`, {
       headers: forward(req),
     });
     return NextResponse.json(await res.json().catch(() => null), { status: res.status });
@@ -23,11 +23,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
   const body = await req.json().catch(() => null);
   try {
-    const res = await fetch(`${backend}/api/v1/live/sessions/${encodeURIComponent(params.id)}/chat`, {
+    const res = await fetch(`${backend}/api/v1/live/sessions/${encodeURIComponent((await params).id)}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...forward(req) },
       body: JSON.stringify(body),

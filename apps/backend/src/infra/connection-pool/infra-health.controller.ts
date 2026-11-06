@@ -10,7 +10,7 @@ import { InfraHealthService, toPublicRow } from './infra-health.service';
 
 export { toPublicRow };
 
-@Controller('api/v1/infra')
+@Controller('infra')
 export class InfraHealthController {
   constructor(private readonly health: InfraHealthService) {}
 

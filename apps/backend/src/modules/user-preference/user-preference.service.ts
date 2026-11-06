@@ -6,7 +6,7 @@
 //   fan-out (<100ms budget) → analytics stream (circadian engine).
 // - syncOfflinePreference: LWW merge for offline mutations (BDD-2).
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   UpdatePreferenceInputSchema,
   UserReadingPreferenceSchema,
@@ -34,10 +34,10 @@ export interface PreferenceBus {
 @Injectable()
 export class UserPreferenceService {
   constructor(
-    private readonly repo?: UserPreferenceRepository,
-    private readonly cache?: PreferenceCache,
-    private readonly bus?: PreferenceBus,
-    private readonly onChanged?: (event: { userId: string; themeMode: string; triggerSource: string }) => void,
+    @Optional() private readonly repo?: UserPreferenceRepository,
+    @Optional() private readonly cache?: PreferenceCache,
+    @Optional() private readonly bus?: PreferenceBus,
+    @Optional() private readonly onChanged?: (event: { userId: string; themeMode: string; triggerSource: string }) => void,
   ) {}
 
   private shape(row: Record<string, unknown>, userId: string): UserPreferenceEntity {

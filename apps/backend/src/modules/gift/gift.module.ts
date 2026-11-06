@@ -24,7 +24,13 @@ import { GiftClaimController } from './api/rest/gift-claim.controller';
     PrismaGiftRepository,
     LineFlexGiftBuilder,
     EntitlementGrantService,
-    GenerateFlexCardUseCase,
+    {
+      // GiftRepository is a TS interface (no runtime token) — wire explicitly.
+      provide: GenerateFlexCardUseCase,
+      useFactory: (repo: PrismaGiftRepository, flex: LineFlexGiftBuilder) =>
+        new GenerateFlexCardUseCase(repo, flex),
+      inject: [PrismaGiftRepository, LineFlexGiftBuilder],
+    },
     {
       provide: CreateGiftOrderService,
       useFactory: (repo: PrismaGiftRepository, flex: LineFlexGiftBuilder, redis: RedisClusterService) =>

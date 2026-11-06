@@ -3,7 +3,7 @@
 // - Session must be joinable (LIVE/PAUSED) → entitlement gate (≤50ms shape)
 //   → vendor playback + 5-min token → forensic watermark → grant ledger +
 //   stream event. Port-based, DB-free tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { LIVE_PLAYBACK_TOKEN_TTL_SEC, LIVE_STREAM, liveGrantKey, liveUserHash } from '@repo/shared';
 import { isJoinable, type LiveStatus } from '../../domain/entities/live-session.entity';
 import { EntitlementCheckerService } from '../../domain/services/entitlement-checker.service';
@@ -22,7 +22,7 @@ export class MintPlaybackTokenUseCase {
     private readonly gate: EntitlementCheckerService,
     private readonly vendor: AmazonIvsAdapter,
     private readonly bus: LiveBus,
-    private readonly watermarkSalt = process.env['LIVE_WATERMARK_SALT'] || 'dev-live-salt',
+    @Optional() private readonly watermarkSalt = process.env['LIVE_WATERMARK_SALT'] || 'dev-live-salt',
   ) {}
 
   async join(args: { sessionId: string; userId: string }): Promise<{

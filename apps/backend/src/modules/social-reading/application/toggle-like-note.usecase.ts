@@ -2,7 +2,7 @@
 // Canonical: apps/backend/src/modules/social-reading/application/toggle-like-note.usecase.ts
 // - @@unique(noteId, userId) makes the toggle idempotent; counter moves in
 //   the same transaction (Gate 7). Port-based tests. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { SOCIAL_STREAM, socialPageKey } from '@repo/shared';
 import type { SocialNoteRepository } from '../domain/social-note.repository.interface';
 
@@ -19,7 +19,7 @@ export class ToggleLikeNoteUsecase {
   constructor(
     private readonly repo: SocialNoteRepository,
     private readonly cache: LikeCachePort,
-    private readonly bus?: LikeBus,
+    @Optional() private readonly bus?: LikeBus,
   ) {}
 
   async execute(args: { userId: string; noteId: string; ebookId: string; pageNumber: number }): Promise<{

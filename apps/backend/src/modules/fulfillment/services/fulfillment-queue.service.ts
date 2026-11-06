@@ -6,7 +6,7 @@
 //   BOOKED + tracking -> LINE tracking event (async seam) -> batch counters.
 // - Port-based (repo/tx/queue/notify/carriers) for DB-free tests.
 // - Zero new deps.
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import {
   BatchBookingRequestSchema,
   FULFILLMENT_QUEUE_STREAM,
@@ -37,7 +37,7 @@ export class FulfillmentQueueService {
     private readonly bus: QueueBus,
     private readonly notify: TrackingNotifier,
     private readonly breaker: BreakerStore,
-    private readonly adapters: (provider: string) => CarrierAdapter = carrierAdapterFor,
+    @Optional() private readonly adapters: (provider: string) => CarrierAdapter = carrierAdapterFor,
   ) {}
 
   /** Enqueue up to 500 PAID orders for courier booking (BDD-1 <2s/100). */

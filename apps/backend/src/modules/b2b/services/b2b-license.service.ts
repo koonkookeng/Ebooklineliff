@@ -3,7 +3,7 @@
 // - Zod gate → account upsert (taxId idempotent) → license pool row with
 //   human code → onboarding Flex + claim URL → stream (Gate 8).
 // - Port-based for DB-free tests. Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   B2B_STREAM,
   CORPORATE_DEFAULT_EXPIRY_DAYS,
@@ -25,7 +25,7 @@ export class B2bLicenseService {
   constructor(
     private readonly repo: B2bRepository,
     private readonly bus: LicenseBus,
-    private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
+    @Optional() private readonly origin: string = process.env['LIFF_ORIGIN'] || 'https://liff.line.me',
   ) {}
 
   async createLicense(args: {

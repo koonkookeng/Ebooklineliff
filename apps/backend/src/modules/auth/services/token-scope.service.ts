@@ -5,7 +5,7 @@
 // - Payload: sub/userId, tenantId, bitmask (decimal string), scopes[], jti, iat/exp.
 // - Revocation rides RedisTokenBlacklistAdapter (<1s edge fan-out, BDD Scenario 3).
 // - hydrate() is the LIFF_INIT entry: verifies + returns introspection for client memory.
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, Optional, ForbiddenException } from '@nestjs/common';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   BitwiseMatrixPayloadSchema,
@@ -40,7 +40,11 @@ export class TokenScopeService {
   private readonly currentSecret: string;
   private readonly prevSecret: string | null;
 
-  constructor(private readonly blacklist: RedisTokenBlacklistAdapter, secret?: string, prevSecret?: string | null) {
+  constructor(
+    private readonly blacklist: RedisTokenBlacklistAdapter,
+    @Optional() secret?: string,
+    @Optional() prevSecret?: string | null,
+  ) {
     this.currentSecret = secret ?? process.env.JWT_SECRET ?? 'secret-key-144-xz-dev-only-change-me';
     const prev = prevSecret ?? process.env.JWT_SECRET_PREV ?? null;
     this.prevSecret = prev && prev !== this.currentSecret ? prev : null;

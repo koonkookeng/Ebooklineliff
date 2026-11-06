@@ -26,7 +26,7 @@ function netOf(req: LooseReq): { ipAddress: string; userAgent: string } {
   };
 }
 
-@Controller('api/v1/kyc')
+@Controller('kyc')
 export class KycSubmissionController {
   constructor(
     private readonly kyc: KycVerificationService,

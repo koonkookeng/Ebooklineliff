@@ -6,7 +6,7 @@
 //   attacker 24h throttle marker. Fail-closed on auth, fail-open on
 //   Redis outage (readers stay up; 050/122 precedent).
 // - Pure entitlementKey exported for contract tests. Zero new deps.
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Optional } from '@nestjs/common';
 import { ATTACKER_BLOCK_TTL_SEC, attackerBlockKey, SECURITY_EVENT_STREAM } from '@repo/shared';
 
 export interface DrmEntitlementEdgePort {
@@ -38,7 +38,7 @@ export function entitlementKey(userId: string, productId: string): string {
 export class DrmEntitlementGuard implements CanActivate {
   constructor(
     private readonly edge: DrmEntitlementEdgePort,
-    private readonly audit?: DrmAuditPort,
+    @Optional() private readonly audit?: DrmAuditPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

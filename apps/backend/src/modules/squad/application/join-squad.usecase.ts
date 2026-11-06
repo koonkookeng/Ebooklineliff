@@ -3,7 +3,7 @@
 // - Code-gated join (private-by-code, public-by-id) + capacity guard +
 //   atomic member row. Leave removes the row (leader-last-member disbands
 //   upstream). Port-based tests. Zero new deps.
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { SQUAD_STREAM } from '@repo/shared';
 import { assertJoinable } from '../domain/squad.entity';
 import type { SquadRepository } from '../domain/squad.repository.interface';
@@ -16,7 +16,7 @@ export interface SquadBus {
 export class JoinSquadUsecase {
   constructor(
     private readonly repo: SquadRepository,
-    private readonly bus?: SquadBus,
+    @Optional() private readonly bus?: SquadBus,
   ) {}
 
   async execute(args: { userId: string; squadCode?: string; squadId?: string }): Promise<{ squadId: string; memberCount: number }> {

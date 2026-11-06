@@ -20,7 +20,7 @@ interface AnalyticsReq {
   headers?: Record<string, string | undefined>;
 }
 
-@Controller('api/v1/analytics')
+@Controller('analytics')
 export class AnalyticsIngestionController {
   constructor(
     private readonly stream: AnalyticsStreamService,

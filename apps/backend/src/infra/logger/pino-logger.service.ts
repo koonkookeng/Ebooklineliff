@@ -7,7 +7,7 @@
 //   message, scrubbed context, optional error.
 // - Every payload is PII-scrubbed pre-emit (Gate 4). Emitters never throw.
 // - Zero new deps.
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { StructuredLogPayloadSchema, scrubPii, type TelemetryLogLevel } from '@repo/shared';
 import { currentTrace } from '../observability/trace-context.holder';
 import { redactPii } from './redact-pii.utility';
@@ -26,7 +26,7 @@ export class PinoLoggerService {
   private readonly logger = new Logger('json');
   private readonly serviceName: string;
 
-  constructor(serviceName = 'ebook-liff-backend') {
+  constructor(@Optional() serviceName = 'ebook-liff-backend') {
     this.serviceName = serviceName;
   }
 

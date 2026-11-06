@@ -18,7 +18,7 @@ function actorOf(req: LooseReq): { userId: string; tenantId: string } {
   return { userId: user.id, tenantId };
 }
 
-@Controller('api/v1/squads')
+@Controller('squads')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class SquadController {
   constructor(

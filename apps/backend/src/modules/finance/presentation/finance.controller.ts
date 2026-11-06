@@ -41,7 +41,7 @@ function actorOf(req: LooseReq): { id: string; role?: string } {
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'FINANCE_ADMIN']);
 
-@Controller('api/v1/finance')
+@Controller('finance')
 export class FinanceController {
   constructor(
     private readonly balances: BalanceCalculatorService,

@@ -5,7 +5,7 @@
 //   of a live lease (>24h left) else HMAC-signed 7-day lease + upsert.
 // - verifyLeaseToken: signature + expiry + revocation check (pure shape).
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Optional } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { OFFLINE_LEASE_DAYS, OFFLINE_LEASE_RENEW_WITHIN_MS } from '@repo/shared';
 
@@ -39,8 +39,8 @@ function hmacEqual(a: string, b: string): boolean {
 @Injectable()
 export class DrmLeaseService {
   constructor(
-    private readonly tables?: DrmLeaseTables,
-    private readonly secretKey: string = process.env.DRM_OFFLINE_SECRET_KEY || 'AhongEmeraldSecret999',
+    @Optional() private readonly tables?: DrmLeaseTables,
+    @Optional() private readonly secretKey: string = process.env.DRM_OFFLINE_SECRET_KEY || 'AhongEmeraldSecret999',
   ) {}
 
   signPayload(payloadStr: string): string {

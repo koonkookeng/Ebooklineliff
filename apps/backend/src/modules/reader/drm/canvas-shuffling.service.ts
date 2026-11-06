@@ -6,7 +6,7 @@
 //   → forensic watermark → payload (<16ms deshuffle budget client-side).
 // - reportViolation: single-row insert (≤500ms) + best-effort stream event.
 // - tsx-safe (no param decorators; structural ports). Zero new deps.
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   DRM_BLOB_URL_TTL_SEC,
@@ -46,12 +46,12 @@ export interface DrmShuffleVault {
 @Injectable()
 export class CanvasShufflingService {
   constructor(
-    private readonly matrices?: PixelMatrixGeneratorService,
-    private readonly tables?: DrmShuffleTables,
-    private readonly cache?: DrmShuffleCache,
-    private readonly vault?: DrmShuffleVault,
-    private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
-    private readonly onViolation?: (event: { userId: string; productId: string; violationType: string }) => void,
+    @Optional() private readonly matrices?: PixelMatrixGeneratorService,
+    @Optional() private readonly tables?: DrmShuffleTables,
+    @Optional() private readonly cache?: DrmShuffleCache,
+    @Optional() private readonly vault?: DrmShuffleVault,
+    @Optional() private readonly tokenSecret: string = process.env.VIDEO_TOKEN_SECRET || process.env.APP_SECRET || 'AHONG_EMERALD_SECRET_KEY_999',
+    @Optional() private readonly onViolation?: (event: { userId: string; productId: string; violationType: string }) => void,
   ) {}
 
   scrambledR2KeyFor(productId: string, pageNumber: number): string {

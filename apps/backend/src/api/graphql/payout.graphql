@@ -33,6 +33,8 @@ type Query {
 }
 
 type Mutation {
-  requestSellerPayout(amount: Float!, bankAccountId: ID!, remark: String): SellerPayoutPayload!
+  # requestSellerPayout is owned by the clearinghouse module SDL (Phase 100)
+  # which uses the PayoutRequestInput object form. Keeping a second signature
+  # here breaks schema merging (same field, different args/type).
   approveClearingBatch(payoutIds: [ID!]!): ClearingBatchPayload!
 }

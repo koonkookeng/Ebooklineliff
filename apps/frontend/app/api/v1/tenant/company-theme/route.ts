@@ -14,7 +14,7 @@ function passthrough(req: Request): Record<string, string> {
 }
 
 export async function GET(req: Request) {
-  const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
+  const backend = process.env.BACKEND_URL ?? 'http://localhost:3001';
   const url = new URL(req.url);
   const slug = url.searchParams.get('slug');
   if (!slug) return NextResponse.json({ message: 'Missing tenant slug' }, { status: 400 });
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
+  const backend = process.env.BACKEND_URL ?? 'http://localhost:3001';
   let body: unknown = null;
   try {
     body = await req.json();

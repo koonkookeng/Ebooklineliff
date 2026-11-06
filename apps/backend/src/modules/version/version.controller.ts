@@ -19,7 +19,7 @@ function header(headers: VersionRequest['headers'], name: string): string | unde
   return typeof s === 'string' && s ? s : undefined;
 }
 
-@Controller('api/v1/version')
+@Controller('version')
 export class VersionController {
   constructor(private readonly versions: VersionService) {}
 

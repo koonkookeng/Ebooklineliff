@@ -7,7 +7,7 @@
 // - pushPosition: Zod gate → clock resolve (accept ties/newer, stale gets
 //   server truth) → edge write (<5ms path) → broadcast → DB upsert.
 // - tsx-safe structural ports. Zero new deps.
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import {
   CrossDeviceSyncPayloadSchema,
   SYNC_STATE_TTL_SEC,
@@ -51,10 +51,10 @@ export interface CrossDeviceStream {
 @Injectable()
 export class CrossDeviceStateService {
   constructor(
-    private readonly tables?: CrossDeviceTables,
-    private readonly cache?: CrossDeviceCache,
-    private readonly bus?: CrossDeviceBus,
-    private readonly stream?: CrossDeviceStream,
+    @Optional() private readonly tables?: CrossDeviceTables,
+    @Optional() private readonly cache?: CrossDeviceCache,
+    @Optional() private readonly bus?: CrossDeviceBus,
+    @Optional() private readonly stream?: CrossDeviceStream,
   ) {}
 
   private async storedClock(userId: string, productId: string, contentType: string): Promise<number> {
