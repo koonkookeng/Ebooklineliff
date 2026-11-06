@@ -79,8 +79,8 @@ function applyTenantBranding(res: NextResponse, tenant: string): void {
 // SSOT Phase 028 §6.1 — strict CSP on every edge response (first millisecond,
 // before HTML render). Directives byte-mirror buildCspHeader() (@repo/shared);
 // parity enforced by scripts/test-phase028-contracts.ts.
-function applyCsp(res: NextResponse, nonce: string, isDev: boolean): NextResponse {
-  res.headers.set('Content-Security-Policy', buildEdgeCspHeader({ nonce, isDev }));
+function applyCsp(res: NextResponse, nonce: string, isDev: boolean, allowInsecure = false): NextResponse {
+  res.headers.set('Content-Security-Policy', buildEdgeCspHeader({ nonce, isDev, allowInsecure }));
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('X-CSP-Nonce', nonce);
@@ -105,6 +105,13 @@ export async function middleware(req: NextRequest) {
   // Phase 028 §6.1: per-request nonce + strict CSP (dev keeps unsafe-eval for HMR).
   const nonce = mintEdgeNonce();
   const isDev = process.env.NODE_ENV === 'development';
+  // Plain-HTTP deployments (local `http://localhost:3000`) must not emit
+  // `upgrade-insecure-requests`, otherwise same-origin navigations are
+  // rewritten to https:// and fail with ERR_SSL_PROTOCOL_ERROR. Trust the
+  // proxy's x-forwarded-proto when present (TLS terminates upstream).
+  const forwardedProto = (req.headers.get('x-forwarded-proto') ?? '').split(',')[0]?.trim().toLowerCase();
+  const isHttps = forwardedProto ? forwardedProto === 'https' : req.nextUrl.protocol === 'https:';
+  const allowInsecure = !isHttps;
 
   // Phase 025 §6.1: permanent mini-app scheme resolver (public link entry).
   // /r/:shortCode and /resolve bypass auth (resolution itself is public; the
@@ -129,7 +136,7 @@ export async function middleware(req: NextRequest) {
           headers: { Location: nativeScheme, 'Cache-Control': 'no-store' },
         });
         applyTenantBranding(redirect, tenantHint);
-        return applyCsp(redirect, nonce, isDev);
+        return applyCsp(redirect, nonce, isDev, allowInsecure);
       }
       const rewriteUrl = req.nextUrl.clone();
       rewriteUrl.pathname = '/resolve';
@@ -137,9 +144,9 @@ export async function middleware(req: NextRequest) {
       rewriteUrl.searchParams.set('tenant', tenantHint);
       const rewritten = NextResponse.rewrite(rewriteUrl);
       applyTenantBranding(rewritten, tenantHint);
-      return applyCsp(rewritten, nonce, isDev);
+      return applyCsp(rewritten, nonce, isDev, allowInsecure);
     }
-    return applyCsp(res, nonce, isDev);
+    return applyCsp(res, nonce, isDev, allowInsecure);
   }
 
   // Public routes bypass (branding only) — Phase 010: storefront home, PDP and
@@ -147,6 +154,14 @@ export async function middleware(req: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
+    // Phase 131: hybrid web identity BFF (start/callback/email/refresh/me).
+    // The BFF owns `__Host-` cookies and forwards to the backend explicitly;
+    // an unauthenticated visitor must be able to reach the sign-in endpoints.
+    pathname === '/api/auth' ||
+    pathname.startsWith('/api/auth/') ||
+    // LINE Messaging API webhook: LINE has no session; the proxy forwards the
+    // raw body and X-Line-Signature to the backend guard for verification.
+    pathname.startsWith('/api/webhooks/line') ||
     pathname.startsWith('/api/v1/resolver/') ||
     // Phase 026: viral preview is public (recipients may be logged out).
     pathname === '/api/v1/social-share/preview' ||
@@ -156,6 +171,13 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/performance/telemetry' ||
     // Phase 030: public branding fetch (logged-out LIFF opens need the theme).
     pathname === '/api/v1/tenant/theme' ||
+    // Phase 072: public company theme (colors + logo, no PII).
+    pathname === '/api/v1/tenant/company-theme' ||
+    // Phase 130: public readiness probe + health.
+    pathname === '/api/v1/infra/golive' ||
+    pathname === '/api/v1/infra/health' ||
+    // GraphQL endpoint (qr-login init needs it anonymously).
+    pathname === '/api/graphql' ||
     // Phase 033: cold-start version check carries no auth (versions only).
     pathname === '/api/v1/version/check' ||
     // Phase 034: OA public config for logged-out LIFF opens (no secrets).
@@ -169,13 +191,18 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/storefront') ||
     pathname === '/login' ||
     pathname.startsWith('/login/') ||
+    // QR login (desktop) must be reachable without a session.
+    pathname === '/auth/qr-login' ||
+    pathname.startsWith('/auth/qr-login/') ||
+    pathname === '/web/auth/qr-login' ||
+    pathname.startsWith('/web/auth/qr-login/') ||
     pathname === '/' ||
     pathname.startsWith('/pdp/') ||
     pathname.startsWith('/catalog')
   ) {
     const res = NextResponse.next();
     applyTenantBranding(res, tenantHint);
-    return applyCsp(res, nonce, isDev);
+    return applyCsp(res, nonce, isDev, allowInsecure);
   }
 
   const token =
@@ -183,18 +210,18 @@ export async function middleware(req: NextRequest) {
     req.headers.get('authorization')?.replace(/^Bearer /, '');
   if (!token) {
     if (pathname.startsWith('/api/')) {
-      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev);
+      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev, allowInsecure);
     }
-    return applyCsp(NextResponse.redirect(new URL('/login', req.url)), nonce, isDev);
+    return applyCsp(NextResponse.redirect(new URL('/login', req.url)), nonce, isDev, allowInsecure);
   }
 
   const secret = process.env.JWT_SECRET ?? 'secret-key-144-xz-dev-only-change-me';
   const claims = await verifyHs256(token, secret);
   if (!claims?.sub) {
     if (pathname.startsWith('/api/')) {
-      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev);
+      return applyCsp(NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 }), nonce, isDev, allowInsecure);
     }
-    return applyCsp(NextResponse.redirect(new URL('/login?error=session_expired', req.url)), nonce, isDev);
+    return applyCsp(NextResponse.redirect(new URL('/login?error=session_expired', req.url)), nonce, isDev, allowInsecure);
   }
 
   const headers = new Headers(req.headers);
@@ -206,7 +233,7 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next({ request: { headers } });
   applyTenantBranding(res, claims.tenantId ?? tenantHint);
-  return applyCsp(res, nonce, isDev);
+  return applyCsp(res, nonce, isDev, allowInsecure);
 }
 
 export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] };

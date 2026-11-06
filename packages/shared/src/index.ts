@@ -4,6 +4,37 @@ export * from './schemas/infra-env.schema';
 export * from './schemas/identity.zod';
 export * from './schemas/zod-graphql-contracts';
 export * from './schemas/auth-contract';
+// Phase 131 — hybrid web identity (LINE Web OAuth / Google OIDC / Email Magic Link)
+export {
+  WebAuthProviderEnum,
+  AccountProviderEnum,
+  WebAuthStartInputSchema,
+  WebAuthCallbackInputSchema,
+  MagicLinkRequestSchema,
+  MagicLinkVerifySchema,
+  OAuthStateRecordSchema,
+  MagicLinkRecordSchema,
+  WebIdentitySchema,
+  WebAuthStartResponseSchema,
+  WebAuthSessionResponseSchema,
+  EmailMagicLinkAcceptedSchema,
+  sanitizeNextPath,
+  pkceChallengeFromVerifier,
+} from './schemas/web-auth.schema';
+export type {
+  WebAuthProvider,
+  AccountProvider,
+  WebAuthStartInput,
+  WebAuthCallbackInput,
+  MagicLinkRequest,
+  MagicLinkVerify,
+  OAuthStateRecord,
+  MagicLinkRecord,
+  WebIdentity,
+  WebAuthStartResponse,
+  WebAuthSessionResponse,
+  EmailMagicLinkAccepted,
+} from './schemas/web-auth.schema';
 export * from './schemas/catalog.zod';
 export {
   ProductSortByEnum,

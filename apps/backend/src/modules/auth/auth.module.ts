@@ -1,18 +1,24 @@
 // SSOT Phase 005 §5.1 — NestJS Auth module (Unified SSO: LINE LIFF / Web OAuth / Google)
 // Phase 021: LINE LIFF Auth Module (LiffAuthService + LiffAuthController)
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { LineOAuthAdapter } from './adapters/line-oauth.adapter';
 import { GoogleOAuthAdapter } from './adapters/google-oauth.adapter';
 import { TokenService } from './services/token.service';
 import { JwtTokenService } from './services/jwt-token.service';
 import { LineVerifierService } from './services/line-verifier.service';
 import { AuthService } from './services/auth.service';
+import { OAuthCodeExchangeService } from './services/oauth-code-exchange.service';
+import { AuthRateLimitService } from './services/auth-rate-limit.service';
+import { WebAuthService } from './services/web-auth.service';
+import { EmailSenderService } from './services/email-sender.service';
+import { EmailAuthService } from './services/email-auth.service';
 import { LiffAuthService } from './liff-auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { LineLiffGuard } from './guards/line-liff.guard';
 import { AuthWebhookController } from './controllers/auth-webhook.controller';
+import { WebAuthController } from './controllers/web-auth.controller';
 import { LiffAuthController } from './liff-auth.controller';
 import { InitQrSessionUseCase } from './qr-sync/application/use-cases/init-qr-session.use-case';
 import { ProcessQrScanUseCase } from './qr-sync/application/use-cases/process-qr-scan.use-case';
@@ -22,8 +28,12 @@ import { QrAuthGateway } from './qr-sync/infrastructure/gateways/qr-auth.gateway
 import { QrAuthWebhookController } from './qr-sync/presentation/controllers/qr-auth-webhook.controller';
 
 // NOTE: PrismaService + RedisClusterService come from global InfraModule (single connection pool).
+// @Global so the shared auth guards (JwtAuthGuard/JwtStrategy/RolesGuard/
+// LineLiffGuard) resolve in every feature module that uses @UseGuards(...)
+// without each module having to import AuthModule.
+@Global()
 @Module({
-  controllers: [AuthWebhookController, QrAuthWebhookController, LiffAuthController],
+  controllers: [AuthWebhookController, WebAuthController, QrAuthWebhookController, LiffAuthController],
   providers: [
     LineOAuthAdapter,
     GoogleOAuthAdapter,
@@ -31,6 +41,11 @@ import { QrAuthWebhookController } from './qr-sync/presentation/controllers/qr-a
     JwtTokenService,
     LineVerifierService,
     AuthService,
+    OAuthCodeExchangeService,
+    AuthRateLimitService,
+    WebAuthService,
+    EmailSenderService,
+    EmailAuthService,
     LiffAuthService,
     JwtStrategy,
     JwtAuthGuard,

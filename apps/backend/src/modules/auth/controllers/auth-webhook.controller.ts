@@ -3,6 +3,7 @@
 // Minimal req/reply typing: works on Fastify without importing 'fastify' types.
 import { Controller, Get, Post, Query, Body, Req, Res, BadRequestException } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { WebAuthService } from '../services/web-auth.service';
 
 const SESSION_COOKIE = '__Host-next-auth.session-token';
 const REFRESH_COOKIE = '__Host-next-auth.refresh-token';
@@ -41,11 +42,15 @@ interface OAuthCallbackQuery {
   code?: string;
   state?: string;
   tenantId?: string;
+  redirectUri?: string;
 }
 
 @Controller('auth')
 export class AuthWebhookController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly webAuth: WebAuthService,
+  ) {}
 
   @Get('line/callback')
   async lineCallback(
@@ -53,21 +58,23 @@ export class AuthWebhookController {
     @Req() req: WebReq,
     @Res() reply: WebReply,
   ): Promise<void> {
-    if (!q.code || !q.state || !q.tenantId) {
+    if (!q.code || !q.state) {
       throw new BadRequestException('Invalid OAuth callback parameters');
     }
-    const redirectUri = `${req.protocol ?? 'https'}://${req.hostname ?? 'localhost'}/auth/line/callback`;
-    const result = await this.auth.authenticateWebOAuth(
-      'LINE_WEB',
-      q.code,
-      q.state,
-      redirectUri,
-      q.tenantId,
+    // Delegates to the Phase 131 state/PKCE engine: the redirect URI must be the
+    // one registered when the flow started (single-use state record).
+    const result = await this.webAuth.handleCallback(
+      {
+        provider: 'LINE_WEB',
+        code: q.code,
+        state: q.state,
+        redirectUri: q.redirectUri ?? `${req.protocol ?? 'https'}://${req.hostname ?? 'localhost'}/auth/line/callback`,
+      },
       clientMeta(req),
     );
     secureCookie(reply, SESSION_COOKIE, result.accessToken, result.expiresIn);
     secureCookie(reply, REFRESH_COOKIE, result.refreshToken, 7 * 24 * 60 * 60);
-    void reply.redirect(302, `/login/success?tenant=${encodeURIComponent(q.tenantId)}`);
+    void reply.redirect(302, result.next);
   }
 
   @Post('refresh')

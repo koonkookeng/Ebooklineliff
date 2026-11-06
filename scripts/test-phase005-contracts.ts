@@ -254,7 +254,7 @@ async function main(): Promise<void> {
   const ctx = { clientIp: '127.0.0.1', userAgent: 't' };
   await assert.rejects(() => svc.authenticateLineLiff({ idToken: 'short', tenantId: TID }, ctx), /Invalid LINE LIFF/);
   await assert.rejects(() => svc.authenticateLineLiff({ idToken: 'x'.repeat(32), tenantId: TID }, ctx), /Signature/);
-  await assert.rejects(() => svc.authenticateWebOAuth('GOOGLE', 'c', 's', 'https://x.test/cb', TID, ctx), /Unsupported/);
+  await assert.rejects(() => svc.authenticateWebOAuth('EMAIL_PASSWORD', 'c', 's', 'https://x.test/cb', TID, ctx), /Unsupported/);
   await assert.rejects(() => svc.refreshAccessToken('nope-not-found', ctx), /Invalid or expired/);
   await assert.rejects(() => svc.logoutSession('', ctx), /Missing session/);
   ok('failure paths fail-fast with context (bad input / bad signature / provider / refresh / logout)');

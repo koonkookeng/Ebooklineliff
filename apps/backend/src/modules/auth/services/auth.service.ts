@@ -1,7 +1,7 @@
 // SSOT Phase 005 §5.2 — Core Auth logic & Account Linking Engine
 // Dual-token issuance (15m access / 7d single-use refresh), atomic user link/create,
 // Redis edge session cache (<1ms verify) with PostgreSQL fallback (self-healing §10.2).
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   LineLiffAuthInputSchema,
@@ -12,19 +12,21 @@ import {
   type LiffAuthInput,
   type AuthResponse,
   type AuthTokenResponse,
+  type WebIdentity,
 } from '@repo/shared';
 import { PrismaService } from '../../../infra/database/prisma.service';
 import { RedisClusterService } from '../../../infra/redis/redis-cluster.service';
 import { TokenService } from './token.service';
 import { LineOAuthAdapter } from '../adapters/line-oauth.adapter';
 import { LineVerifierService } from './line-verifier.service';
+import { OAuthCodeExchangeService } from './oauth-code-exchange.service';
 
 export interface AuthRequestContext {
   clientIp: string;
   userAgent: string;
 }
 
-interface LinkedUser {
+export interface LinkedUser {
   id: string;
   displayName: string;
   avatarUrl: string | null;
@@ -37,6 +39,28 @@ interface LinkedUser {
   rewardPoints: number;
   affiliateCode: string;
   createdAt: Date;
+}
+
+export interface WebProvisionResult {
+  user: LinkedUser;
+  isNew: boolean;
+  linked: boolean;
+}
+
+/** Structural account delegate (keeps legacy test doubles without `account` working). */
+interface AccountDelegateLike {
+  findUnique(args: unknown): Promise<{ id: string; userId: string; user?: unknown } | null>;
+  create(args: unknown): Promise<unknown>;
+  upsert(args: unknown): Promise<unknown>;
+}
+
+function accountDelegate(tx: unknown): AccountDelegateLike | null {
+  const delegate = (tx as { account?: AccountDelegateLike } | null | undefined)?.account;
+  return delegate && typeof delegate.upsert === 'function' ? delegate : null;
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === 'object' && (err as { code?: string }).code === 'P2002';
 }
 
 function toLinkedUser(row: {
@@ -70,6 +94,13 @@ function toLinkedUser(row: {
 const SESSION_TTL_SEC = 900; // 15m edge cache
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7d
 
+function defaultDisplayName(identity: WebIdentity): string {
+  if (identity.email) return identity.email.split('@')[0] || 'Member';
+  if (identity.provider === 'LINE_LIFF' || identity.provider === 'LINE_WEB') return 'LINE User';
+  if (identity.provider === 'GOOGLE') return 'Google User';
+  return 'Member';
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -77,7 +108,8 @@ export class AuthService {
     private readonly redis: RedisClusterService,
     private readonly tokens: TokenService,
     private readonly lineAdapter: LineOAuthAdapter,
-    private readonly lineVerifier?: LineVerifierService,
+    @Optional() private readonly lineVerifier?: LineVerifierService,
+    @Optional() private readonly oauthExchange?: OAuthCodeExchangeService,
   ) {}
 
   async authenticateLineLiff(
@@ -97,6 +129,26 @@ export class AuthService {
     // Atomic transaction: find-or-link-or-create (Gate 7)
     const provisioned = (await this.prisma.$transaction(async (tx) => {
       let existing = await tx.user.findUnique({ where: { lineUserId } });
+      // Phase 131 identity convergence: a user who first signed up through
+      // LINE Web OAuth owns an Account row but may not have User.lineUserId yet.
+      if (!existing) {
+        const account = accountDelegate(tx);
+        if (account) {
+          const webLink = await account.findUnique({
+            where: {
+              provider_providerAccountId: { provider: 'LINE_WEB', providerAccountId: lineUserId },
+            },
+            include: { user: true },
+          });
+          const linkedId = (webLink?.user as { id?: string } | null | undefined)?.id;
+          if (linkedId) {
+            existing = await tx.user.update({
+              where: { id: linkedId },
+              data: { lineUserId, avatarUrl: lineProfile.picture ?? undefined },
+            });
+          }
+        }
+      }
       if (!existing && email) {
         const byEmail = await tx.user.findUnique({ where: { email } });
         if (byEmail) {
@@ -130,6 +182,18 @@ export class AuthService {
               ? { referredById: await this.resolveReferralId(tx, input.referralCode) }
               : {}),
           },
+        });
+      }
+      // Phase 131: every authenticated identity is also recorded in `Account`
+      // so web/QR/LIFF sessions converge on a single User row.
+      const account = accountDelegate(tx);
+      if (account) {
+        await account.upsert({
+          where: {
+            provider_providerAccountId: { provider: 'LINE_LIFF', providerAccountId: lineUserId },
+          },
+          update: {},
+          create: { userId: existing.id, provider: 'LINE_LIFF', providerAccountId: lineUserId },
         });
       }
       return existing;
@@ -190,6 +254,16 @@ export class AuthService {
           },
           include: { lineProfile: true },
         });
+        const account = accountDelegate(tx);
+        if (account) {
+          await account.upsert({
+            where: {
+              provider_providerAccountId: { provider: 'LINE_LIFF', providerAccountId: lineProfile.sub },
+            },
+            update: {},
+            create: { userId: created.id, provider: 'LINE_LIFF', providerAccountId: lineProfile.sub },
+          });
+        }
         await tx.authAuditLog
           .create({
             data: {
@@ -238,6 +312,16 @@ export class AuthService {
       // Tenant bind when unset (expand-contract backfill happens on login)
       if (!existing.tenantId) {
         await tx.user.update({ where: { id: existing.id }, data: { tenantId: tenant.id } }).catch(() => undefined);
+      }
+      const account = accountDelegate(tx);
+      if (account) {
+        await account.upsert({
+          where: {
+            provider_providerAccountId: { provider: 'LINE_LIFF', providerAccountId: lineProfile.sub },
+          },
+          update: {},
+          create: { userId: existing.id, provider: 'LINE_LIFF', providerAccountId: lineProfile.sub },
+        });
       }
       await tx.authAuditLog
         .create({
@@ -302,6 +386,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Phase 131 — authorization-code login for the GraphQL contract.
+   * The browser flow uses `WebAuthService` (state + PKCE + nonce in Redis);
+   * this entry point is kept for API clients that already hold a code and
+   * therefore cannot replay the Redis state record.
+   */
   async authenticateWebOAuth(
     provider: string,
     code: string,
@@ -313,19 +403,209 @@ export class AuthService {
     const parsed = WebOAuthInputSchema.safeParse({ code, state, redirectUri, tenantId });
     if (!parsed.success) throw new BadRequestException('Invalid Web OAuth input');
     const providerParsed = AuthProviderEnum.safeParse(provider);
-    if (!providerParsed.success || providerParsed.data === 'REFRESH_TOKEN') {
-      throw new BadRequestException('Unsupported OAuth provider');
+    if (providerParsed.data !== 'LINE_WEB' && providerParsed.data !== 'GOOGLE') {
+      throw new BadRequestException('Unsupported OAuth provider for this endpoint');
     }
-    // LINE_WEB reuses the ID-token verifier (code here is the LINE ID Token from LIFF-less web flow
-    // after the channel code->token exchange at the edge). Full server-side code exchange with
-    // channel secret is intentionally out of scope here (no external secrets in repo).
-    if (providerParsed.data !== 'LINE_WEB' && providerParsed.data !== 'LINE_LIFF') {
-      throw new BadRequestException('Unsupported OAuth provider for this tenant');
+    if (!this.oauthExchange) {
+      throw new BadRequestException('OAuth code exchange is not configured');
     }
-    return this.authenticateLineLiff(
-      { idToken: code, tenantId: parsed.data.tenantId },
-      ctx,
-    );
+    const identity = await this.oauthExchange.exchange({
+      provider: providerParsed.data,
+      code: parsed.data.code,
+      redirectUri: parsed.data.redirectUri,
+      // No PKCE verifier exists for API clients that did not start via
+      // /auth/web/start; providers only require it when code_challenge was sent.
+      codeVerifier: '',
+    });
+    const provisioned = await this.provisionWebIdentity(identity, parsed.data.tenantId, ctx);
+    return this.createSessionForUser(provisioned.user, parsed.data.tenantId, ctx);
+  }
+
+  /**
+   * Phase 131 §5.3 — identity provisioning engine (Account-first).
+   *
+   * Rules (account-takeover safe):
+   * 1. `Account(provider, providerAccountId)` is the primary key of identity.
+   * 2. A legacy `User.lineUserId` row is linked for LINE identities (migration).
+   * 3. An existing `User.email` is linked ONLY when the provider asserted
+   *    `email_verified === true` (Google). Unverified emails never auto-link.
+   * 4. Otherwise a new `User` + `Account` is created atomically.
+   */
+  async provisionWebIdentity(
+    identity: WebIdentity,
+    tenantId: string,
+    ctx: AuthRequestContext,
+  ): Promise<WebProvisionResult> {
+    try {
+      return await this.provisionWebIdentityTx(identity, tenantId, ctx);
+    } catch (err) {
+      if (!isUniqueViolation(err)) throw err;
+      // Concurrent first-login race: the other transaction won. Re-read the
+      // winning Account instead of surfacing a 500.
+      const delegate = accountDelegate(this.prisma);
+      const existing = delegate
+        ? await delegate
+            .findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider: identity.provider,
+                  providerAccountId: identity.providerAccountId,
+                },
+              },
+              include: { user: true },
+            })
+            .catch(() => null)
+        : null;
+      const row = (existing as { user?: unknown } | null)?.user;
+      if (row) {
+        return {
+          user: toLinkedUser(row as unknown as Parameters<typeof toLinkedUser>[0]),
+          isNew: false,
+          linked: false,
+        };
+      }
+      throw err;
+    }
+  }
+
+  private async provisionWebIdentityTx(
+    identity: WebIdentity,
+    tenantId: string,
+    ctx: AuthRequestContext,
+  ): Promise<WebProvisionResult> {
+    const provisioned = await this.prisma.$transaction(async (tx) => {
+      const delegate = accountDelegate(tx);
+      const existingAccount = delegate
+        ? await delegate.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: identity.provider,
+                providerAccountId: identity.providerAccountId,
+              },
+            },
+            include: { user: true },
+          })
+        : null;
+
+      if (existingAccount?.user) {
+        let row = existingAccount.user as unknown as {
+          id: string;
+          avatarUrl: string | null;
+          email: string | null;
+          tenantId?: string | null;
+        };
+        const patch: Record<string, unknown> = {};
+        if (!row.avatarUrl && identity.avatarUrl) patch.avatarUrl = identity.avatarUrl;
+        if (!row.email && identity.email && identity.emailVerified) patch.email = identity.email;
+        if (!row.tenantId) patch.tenantId = tenantId;
+        if (Object.keys(patch).length > 0) {
+          row = await tx.user.update({ where: { id: row.id }, data: patch });
+        }
+        return { row, isNew: false, linked: false };
+      }
+
+      let linked = false;
+      let createdNewUser = false;
+      let existingUser: { id: string; avatarUrl: string | null; email: string | null; tenantId?: string | null } | null =
+        null;
+
+      // (2) Legacy LINE rows predate the Account table.
+      if (identity.provider === 'LINE_WEB' || identity.provider === 'LINE_LIFF') {
+        existingUser = await tx.user.findUnique({
+          where: { lineUserId: identity.providerAccountId },
+        });
+        if (existingUser) {
+          linked = true;
+          await tx.authAuditLog
+            .create({
+              data: {
+                userId: existingUser.id,
+                tenantId,
+                event: 'ACCOUNT_LINKED',
+                ipAddress: ctx.clientIp,
+                userAgent: ctx.userAgent,
+                metadata: { provider: identity.provider, reason: 'legacy_line_user' },
+              },
+            })
+            .catch(() => undefined);
+        }
+      }
+
+      // (3) Verified-email auto-link (never for unverified emails).
+      if (!existingUser && identity.email && identity.emailVerified) {
+        existingUser = await tx.user.findUnique({ where: { email: identity.email } });
+        if (existingUser) {
+          linked = true;
+          await tx.authAuditLog
+            .create({
+              data: {
+                userId: existingUser.id,
+                tenantId,
+                event: 'ACCOUNT_LINKED',
+                ipAddress: ctx.clientIp,
+                userAgent: ctx.userAgent,
+                metadata: { provider: identity.provider, reason: 'verified_email' },
+              },
+            })
+            .catch(() => undefined);
+        }
+      }
+
+      if (existingUser) {
+        const patch: Record<string, unknown> = {};
+        if (!existingUser.avatarUrl && identity.avatarUrl) patch.avatarUrl = identity.avatarUrl;
+        if (!existingUser.email && identity.email && identity.emailVerified) patch.email = identity.email;
+        if (!existingUser.tenantId) patch.tenantId = tenantId;
+        if (Object.keys(patch).length > 0) {
+          existingUser = await tx.user.update({ where: { id: existingUser.id }, data: patch });
+        }
+      } else {
+        // Unverified email must not collide with (or hijack) an existing row.
+        let email = identity.email;
+        if (email && !identity.emailVerified) {
+          const taken = await tx.user.findUnique({ where: { email } });
+          if (taken) email = null;
+        }
+        existingUser = await tx.user.create({
+          data: {
+            email,
+            displayName: identity.displayName ?? defaultDisplayName(identity),
+            avatarUrl: identity.avatarUrl,
+            role: 'MEMBER',
+            tenantId,
+          },
+        });
+        createdNewUser = true;
+      }
+
+      if (delegate) {
+        await delegate.create({
+          data: {
+            userId: existingUser.id,
+            provider: identity.provider,
+            providerAccountId: identity.providerAccountId,
+          },
+        });
+      }
+
+      return {
+        row: existingUser,
+        isNew: createdNewUser,
+        linked,
+      };
+    });
+
+    const user = toLinkedUser(provisioned.row as unknown as Parameters<typeof toLinkedUser>[0]);
+    return { user, isNew: provisioned.isNew, linked: provisioned.linked };
+  }
+
+  /** Public session factory used by LIFF, web OAuth and email magic-link flows. */
+  async createSessionForUser(
+    user: LinkedUser,
+    tenantId: string,
+    ctx: AuthRequestContext,
+  ): Promise<AuthResponse & { refreshToken: string; sessionId: string }> {
+    return this.issueSessionForUser(user, tenantId, ctx);
   }
 
   async refreshAccessToken(
